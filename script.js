@@ -1,35 +1,35 @@
-// script.js
-async function initApp() {
-  const video = document.getElementById('video');
-  const ui = video['ui'];
-  const player = ui.getControls().getPlayer();
+async function init() {
+    const video = document.getElementById('video');
+    const ui = video['ui'];
+    const player = ui.getControls().getPlayer();
 
-  // Mengambil data dari URL browser
-  const urlParams = new URLSearchParams(window.location.search);
-  const mpdUrl = urlParams.get('mpd'); // Mengambil ?mpd=
-  const keyPair = urlParams.get('key'); // Mengambil &key=KID:KEY
+    // Mengambil data dari URL browser (?mpd=...&key=...)
+    const params = new URLSearchParams(window.location.search);
+    const mpdUrl = params.get('mpd');
+    const keyPair = params.get('key');
 
-  if (keyPair) {
-    const [kid, key] = keyPair.split(':');
-    player.configure({
-      drm: {
-        clearKeys: {
-          [kid]: key
-        }
-      }
-    });
-  }
-
-  if (mpdUrl) {
-    try {
-      await player.load(mpdUrl);
-      console.log('Video berhasil dimuat!');
-    } catch (e) {
-      console.error('Gagal memuat MPD:', e);
+    // Setting ClearKey jika ada parameter key
+    if (keyPair && keyPair.includes(':')) {
+        const [kid, key] = keyPair.split(':');
+        player.configure({
+            drm: {
+                clearKeys: {
+                    [kid]: key
+                }
+            }
+        });
     }
-  } else {
-    alert('Masukkan parameter MPD di URL! Contoh: ?mpd=URL_MPD&key=KID:KEY');
-  }
+
+    // Load link MPD
+    if (mpdUrl) {
+        try {
+            await player.load(mpdUrl);
+            console.log('Video berhasil dimuat!');
+        } catch (e) {
+            console.error('Gagal memuat video:', e);
+        }
+    }
 }
 
-document.addEventListener('shaka-ui-loaded', initApp);
+// Menjalankan fungsi setelah Shaka UI siap
+document.addEventListener('shaka-ui-loaded', init);
