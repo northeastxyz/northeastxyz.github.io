@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLV Player - Live Stream</title>
+    <title>FLV Player (Force Type)</title>
     <!-- Library flv.js -->
     <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
     <style>
@@ -20,12 +20,10 @@
         .video-wrapper { 
             width: 100%; 
             height: 100%; 
-            max-width: 1000px; 
         }
         video { 
             width: 100%; 
             height: 100%; 
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
         }
     </style>
 </head>
@@ -39,43 +37,44 @@
         if (flvjs.isSupported()) {
             const videoElement = document.getElementById('videoElement');
             
-            // Mengambil URL FLV dari parameter ?url=
+            // Mengambil URL dari parameter ?url=
             const params = new URLSearchParams(window.location.search);
             const flvUrl = params.get('url');
 
             if (flvUrl) {
                 const flvPlayer = flvjs.createPlayer({
-                    type: 'flv',
+                    type: 'flv',       // MEMAKSA format FLV meski tanpa ekstensi di URL
                     url: flvUrl,
-                    isLive: true,      // Set ke true untuk Live Streaming (low latency)
+                    isLive: true,      // Mengurangi delay untuk siaran langsung
+                    cors: true,        // Mengizinkan akses lintas domain
                     hasAudio: true,
                     hasVideo: true,
-                    enableWorker: true // Meningkatkan performa pemutaran
+                    enableWorker: true
+                }, {
+                    enableStashBuffer: false, // Mematikan buffer tambahan agar lebih real-time
+                    fixAudioTimestampGap: false
                 });
                 
                 flvPlayer.attachMediaElement(videoElement);
                 flvPlayer.load();
                 
-                // Menangani kebijakan autoplay browser
+                // Menangani blokir autoplay dari browser
                 const playPromise = flvPlayer.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
-                        console.log("Autoplay dicegah, klik play secara manual.");
+                        console.log("Klik tombol play manual jika video tidak jalan otomatis.");
                     });
                 }
 
-                // Error Handling jika link mati atau salah
+                // Error logger
                 flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail) => {
-                    console.error('FLV Error:', errType, errDetail);
-                    if (errType === flvjs.Events.NetworkError) {
-                        alert("Gagal memuat: Masalah jaringan atau link salah.");
-                    }
+                    console.error('Error Type:', errType, 'Detail:', errDetail);
                 });
             } else {
-                console.log("Gunakan format: ?url=http://link-anda.flv");
+                console.log("Masukkan parameter URL, contoh: flv.html?url=LINK_ANDA");
             }
         } else {
-            alert("Browser Anda tidak mendukung FLV player ini.");
+            alert("Browser Anda tidak mendukung pemutar FLV ini.");
         }
     </script>
 </body>
