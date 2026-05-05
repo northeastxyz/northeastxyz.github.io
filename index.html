@@ -3,82 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MPD ClearKey Player</title>
-    <!-- Shaka Player UI Styles -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/controls.css">
+    <title>JW Player MPD ClearKey</title>
+    <!-- Load JW Player Library (Ganti dengan link library milikmu jika punya sendiri) -->
+    <script src="https://ssl.p.jwpcdn.com/player/v/8.21.0/jwplayer.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .video-container {
-            width: 100%;
-            height: 100%;
-            max-width: 1200px;
-            max-height: 675px; /* 16:9 Aspect Ratio */
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        video {
-            width: 100%;
-            height: 100%;
-        }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #player { width: 100% !important; height: 100% !important; }
     </style>
 </head>
 <body>
 
-    <div class="video-container" data-shaka-player-container>
-        <video data-shaka-player id="video" autoplay></video>
-    </div>
-
-    <!-- Shaka Player Library & UI -->
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.ui.js"></script>
+    <div id="player"></div>
 
     <script>
-        async function initPlayer() {
-            // 1. Ambil elemen video dan player
-            const video = document.getElementById('video');
-            const ui = video['ui'];
-            const player = ui.getControls().getPlayer();
+        // Ambil parameter dari URL
+        const params = new URLSearchParams(window.location.search);
+        const mpdUrl = params.get('mpd');
+        const keyPair = params.get('key');
 
-            // 2. Ambil parameter dari URL (?mpd=...&key=...)
-            const params = new URLSearchParams(window.location.search);
-            const mpdUrl = params.get('mpd');
-            const keyPair = params.get('key');
+        let drmConfig = {};
 
-            // 3. Konfigurasi ClearKey jika ada parameter key (format KID:KEY)
-            if (keyPair && keyPair.includes(':')) {
-                const [kid, key] = keyPair.split(':');
-                player.configure({
-                    drm: {
-                        clearKeys: {
-                            [kid]: key
-                        }
-                    }
-                });
-            }
-
-            // 4. Load video jika URL MPD tersedia
-            if (mpdUrl) {
-                try {
-                    await player.load(mpdUrl);
-                    console.log('Video loaded successfully!');
-                } catch (error) {
-                    console.error('Error loading video:', error);
-                    alert('Gagal memuat video. Pastikan link MPD dan Key benar.');
+        // Konfigurasi ClearKey untuk JW Player
+        if (keyPair && keyPair.includes(':')) {
+            const [kid, key] = keyPair.split(':');
+            drmConfig = {
+                clearkey: {
+                    keyId: kid,
+                    key: key
                 }
-            } else {
-                console.log('Menunggu parameter mpd di URL...');
-            }
+            };
         }
 
-        // Jalankan inisialisasi setelah UI Shaka siap
-        document.addEventListener('shaka-ui-loaded', initPlayer);
+        const playerInstance = jwplayer("player").setup({
+            file: mpdUrl,
+            type: "dash",
+            width: "100%",
+            height: "100%",
+            autostart: true,
+            mute: false,
+            drm: drmConfig
+        });
+
+        playerInstance.on('error', function(e) {
+            console.error("JW Player Error:", e);
+        });
     </script>
 </body>
 </html>
