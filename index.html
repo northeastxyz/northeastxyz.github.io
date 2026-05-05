@@ -3,52 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VideoJS MPD Player</title>
-    <!-- Video.js CSS -->
-    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+    <title>Clappr MPD Player with Quality Selector</title>
+    <!-- Load Clappr & Dash Shaka Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dash-shaka-playback@latest/dist/dash-shaka-playback.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clappr-quality-selector-latest@latest/dist/clappr-quality-selector.min.js"></script>
     <style>
         body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .video-js { width: 100vw; height: 100vh; }
+        #player { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
-    <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto" crossorigin="anonymous">
-    </video>
-
-    <!-- Video.js Library -->
-    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
-    <!-- Dash.js & Video.js Dash Plugin (Wajib untuk MPD) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.5.0/dash.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-dash/5.1.1/videojs-contrib-dash.min.js"></script>
+    <div id="player"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const mpdUrl = params.get('mpd');
         const keyPair = params.get('key');
 
-        let keyOptions = {};
+        let drmConfig = {};
         if (keyPair && keyPair.includes(':')) {
             const [kid, key] = keyPair.split(':');
-            keyOptions = {
-                "org.w3.clearkey": {
-                    "clearkeys": {
-                        [kid]: key
-                    }
+            drmConfig = {
+                clearKeys: {
+                    [kid]: key
                 }
             };
         }
 
-        const player = videojs('my-video');
-
-        if (mpdUrl) {
-            player.src({
-                src: mpdUrl,
-                type: 'application/dash+xml',
-                keySystemOptions: keyOptions
-            });
-            player.play();
-        }
+        var player = new Clappr.Player({
+            source: mpdUrl,
+            parentId: "#player",
+            plugins: [DashShakaPlayback, QualitySelector],
+            shakaConfiguration: {
+                drm: drmConfig
+            },
+            width: '100%',
+            height: '100%',
+            autoPlay: true,
+            mimeType: 'application/dash+xml'
+        });
     </script>
 </body>
 </html>
