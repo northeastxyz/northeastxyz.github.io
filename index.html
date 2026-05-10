@@ -3,73 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DASH Player - EdgeOne Style</title>
-    <link href="https://imgcache.qq.com/open/qcloud/video/tcplayer/tcplayer.min.css" rel="stylesheet">
+    <title>Fixed MPD Player</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/controls.css">
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.ui.js"></script>
     <style>
-        body { margin: 0; background: #000; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        #player-container { width: 100%; height: 100%; }
-        /* Memperbaiki z-index menu resolusi di mobile */
-        .tcp-skin .tcp-setting-usage { z-index: 999; }
+        body { margin: 0; background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .video-container { width: 100%; height: 100%; }
+        video { width: 100%; height: 100%; }
+        /* Memaksa menu agar muncul di Android */
+        .shaka-overflow-menu button { font-size: 14px !important; padding: 10px !important; }
     </style>
 </head>
 <body>
 
-    <div id="player-container">
-        <video id="player-video" preload="auto" playsinline webkit-playsinline></video>
+    <div class="video-container" data-shaka-player-container>
+        <video data-shaka-player id="video" autoplay playsinline></video>
     </div>
 
-    <script src="https://imgcache.qq.com/open/qcloud/video/tcplayer/libs/hls.min.0.13.2m.js"></script>
-    <script src="https://imgcache.qq.com/open/qcloud/video/tcplayer/libs/dash.all.min.3.1.3.js"></script>
-    <script src="https://imgcache.qq.com/open/qcloud/video/tcplayer/tcplayer.v4.8.0.min.js"></script>
-
     <script>
-        (function() {
+        async function init() {
+            const video = document.getElementById('video');
+            const ui = video['ui'];
+            const controls = ui.getControls();
+            const player = controls.getPlayer();
+
+            // Konfigurasi UI untuk Resolusi
+            ui.configure({
+                'controlPanelElements': ['play_pause', 'time_and_duration', 'spacer', 'quality', 'mute', 'fullscreen', 'overflow_menu'],
+                'overflowMenuButtons' : ['quality', 'playback_rate'],
+                'addQualityControls': true
+            });
+
+            // Konfigurasi Player agar lebih "tahan banting"
+            player.configure({
+                abr: { enabled: true },
+                streaming: {
+                    lowLatencyMode: true,
+                    jumpLargeGaps: true
+                }
+            });
+
             const params = new URLSearchParams(window.location.search);
             const mpdUrl = params.get('mpd');
             const keyPair = params.get('key');
 
-            if (!mpdUrl) {
-                console.error("Link MPD tidak ditemukan.");
-                return;
-            }
-
-            // Inisialisasi TCPlayer
-            const player = TCPlayer('player-video', {
-                autoplay: true,
-                controls: true,
-                width: '100%',
-                height: '100%',
-                sources: [{
-                    src: mpdUrl,
-                    type: 'application/dash+xml'
-                }],
-                // Fitur Resolusi dan Kontrol
-                playbackRates: [0.5, 1, 1.25, 1.5, 2],
-                plugins: {
-                    ContinuePlay: false, // Mematikan fitur lanjut nonton
-                }
-            });
-
-            // Menangani DRM ClearKey jika ada
             if (keyPair && keyPair.includes(':')) {
                 const [kid, key] = keyPair.split(':');
-                // Konfigurasi DRM untuk DASH di TCPlayer
-                player.dashPlayer.setProtectionData({
-                    "org.w3.clearkey": {
-                        "clearkeys": {
-                            [kid]: key
-                        }
-                    }
+                player.configure({
+                    drm: { clearKeys: { [kid]: key } }
                 });
             }
 
-            // Force Refresh Resolusi setelah load
-            player.on('ready', function() {
-                console.log('Player Ready');
-                // TCPlayer otomatis mendeteksi track kualitas dari MPD
-            });
+            if (mpdUrl) {
+                try {
+                    // Jika link HTTP digunakan di HTTPS (GitHub), ini akan tetap sulit 
+                    // kecuali user sudah "Allow Insecure Content" di browser.
+                    await player.load(mpdUrl);
+                } catch (e) {
+                    console.error('Gagal load:', e);
+                }
+            }
+        }
 
-        })();
+        document.addEventListener('shaka-ui-loaded', init);
     </script>
 </body>
 </html>
