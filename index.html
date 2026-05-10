@@ -1,73 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kaltura DRM Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/kaltura-player-js@latest/dist/kaltura-player.js"></script>
+    <title>Dash.js Official Player</title>
+    <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-        #player-placeholder { width: 100vw; height: 100vh; }
+        .video-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        video { width: 100%; height: auto; max-height: 100%; }
+        
+        /* UI Sederhana agar tidak tertutup tombol navigasi HP */
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        select { background: rgba(0,0,0,0.7); color: white; border: 1px solid #444; padding: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="player-placeholder"></div>
+    <div class="video-wrapper">
+        <video id="videoPlayer" controls playsinline></video>
+    </div>
+
+    <div id="controls">
+        <select id="qualitySelect">
+            <option value="-1">Auto Resolution</option>
+        </select>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function () {
+            const video = document.getElementById('videoPlayer');
+            const qualitySelect = document.getElementById('qualitySelect');
+            
             const params = new URLSearchParams(window.location.search);
             const mpdUrl = params.get('mpd');
             const keyPair = params.get('key');
 
             if (!mpdUrl) return;
 
-            let drmConfig = [];
+            const player = dashjs.MediaPlayer().create();
+
+            // Konfigurasi DRM ClearKey
             if (keyPair && keyPair.includes(':')) {
                 const [kid, key] = keyPair.split(':');
-                // Konfigurasi ClearKey untuk Kaltura
-                drmConfig = [{
-                    licenseUrl: "", 
-                    scheme: "clearkey",
-                    keyId: kid,
-                    key: key
-                }];
-            }
-
-            // Inisialisasi Kaltura Player
-            try {
-                const config = {
-                    targetId: "player-placeholder",
-                    provider: { partnerId: 0 }, // Standalone mode
-                    playback: {
-                        autoplay: true,
-                        playsinline: true,
-                        options: {
-                            html5: {
-                                dash: {
-                                    drm: {
-                                        "org.w3.clearkey": {
-                                            clearkeys: { [drmConfig[0].keyId]: drmConfig[0].key }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    sources: {
-                        dash: [{
-                            url: mpdUrl,
-                            id: "dash-source"
-                        }]
+                player.setProtectionData({
+                    "org.w3.clearkey": {
+                        "clearkeys": { [kid]: key }
                     }
-                };
-
-                const player = KalturaPlayer.setup(config);
-                player.loadMedia({ sources: config.sources });
-
-            } catch (e) {
-                console.error("Kaltura Error:", e);
+                });
             }
+
+            // Inisialisasi Player
+            player.initialize(video, mpdUrl, true);
+
+            // Logika Mengisi Menu Resolusi
+            player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, function () {
+                const bitrates = player.getBitrateInfoListFor("video");
+                bitrates.forEach((info, index) => {
+                    const option = document.createElement("option");
+                    option.value = index;
+                    option.text = info.height + "p (" + Math.round(info.bitrate / 1000) + "kbps)";
+                    qualitySelect.appendChild(option);
+                });
+            });
+
+            // Ganti Resolusi Manual
+            qualitySelect.addEventListener('change', function() {
+                const level = parseInt(this.value);
+                player.updateSettings({
+                    'streaming': {
+                        'abr': { 'enabled': level === -1 }
+                    }
+                });
+                if (level !== -1) {
+                    player.setQualityFor("video", level);
+                }
+            });
+            
+            // Auto-hide menu resolusi jika tidak ada interaksi
+            let timeout;
+            document.addEventListener('touchstart', () => {
+                qualitySelect.style.opacity = '1';
+                clearTimeout(timeout);
+                timeout = setTimeout(() => qualitySelect.style.opacity = '0', 3000);
+            });
         });
     </script>
 </body>
