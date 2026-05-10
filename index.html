@@ -3,82 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shaka Player Android Optimized</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/controls.css">
+    <title>DASH Player - EdgeOne Style</title>
+    <link href="https://imgcache.qq.com/open/qcloud/video/tcplayer/tcplayer.min.css" rel="stylesheet">
     <style>
-        body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; }
-        .video-container { width: 100%; height: 100%; position: relative; }
-        video { width: 100%; height: 100%; }
-        
-        /* Memperbesar tombol di Android agar mudah di-klik jari */
-        .shaka-range-container { margin: 0 10px; }
-        .shaka-bottom-controls { display: flex; align-items: center; }
-        
-        /* Memastikan menu resolusi terlihat jelas */
-        .shaka-settings-menu, .shaka-overflow-menu {
-            background-color: rgba(30, 30, 30, 0.9) !important;
-            font-size: 14px !important;
-        }
+        body { margin: 0; background: #000; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        #player-container { width: 100%; height: 100%; }
+        /* Memperbaiki z-index menu resolusi di mobile */
+        .tcp-skin .tcp-setting-usage { z-index: 999; }
     </style>
 </head>
 <body>
 
-    <div class="video-container" data-shaka-player-container>
-        <video data-shaka-player id="video" autoplay playsinline></video>
+    <div id="player-container">
+        <video id="player-video" preload="auto" playsinline webkit-playsinline></video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.ui.js"></script>
+    <script src="https://imgcache.qq.com/open/qcloud/video/tcplayer/libs/hls.min.0.13.2m.js"></script>
+    <script src="https://imgcache.qq.com/open/qcloud/video/tcplayer/libs/dash.all.min.3.1.3.js"></script>
+    <script src="https://imgcache.qq.com/open/qcloud/video/tcplayer/tcplayer.v4.8.0.min.js"></script>
 
     <script>
-        async function initPlayer() {
-            const video = document.getElementById('video');
-            const ui = video['ui'];
-            const controls = ui.getControls();
-            const player = controls.getPlayer();
-
-            // KONFIGURASI KHUSUS MOBILE
-            const uiConfig = {
-                'controlPanelElements': ['play_pause', 'time_and_duration', 'spacer', 'quality', 'mute', 'fullscreen', 'overflow_menu'],
-                'overflowMenuButtons' : ['quality', 'playback_rate'],
-                'addQualityControls': true,
-                'forceTransmuxTS': true,
-                'doubleTapToSeek': true, // Fitur tambahan ala YouTube
-                'enableTooltips': false  // Matikan tooltip agar tidak mengganggu di layar kecil
-            };
-            ui.configure(uiConfig);
-
-            // Memastikan Shaka tidak menyerahkan kontrol ke player bawaan Android
-            player.configure({
-                streaming: {
-                    useNativeHlsOnSafari: false,
-                },
-                abr: {
-                    enabled: true // Ini yang memunculkan pilihan "Auto"
-                }
-            });
-
+        (function() {
             const params = new URLSearchParams(window.location.search);
             const mpdUrl = params.get('mpd');
             const keyPair = params.get('key');
 
+            if (!mpdUrl) {
+                console.error("Link MPD tidak ditemukan.");
+                return;
+            }
+
+            // Inisialisasi TCPlayer
+            const player = TCPlayer('player-video', {
+                autoplay: true,
+                controls: true,
+                width: '100%',
+                height: '100%',
+                sources: [{
+                    src: mpdUrl,
+                    type: 'application/dash+xml'
+                }],
+                // Fitur Resolusi dan Kontrol
+                playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                plugins: {
+                    ContinuePlay: false, // Mematikan fitur lanjut nonton
+                }
+            });
+
+            // Menangani DRM ClearKey jika ada
             if (keyPair && keyPair.includes(':')) {
                 const [kid, key] = keyPair.split(':');
-                player.configure({
-                    drm: { clearKeys: { [kid]: key } }
+                // Konfigurasi DRM untuk DASH di TCPlayer
+                player.dashPlayer.setProtectionData({
+                    "org.w3.clearkey": {
+                        "clearkeys": {
+                            [kid]: key
+                        }
+                    }
                 });
             }
 
-            if (mpdUrl) {
-                try {
-                    await player.load(mpdUrl);
-                    console.log('Video Loaded!');
-                } catch (e) {
-                    console.error('Error:', e);
-                }
-            }
-        }
+            // Force Refresh Resolusi setelah load
+            player.on('ready', function() {
+                console.log('Player Ready');
+                // TCPlayer otomatis mendeteksi track kualitas dari MPD
+            });
 
-        document.addEventListener('shaka-ui-loaded', initPlayer);
+        })();
     </script>
 </body>
 </html>
