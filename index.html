@@ -3,15 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fixed MPD Player</title>
+    <title>MPD Player - Mobile Optimized</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/controls.css">
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.ui.js"></script>
     <style>
-        body { margin: 0; background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .video-container { width: 100%; height: 100%; }
-        video { width: 100%; height: 100%; }
-        /* Memaksa menu agar muncul di Android */
-        .shaka-overflow-menu button { font-size: 14px !important; padding: 10px !important; }
+        /* Menghilangkan margin dan memastikan body tidak bisa scroll */
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            background: #000; 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden; 
+        }
+
+        /* Container dibuat flex agar video berada di tengah dan pas di layar */
+        .video-container { 
+            width: 100%; 
+            height: 100vh; /* Memenuhi layar tapi tetap dalam batas viewport */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; /* Memastikan video tidak terpotong */
+        }
+
+        /* Memperkecil UI Shaka agar tidak menumpuk di layar HP */
+        .shaka-controls-container {
+            font-size: 12px !important;
+        }
+        
+        .shaka-overflow-menu, .shaka-settings-menu {
+            background-color: rgba(30, 30, 30, 0.9) !important;
+            max-height: 80vh; /* Agar menu tidak melebihi layar */
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -20,6 +49,8 @@
         <video data-shaka-player id="video" autoplay playsinline></video>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.3.5/dist/shaka-player.ui.js"></script>
+
     <script>
         async function init() {
             const video = document.getElementById('video');
@@ -27,19 +58,18 @@
             const controls = ui.getControls();
             const player = controls.getPlayer();
 
-            // Konfigurasi UI untuk Resolusi
+            // Konfigurasi agar tombol resolusi (quality) muncul langsung di bar utama
             ui.configure({
-                'controlPanelElements': ['play_pause', 'time_and_duration', 'spacer', 'quality', 'mute', 'fullscreen', 'overflow_menu'],
+                'controlPanelElements': ['play_pause', 'spacer', 'quality', 'mute', 'fullscreen', 'overflow_menu'],
                 'overflowMenuButtons' : ['quality', 'playback_rate'],
                 'addQualityControls': true
             });
 
-            // Konfigurasi Player agar lebih "tahan banting"
             player.configure({
                 abr: { enabled: true },
-                streaming: {
+                streaming: { 
                     lowLatencyMode: true,
-                    jumpLargeGaps: true
+                    jumpLargeGaps: true 
                 }
             });
 
@@ -56,11 +86,9 @@
 
             if (mpdUrl) {
                 try {
-                    // Jika link HTTP digunakan di HTTPS (GitHub), ini akan tetap sulit 
-                    // kecuali user sudah "Allow Insecure Content" di browser.
                     await player.load(mpdUrl);
                 } catch (e) {
-                    console.error('Gagal load:', e);
+                    console.error('Error load:', e);
                 }
             }
         }
