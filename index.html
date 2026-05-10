@@ -2,64 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DASH ClearKey Player</title>
+  <title>DRM Player — Standalone</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▶</text></svg>">
   
-  <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dash-shaka-playback@latest/dist/dash-shaka-playback.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/clappr/clappr-level-selector-plugin@latest/dist/level-selector.min.js"></script>
-
+  <script src="https://content.jwplatform.com/libraries/SAHhwvZq.js"></script>
+  
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; width: 100%; background: #000; overflow: hidden; }
-    #player { width: 100%; height: 100%; position: fixed; top: 0; left: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(160deg, #0d1117 0%, #161b22 100%);
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #jwplayerDiv { width: 100vw; height: 100vh; display: none; }
     
-    /* Memastikan kontrol tidak tertutup navigasi HP */
-    .clappr-controls { bottom: 20px !important; }
+    .card {
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 32px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 460px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+      z-index: 10;
+    }
+    .card.hide { display: none; }
+    h1 { font-size: 1.4rem; margin-bottom: 20px; color: #f0f6fc; text-align: center; }
+    label { display: block; font-size: 0.75rem; margin-bottom: 5px; color: #8b949e; text-transform: uppercase; }
+    input {
+      width: 100%; padding: 10px; margin-bottom: 15px;
+      background: #0d1117; border: 1px solid #30363d;
+      border-radius: 6px; color: #fff;
+    }
+    .btn-play {
+      width: 100%; padding: 12px; background: #238636;
+      color: #fff; border: none; border-radius: 6px;
+      font-weight: 600; cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <div id="player"></div>
+  <div id="jwplayerDiv"></div>
+
+  <div class="card" id="card">
+    <h1>DRM Player</h1>
+    <form id="frm" onsubmit="return false;">
+      <label>Stream URL (MPD/M3U8)</label>
+      <input type="text" id="manifest" placeholder="https://example.com/stream.mpd">
+      
+      <label>Key ID (KID)</label>
+      <input type="text" id="keyId" placeholder="Optional">
+      
+      <label>Key</label>
+      <input type="text" id="key" placeholder="Optional">
+      
+      <button type="button" class="btn-play" onclick="playManual()">▶ Play Video</button>
+    </form>
+  </div>
 
   <script>
-    'use strict';
+    const $ = (id) => document.getElementById(id);
 
-    function initPlayer() {
-      const params = new URLSearchParams(window.location.search);
-      const mpdUrl = params.get('mpd');
-      const keyPair = params.get('key');
-      
-      let drmConfig = {};
+    function setupPlayer(url, kid, key) {
+      $('card').classList.add('hide');
+      $('jwplayerDiv').style.display = 'block';
 
-      if (keyPair && keyPair.includes(':')) {
-        const [kid, key] = keyPair.split(':');
-        drmConfig = {
-          clearKeys: { [kid]: key }
+      const config = {
+        file: url,
+        autostart: true,
+        width: '100%',
+        height: '100%',
+        stretching: 'uniform'
+      };
+
+      if (kid && key) {
+        config.drm = {
+          clearkey: { keyId: kid, key: key }
         };
       }
 
-      if (mpdUrl) {
-        const player = new Clappr.Player({
-          source: mpdUrl,
-          parentId: '#player',
-          plugins: [DashShakaPlayback, LevelSelector],
-          shakaConfiguration: {
-            drm: drmConfig,
-            streaming: { jumpLargeGaps: true }
-          },
-          shakaOnBeforeLoad: function(shakaPlayer) {
-            // Tambahan jika perlu tuning shaka langsung
-          },
-          width: '100%',
-          height: '100%',
-          autoPlay: true,
-          mediacontrol: { seekbar: '#e94560', buttons: '#eee' },
-        });
-      }
+      jwplayer('jwplayerDiv').setup(config);
     }
 
-    window.onload = initPlayer;
+    function playManual() {
+      const url = $('manifest').value.trim();
+      const kid = $('keyId').value.trim();
+      const key = $('key').value.trim();
+      if (url) setupPlayer(url, kid, key);
+    }
+
+    // Auto-load dari URL Parameter (?mpd=...&key=KID:KEY)
+    window.onload = () => {
+      const params = new URLSearchParams(window.location.search);
+      const mpd = params.get('mpd');
+      const keyPair = params.get('key');
+
+      if (mpd) {
+        let kid = '', key = '';
+        if (keyPair && keyPair.includes(':')) {
+          [kid, key] = keyPair.split(':');
+        }
+        setupPlayer(mpd, kid, key);
+      }
+    };
   </script>
 </body>
 </html>
