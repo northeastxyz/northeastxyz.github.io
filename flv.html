@@ -3,43 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLV Player - Direct</title>
+    <title>FLV Player</title>
+
     <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+
     <style>
-        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        video { width: 100%; height: 100%; }
+        body {
+            margin: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+            background: #000;
+        }
     </style>
 </head>
 <body>
 
-    <video id="videoElement" controls autoplay muted></video>
+<video id="videoElement" controls autoplay></video>
 
-    <script>
-        if (flvjs.isSupported()) {
-            const videoElement = document.getElementById('videoElement');
-            const params = new URLSearchParams(window.location.search);
-            const flvUrl = params.get('url');
+<script>
+if (flvjs.isSupported()) {
 
-            if (flvUrl) {
-                const flvPlayer = flvjs.createPlayer({
-                    type: 'flv', // Memaksa format FLV meski tanpa ekstensi
-                    url: flvUrl,
-                    isLive: true,
-                    cors: true
-                }, {
-                    enableStashBuffer: false,
-                    fixAudioTimestampGap: false
-                });
-                
-                flvPlayer.attachMediaElement(videoElement);
-                flvPlayer.load();
-                flvPlayer.play().catch(e => console.log("Autoplay blocked"));
+    const videoElement = document.getElementById('videoElement');
 
-                flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail) => {
-                    console.error('FLV Error:', errType, errDetail);
-                });
-            }
-        }
-    </script>
+    const params = new URLSearchParams(window.location.search);
+
+    const flvUrl = params.get('url');
+
+    if (flvUrl) {
+
+        const flvPlayer = flvjs.createPlayer({
+            type: 'flv',
+            url: flvUrl,
+            isLive: true
+        }, {
+            enableStashBuffer: false,
+            fixAudioTimestampGap: false
+        });
+
+        flvPlayer.attachMediaElement(videoElement);
+
+        flvPlayer.load();
+
+        videoElement.addEventListener('click', () => {
+            videoElement.play();
+        });
+
+        flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail) => {
+            console.error('FLV Error:', errType, errDetail);
+        });
+    }
+}
+</script>
+
 </body>
 </html>
