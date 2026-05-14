@@ -1,67 +1,174 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLV Player</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+<title>FLV Live Player</title>
 
-    <style>
-        body {
-            margin: 0;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
 
-        video {
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain;
-            background: #000;
-        }
-    </style>
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+    }
+
+    body{
+        width:100vw;
+        height:100vh;
+        background:#000;
+        overflow:hidden;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+    }
+
+    #videoElement{
+        width:100vw;
+        height:100vh;
+        background:#000;
+        object-fit:contain;
+    }
+
+    #loading{
+        position:absolute;
+        color:white;
+        font-family:sans-serif;
+        font-size:14px;
+        z-index:999;
+    }
+
+    #error{
+        position:absolute;
+        bottom:20px;
+        left:20px;
+        right:20px;
+        color:red;
+        font-family:sans-serif;
+        font-size:14px;
+        z-index:999;
+        word-break:break-word;
+    }
+</style>
 </head>
+
 <body>
 
-<video id="videoElement" controls autoplay></video>
+<div id="loading">Loading stream...</div>
+
+<div id="error"></div>
+
+<video
+    id="videoElement"
+    controls
+    autoplay
+    muted
+    playsinline
+></video>
 
 <script>
-if (flvjs.isSupported()) {
 
-    const videoElement = document.getElementById('videoElement');
+const loading = document.getElementById('loading');
+const errorBox = document.getElementById('error');
+const videoElement = document.getElementById('videoElement');
+
+function showError(msg){
+    console.error(msg);
+    errorBox.innerText = msg;
+}
+
+if (!flvjs.isSupported()) {
+    showError('FLV.js not supported in this browser');
+} else {
 
     const params = new URLSearchParams(window.location.search);
 
     const flvUrl = params.get('url');
 
-    if (flvUrl) {
+    if (!flvUrl) {
 
-        const flvPlayer = flvjs.createPlayer({
-            type: 'flv',
-            url: flvUrl,
-            isLive: true
-        }, {
-            enableStashBuffer: false,
-            fixAudioTimestampGap: false
-        });
+        showError('Missing ?url=');
 
-        flvPlayer.attachMediaElement(videoElement);
+    } else {
 
-        flvPlayer.load();
+        try {
 
-        videoElement.addEventListener('click', () => {
-            videoElement.play();
-        });
+            const flvPlayer = flvjs.createPlayer({
 
-        flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail) => {
-            console.error('FLV Error:', errType, errDetail);
-        });
+                type: 'flv',
+
+                url: flvUrl,
+
+                isLive: true,
+
+                cors: true,
+
+                hasAudio: true,
+
+                hasVideo: true
+
+            }, {
+
+                enableWorker: true,
+
+                enableStashBuffer: false,
+
+                lazyLoad: false,
+
+                stashInitialSize: 128,
+
+                autoCleanupSourceBuffer: true
+
+            });
+
+            flvPlayer.attachMediaElement(videoElement);
+
+            flvPlayer.load();
+
+            flvPlayer.play().catch(() => {});
+
+            videoElement.addEventListener('click', () => {
+                videoElement.play();
+            });
+
+            flvPlayer.on(flvjs.Events.LOADING_COMPLETE, () => {
+                console.log('Loading complete');
+            });
+
+            flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail, errInfo) => {
+
+                showError(
+                    'FLV Error: ' +
+                    errType +
+                    ' | ' +
+                    errDetail
+                );
+
+                console.error(errInfo);
+            });
+
+            videoElement.addEventListener('loadedmetadata', () => {
+                loading.style.display = 'none';
+            });
+
+            videoElement.addEventListener('playing', () => {
+                loading.style.display = 'none';
+            });
+
+            videoElement.addEventListener('waiting', () => {
+                loading.style.display = 'block';
+            });
+
+        } catch (e) {
+
+            showError(e.message);
+
+        }
     }
 }
+
 </script>
 
 </body>
