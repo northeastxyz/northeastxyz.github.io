@@ -7,7 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Universal HLS Player</title>
+<title>Universal HLS Proxy Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
@@ -38,10 +38,9 @@ body{
 
 #loading{
     position:absolute;
-    color:white;
+    color:#fff;
     font-family:sans-serif;
     font-size:14px;
-    color:white;
     z-index:999;
 }
 
@@ -51,8 +50,8 @@ body{
     left:10px;
     right:10px;
     color:red;
-    font-size:12px;
     font-family:sans-serif;
+    font-size:12px;
     z-index:999;
     word-break:break-word;
 }
@@ -94,32 +93,125 @@ async function init() {
 
     const params = new URLSearchParams(window.location.search);
 
-    const hlsUrl =
+    // =====================================
+    // INPUT URL
+    // =====================================
+
+    let streamUrl =
         params.get('m3u8') ||
         params.get('url');
 
-    if (!hlsUrl) {
+    if (!streamUrl) {
 
         showError('Missing ?m3u8=');
 
         return;
     }
 
-    console.log('URL:', hlsUrl);
-
     // =====================================
-    // Native HLS
+    // AUTO PROXY
     // =====================================
 
-    // Banyak stream CCTV lebih cocok native
+    // GANTI dengan proxy kamu sendiri nanti
 
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    const proxyPrefix =
+        'http://43.168.176.59/';
 
-        console.log('Using native HLS');
+    // kalau bukan proxy
+    // otomatis lewat proxy
 
-        video.src = hlsUrl;
+    if (
+        !streamUrl.includes('43.168.176.59')
+    ){
 
-        video.addEventListener('loadedmetadata', async () => {
+        streamUrl =
+            proxyPrefix +
+            streamUrl
+                .replace(/^https?:\/\//, '');
+
+    }
+
+    console.log('FINAL URL:', streamUrl);
+
+    // =====================================
+    // Native HLS dulu
+    // =====================================
+
+    if (
+        video.canPlayType(
+            'application/vnd.apple.mpegurl'
+        )
+    ){
+
+        console.log('Using Native HLS');
+
+        video.src = streamUrl;
+
+        video.addEventListener(
+            'loadedmetadata',
+            async () => {
+
+                loading.style.display = 'none';
+
+                try {
+
+                    await video.play();
+
+                } catch(e) {
+
+                    console.error(e);
+
+                }
+            }
+        );
+
+        video.addEventListener('error', () => {
+
+            console.log(
+                'Native failed -> HLS.js'
+            );
+
+            startHls(streamUrl);
+
+        });
+
+    } else {
+
+        startHls(streamUrl);
+
+    }
+}
+
+function startHls(url){
+
+    if (!Hls.isSupported()) {
+
+        showError('HLS not supported');
+
+        return;
+    }
+
+    console.log('Using HLS.js');
+
+    const hls = new Hls({
+
+        enableWorker: true,
+
+        lowLatencyMode: false,
+
+        backBufferLength: 30,
+
+        maxBufferLength: 60
+
+    });
+
+    hls.loadSource(url);
+
+    hls.attachMedia(video);
+
+    hls.on(
+        Hls.Events.MANIFEST_PARSED,
+        async function() {
 
             loading.style.display = 'none';
 
@@ -132,106 +224,55 @@ async function init() {
                 console.error(e);
 
             }
-        });
-
-        video.addEventListener('error', () => {
-
-            console.log('Native failed, fallback HLS.js');
-
-            startHlsJs(hlsUrl);
-
-        });
-
-        return;
-    }
-
-    // =====================================
-    // HLS.js fallback
-    // =====================================
-
-    startHlsJs(hlsUrl);
-}
-
-function startHlsJs(hlsUrl){
-
-    if (!Hls.isSupported()) {
-
-        showError('HLS not supported');
-
-        return;
-    }
-
-    const hls = new Hls({
-
-        enableWorker: true,
-
-        lowLatencyMode: false,
-
-        backBufferLength: 30
-
-    });
-
-    hls.loadSource(hlsUrl);
-
-    hls.attachMedia(video);
-
-    hls.on(Hls.Events.MANIFEST_PARSED, async function() {
-
-        console.log('Manifest loaded');
-
-        loading.style.display = 'none';
-
-        try {
-
-            await video.play();
-
-        } catch(e) {
-
-            console.error(e);
-
         }
+    );
 
-    });
+    hls.on(
+        Hls.Events.ERROR,
+        function(event, data) {
 
-    hls.on(Hls.Events.ERROR, function(event, data) {
+            console.error(data);
 
-        console.error(data);
+            showError(
+                'HLS Error: ' +
+                data.type +
+                ' | ' +
+                data.details
+            );
 
-        showError(
-            'HLS Error: ' +
-            data.type +
-            ' | ' +
-            data.details
-        );
+            if (data.fatal) {
 
-        if (data.fatal) {
+                switch(data.type) {
 
-            switch(data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
 
-                case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.log(
+                            'Recover NETWORK_ERROR'
+                        );
 
-                    console.log('Recover network');
+                        hls.startLoad();
 
-                    hls.startLoad();
+                        break;
 
-                    break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
 
-                case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.log(
+                            'Recover MEDIA_ERROR'
+                        );
 
-                    console.log('Recover media');
+                        hls.recoverMediaError();
 
-                    hls.recoverMediaError();
+                        break;
 
-                    break;
+                    default:
 
-                default:
+                        hls.destroy();
 
-                    hls.destroy();
-
-                    break;
+                        break;
+                }
             }
         }
-    });
+    );
 
     video.addEventListener('playing', () => {
 
@@ -244,9 +285,18 @@ function startHlsJs(hlsUrl){
         loading.style.display = 'block';
 
     });
+
+    video.addEventListener('click', () => {
+
+        video.play().catch(() => {});
+
+    });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener(
+    'DOMContentLoaded',
+    init
+);
 
 </script>
 
