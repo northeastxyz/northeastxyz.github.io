@@ -9,7 +9,6 @@
 
 <title>Universal HLS Player</title>
 
-<!-- HLS.js -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
@@ -94,10 +93,13 @@ async function init() {
 
     const params = new URLSearchParams(window.location.search);
 
-    // URL:
-    // ?m3u8=https://example.com/live.m3u8
+    // Support:
+    // ?m3u8=
+    // ?url=
 
-    const hlsUrl = params.get('m3u8');
+    const hlsUrl =
+        params.get('m3u8') ||
+        params.get('url');
 
     if (!hlsUrl) {
 
@@ -106,45 +108,9 @@ async function init() {
         return;
     }
 
-    // =====================================
-    // OPSI 1
-    // Native HLS browser
-    // =====================================
-
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-
-        console.log('Using Native HLS');
-
-        video.src = hlsUrl;
-
-        video.addEventListener('loadedmetadata', async () => {
-
-            loading.style.display = 'none';
-
-            try {
-
-                await video.play();
-
-            } catch(e) {
-
-                console.error(e);
-
-            }
-        });
-
-        video.addEventListener('error', () => {
-
-            showError('Native HLS failed');
-
-        });
-
-        return;
-    }
-
-    // =====================================
-    // OPSI 2
-    // HLS.js
-    // =====================================
+    // =========================================
+    // FORCE HLS.JS
+    // =========================================
 
     if (Hls.isSupported()) {
 
@@ -158,16 +124,23 @@ async function init() {
 
             backBufferLength: 90,
 
+            maxBufferLength: 30,
+
+            maxMaxBufferLength: 60,
+
+            liveSyncDurationCount: 3,
+
             xhrSetup: function(xhr, url) {
 
                 // Kadang membantu bypass anti-leech
+
+                xhr.withCredentials = false;
 
                 xhr.setRequestHeader(
                     'X-Requested-With',
                     'XMLHttpRequest'
                 );
 
-                xhr.withCredentials = false;
             }
 
         });
@@ -177,6 +150,8 @@ async function init() {
         hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, async function() {
+
+            console.log('Manifest loaded');
 
             loading.style.display = 'none';
 
@@ -192,9 +167,15 @@ async function init() {
 
         });
 
+        hls.on(Hls.Events.LEVEL_LOADED, function() {
+
+            console.log('Level loaded');
+
+        });
+
         hls.on(Hls.Events.ERROR, function(event, data) {
 
-            console.error(data);
+            console.error('HLS Error:', data);
 
             showError(
                 'HLS Error: ' +
@@ -203,7 +184,7 @@ async function init() {
                 data.details
             );
 
-            // Auto recovery
+            // Auto recover
 
             if (data.fatal) {
 
@@ -227,6 +208,8 @@ async function init() {
 
                     default:
 
+                        console.log('Destroy HLS');
+
                         hls.destroy();
 
                         break;
@@ -236,13 +219,13 @@ async function init() {
 
     } else {
 
-        showError('HLS tidak didukung browser');
+        showError('HLS not supported');
 
     }
 
-    // =====================================
-    // Events
-    // =====================================
+    // =========================================
+    // VIDEO EVENTS
+    // =========================================
 
     video.addEventListener('playing', () => {
 
@@ -259,6 +242,14 @@ async function init() {
     video.addEventListener('click', () => {
 
         video.play().catch(() => {});
+
+    });
+
+    video.addEventListener('error', (e) => {
+
+        console.error(e);
+
+        showError('Video playback failed');
 
     });
 
