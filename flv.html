@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Huya Full Proxy FLV Player</title>
     
-    <script src="https://northeastxyz.github.io/plyr/mpegts.js" onerror="let s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js';document.head.appendChild(s);"></script>
+    <script src="mpegts.js"></script>
     
     <style>
         * { box-sizing: border-box; }
@@ -69,6 +69,13 @@
             padding: 6px;
             border-radius: 4px;
         }
+        .error-msg {
+            color: #ef4444;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 4px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -79,7 +86,8 @@
         </div>
         <div class="controls-panel">
             <button class="btn-reload" id="reloadBtn">Reload Stream Proxy</button>
-            <div class="status-badge" id="streamUrlBadge">Menghubungkan...</div>
+            <div class="status-badge" id="streamUrlBadge">Menghubungkan ke Proxy Workers...</div>
+            <div class="error-msg" id="errorMsg">Stream Terputus, Buffering Melebihi Batas, atau Server Timeout.</div>
         </div>
     </div>
 
@@ -88,12 +96,15 @@
             const videoElement = document.getElementById('videoElement');
             const reloadBtn = document.getElementById('reloadBtn');
             const streamUrlBadge = document.getElementById('streamUrlBadge');
+            const errorMsg = document.getElementById('errorMsg');
             let player = null;
 
+            // Membaca parameter query URL (?id=...)
             const urlParams = new URLSearchParams(window.location.search);
             const roomId = urlParams.get('id') || '30805928';
+            
+            // Mengarah ke Cloudflare Workers Full Proxy milikmu
             const finalProxyUrl = `https://flv.northeastxyz.workers.dev/?id=${roomId}`;
-
             streamUrlBadge.textContent = `Proxy: ${finalProxyUrl}`;
 
             function startLiveStream() {
@@ -104,6 +115,8 @@
                     player = null;
                 }
 
+                errorMsg.style.display = 'none';
+
                 if (typeof mpegts !== 'undefined' && mpegts.getFeatureList().isSupported) {
                     player = mpegts.createPlayer({
                         type: 'flv',
@@ -113,23 +126,33 @@
                     }, {
                         enableWorker: true,
                         lazyLoad: false,
-                        liveBufferLatencyChasing: true,
-                        stashInitialSize: 32
+                        liveBufferLatencyChasing: true, // Otomatis memotong sisa buffer agar video selalu realtime
+                        stashInitialSize: 32           // Buffer kecil awal (32KB) agar video instan menyala tanpa menumpuk data
                     });
 
                     player.attachMediaElement(videoElement);
                     player.load();
                     
+                    // Kebijakan Autoplay Browser: Harus diawali dengan keadaan Muted (Tanpa Suara)
                     videoElement.muted = true;
-                    player.play().catch(err => console.log("Autoplay ditahan browser.", err));
+                    
+                    player.play().catch(err => {
+                        console.log("Autoplay ditahan browser, klik ikon play secara manual.", err);
+                    });
+
+                    // Penanganan Error jika Stream terputus di tengah jalan
+                    player.on(mpegts.Events.ERROR, (type, detail, info) => {
+                        console.error('Mpegts Player Error:', type, detail, info);
+                        errorMsg.style.display = 'block';
+                    });
+
                 } else {
-                    // Jika gagal memuat, tunggu 1 detik lalu coba lagi secara otomatis
-                    setTimeout(startLiveStream, 1000);
+                    alert('Objek mpegts tidak terdefinisi. Pastikan file mpegts.js berada di folder yang sama.');
                 }
             }
 
-            // Jalankan stream dengan sedikit jeda agar library siap
-            setTimeout(startLiveStream, 500);
+            // Jalankan player
+            startLiveStream();
             reloadBtn.addEventListener('click', startLiveStream);
         });
     </script>
