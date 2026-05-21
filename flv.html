@@ -308,6 +308,45 @@ select{
     color:#888;
 }
 
+.empty{
+
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-direction:column;
+
+    color:white;
+
+    z-index:30;
+
+    text-align:center;
+
+    padding:20px;
+}
+
+.empty h1{
+
+    font-size:22px;
+
+    margin-bottom:10px;
+}
+
+.empty p{
+
+    font-size:14px;
+
+    color:#999;
+
+    line-height:1.6;
+}
+
 @media(max-width:700px){
 
     .controls{
@@ -343,12 +382,34 @@ select{
         x5-playsinline>
     </video>
 
-    <div class="loader" id="loader">
+    <!-- EMPTY -->
+    <div
+        class="empty"
+        id="emptyBox">
+
+        <h1>
+            No Stream URL
+        </h1>
+
+        <p>
+            Add:
+            <br><br>
+
+            ?url=https://your-flv-url
+        </p>
+
+    </div>
+
+    <!-- LOADER -->
+    <div
+        class="loader hidden"
+        id="loader">
 
         <div class="spinner"></div>
 
     </div>
 
+    <!-- TOPBAR -->
     <div class="topbar">
 
         <div class="live">
@@ -361,20 +422,31 @@ select{
 
         <select id="quality">
 
-            <option value="1080">1080p</option>
-
-            <option value="720" selected>
-                720p
+            <option value="1080">
+                1080p
             </option>
 
-            <option value="480">480p</option>
+            <option
+                value="720"
+                selected>
 
-            <option value="360">360p</option>
+                720p
+
+            </option>
+
+            <option value="480">
+                480p
+            </option>
+
+            <option value="360">
+                360p
+            </option>
 
         </select>
 
     </div>
 
+    <!-- FULLSCREEN -->
     <button
         class="fullscreen"
         id="fullscreenBtn">
@@ -383,6 +455,7 @@ select{
 
     </button>
 
+    <!-- CONTROLS -->
     <div class="controls">
 
         <div class="panel">
@@ -391,7 +464,7 @@ select{
                 class="status"
                 id="status">
 
-                Initializing...
+                Waiting stream...
 
             </div>
 
@@ -456,6 +529,9 @@ const reloadBtn =
 const statsBox =
     document.getElementById('stats');
 
+const emptyBox =
+    document.getElementById('emptyBox');
+
 // =========================
 // PLAYER STATE
 // =========================
@@ -469,22 +545,48 @@ let watchdogTimer = null;
 let reconnectCount = 0;
 
 // =========================
-// RAW FLV URL
+// URL PARAM
 // =========================
 
-const rawStream = `https://gabriel-zum-consultancy-plasma.trycloudflare.com/https://flvhspull2mgsplive.miguvideo.com/mglive/mgss150_51.flv?msisdn=784f8113d8be6ac956e87e3eee4bba5e&mdspid=&spid=800033&netType=0&sid=7510484663&pid=2028597139&timestamp=20260521220610&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=964849605&ParentNodeID=-99&assertID=7510484663&client_ip=82.157.96.134&SecurityKey=20260521220610&promotionId=&mvid=7510241997&mcid=500020&mpid=120000577269&playurlVersion=ZQ-A1-9.5.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=cbed50b3e1e8e7e950882c6a01e0ca0d&sv=10004&ct=android`;
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const rawUrl =
+    params.get('url');
 
 // =========================
-// AUTO ENCODE URL
+// CURRENT URL
 // =========================
 
-const currentUrl =
-    encodeURI(rawStream);
+let currentUrl = null;
 
-console.log(
-    'ENCODED URL:',
-    currentUrl
-);
+// =========================
+// VALIDATE URL
+// =========================
+
+if(
+    rawUrl &&
+    rawUrl.trim() !== ''
+){
+
+    currentUrl =
+        decodeURIComponent(rawUrl);
+
+    console.log(
+        'STREAM URL:',
+        currentUrl
+    );
+
+}else{
+
+    console.warn(
+        'No FLV URL'
+    );
+
+    currentUrl = null;
+}
 
 // =========================
 // STATUS
@@ -542,7 +644,9 @@ function destroyPlayer(){
 
 function resetWatchdog(){
 
-    clearTimeout(watchdogTimer);
+    clearTimeout(
+        watchdogTimer
+    );
 
     watchdogTimer =
         setTimeout(() => {
@@ -562,13 +666,21 @@ function resetWatchdog(){
 
 function reconnect(){
 
+    if(!currentUrl){
+
+        return;
+    }
+
     destroyPlayer();
 
-    errorBox.style.display = 'block';
+    errorBox.style.display =
+        'block';
 
     const delay = Math.min(
         15000,
-        1000 * (2 ** reconnectCount)
+        1000 * (
+            2 ** reconnectCount
+        )
     );
 
     reconnectCount++;
@@ -577,7 +689,9 @@ function reconnect(){
         `Reconnecting in ${delay/1000}s...`
     );
 
-    clearTimeout(reconnectTimer);
+    clearTimeout(
+        reconnectTimer
+    );
 
     reconnectTimer =
         setTimeout(() => {
@@ -593,6 +707,39 @@ function reconnect(){
 
 function startPlayer(){
 
+    // =========================
+    // EMPTY URL
+    // =========================
+
+    if(!currentUrl){
+
+        destroyPlayer();
+
+        hideLoader();
+
+        emptyBox.style.display =
+            'flex';
+
+        setStatus(
+            'No stream URL'
+        );
+
+        statsBox.innerHTML =
+            'Waiting stream...';
+
+        errorBox.style.display =
+            'none';
+
+        return;
+    }
+
+    // =========================
+    // HAS URL
+    // =========================
+
+    emptyBox.style.display =
+        'none';
+
     destroyPlayer();
 
     showLoader();
@@ -601,15 +748,21 @@ function startPlayer(){
         'Connecting FLV...'
     );
 
-    errorBox.style.display = 'none';
+    errorBox.style.display =
+        'none';
 
     console.log(
         'STREAM:',
         currentUrl
     );
 
+    // =========================
+    // CHECK MPEGTS
+    // =========================
+
     if(
-        typeof mpegts === 'undefined'
+        typeof mpegts ===
+        'undefined'
     ){
 
         setStatus(
@@ -619,8 +772,13 @@ function startPlayer(){
         return;
     }
 
+    // =========================
+    // CHECK BROWSER
+    // =========================
+
     if(
-        !mpegts.getFeatureList()
+        !mpegts
+            .getFeatureList()
             .mseLivePlayback
     ){
 
@@ -630,6 +788,10 @@ function startPlayer(){
 
         return;
     }
+
+    // =========================
+    // CREATE PLAYER
+    // =========================
 
     player =
         mpegts.createPlayer({
@@ -663,11 +825,16 @@ function startPlayer(){
             fixAudioTimestampGap:false
         });
 
-    player.attachMediaElement(video);
+    player.attachMediaElement(
+        video
+    );
 
     player.load();
 
+    // =========================
     // AUTOPLAY
+    // =========================
+
     video.muted = true;
 
     video.play()
@@ -709,7 +876,9 @@ function startPlayer(){
     // =========================
 
     player.on(
-        mpegts.Events.STATISTICS_INFO,
+        mpegts.Events
+            .STATISTICS_INFO,
+
         (stats) => {
 
             statsBox.innerHTML = `
@@ -735,9 +904,12 @@ video.addEventListener(
 
         reconnectCount = 0;
 
-        errorBox.style.display = 'none';
+        errorBox.style.display =
+            'none';
 
-        setStatus('LIVE');
+        setStatus(
+            'LIVE'
+        );
 
         resetWatchdog();
     }
@@ -810,16 +982,20 @@ fullscreenBtn.addEventListener(
     () => {
 
         if(
-            !document.fullscreenElement
+            !document
+                .fullscreenElement
         ){
 
             document
-                .querySelector('.player')
+                .querySelector(
+                    '.player'
+                )
                 .requestFullscreen();
 
         }else{
 
-            document.exitFullscreen();
+            document
+                .exitFullscreen();
         }
     }
 );
@@ -856,7 +1032,10 @@ document.addEventListener(
     'visibilitychange',
     () => {
 
-        if(!document.hidden){
+        if(
+            !document.hidden &&
+            currentUrl
+        ){
 
             reconnectCount = 0;
 
