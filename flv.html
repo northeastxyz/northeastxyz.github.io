@@ -9,7 +9,7 @@
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
 />
 
-<title>Ultra Low Latency FLV Player</title>
+<title>Professional FLV Live Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -66,6 +66,10 @@ video{
 
     background:black;
 }
+
+/* =========================
+TOPBAR
+========================= */
 
 .topbar{
 
@@ -137,6 +141,10 @@ video{
     }
 }
 
+/* =========================
+BOTTOM PANEL
+========================= */
+
 .controls{
 
     position:absolute;
@@ -179,7 +187,7 @@ video{
     gap:10px;
 }
 
-button,select{
+button,select,input{
 
     border:none;
 
@@ -198,14 +206,17 @@ button,select{
 
 button{
 
-    flex:1;
-
     cursor:pointer;
 }
 
 button:hover{
 
     background:#232327;
+}
+
+input{
+
+    width:100%;
 }
 
 select{
@@ -273,7 +284,7 @@ select{
     position:absolute;
 
     right:14px;
-    bottom:120px;
+    bottom:170px;
 
     width:48px;
     height:48px;
@@ -291,6 +302,15 @@ select{
     z-index:60;
 
     cursor:pointer;
+}
+
+.stats{
+
+    margin-top:10px;
+
+    font-size:12px;
+
+    color:#888;
 }
 
 @media(max-width:700px){
@@ -377,12 +397,28 @@ select{
                 id="status">
 
                 Initializing...
+
             </div>
 
             <div class="row">
 
+                <input
+                    id="streamInput"
+                    placeholder="Paste FLV URL"
+                />
+
+            </div>
+
+            <br>
+
+            <div class="row">
+
+                <button id="playBtn">
+                    Play Stream
+                </button>
+
                 <button id="reloadBtn">
-                    Reload Stream
+                    Reload
                 </button>
 
             </div>
@@ -396,6 +432,14 @@ select{
 
             </div>
 
+            <div
+                class="stats"
+                id="stats">
+
+                Waiting stream...
+
+            </div>
+
         </div>
 
     </div>
@@ -404,14 +448,15 @@ select{
 
 <script>
 
+// =========================
+// ELEMENT
+// =========================
+
 const video =
     document.getElementById('video');
 
 const statusBox =
     document.getElementById('status');
-
-const reloadBtn =
-    document.getElementById('reloadBtn');
 
 const loader =
     document.getElementById('loader');
@@ -425,6 +470,22 @@ const qualitySelect =
 const fullscreenBtn =
     document.getElementById('fullscreenBtn');
 
+const reloadBtn =
+    document.getElementById('reloadBtn');
+
+const playBtn =
+    document.getElementById('playBtn');
+
+const streamInput =
+    document.getElementById('streamInput');
+
+const statsBox =
+    document.getElementById('stats');
+
+// =========================
+// PLAYER STATE
+// =========================
+
 let player = null;
 
 let reconnectTimer = null;
@@ -433,6 +494,8 @@ let watchdogTimer = null;
 
 let reconnectCount = 0;
 
+let currentUrl = null;
+
 // =========================
 // URL PARAM
 // =========================
@@ -440,46 +503,21 @@ let reconnectCount = 0;
 const params =
     new URLSearchParams(location.search);
 
-// SUPPORT:
-// ?url=ENCODED_FLV_URL
-// ATAU
-// ?id=test1
-
 const rawUrl =
     params.get('url');
 
-const streamId =
-    params.get('id');
-
 // =========================
-// STREAM SOURCE
+// AUTO INPUT
 // =========================
 
-const STREAMS = {
+if(rawUrl){
 
-    test1:
-        'https://example.com/live.flv'
-};
+    const decoded =
+        decodeURIComponent(rawUrl);
 
-// =========================
-// GET STREAM URL
-// =========================
+    streamInput.value = decoded;
 
-function getStreamUrl(){
-
-    // URL DIRECT
-    if(rawUrl){
-
-        return decodeURIComponent(rawUrl);
-    }
-
-    // ID STREAM
-    if(streamId && STREAMS[streamId]){
-
-        return STREAMS[streamId];
-    }
-
-    return null;
+    currentUrl = decoded;
 }
 
 // =========================
@@ -589,13 +627,10 @@ function reconnect(){
 
 function startPlayer(){
 
-    const streamUrl =
-        getStreamUrl();
-
-    if(!streamUrl){
+    if(!currentUrl){
 
         setStatus(
-            'No stream URL'
+            'Paste FLV URL first'
         );
 
         return;
@@ -609,9 +644,11 @@ function startPlayer(){
         'Connecting FLV...'
     );
 
+    errorBox.style.display = 'none';
+
     console.log(
         'STREAM:',
-        streamUrl
+        currentUrl
     );
 
     if(
@@ -644,7 +681,7 @@ function startPlayer(){
 
             isLive:true,
 
-            url:streamUrl
+            url:currentUrl
 
         },{
 
@@ -676,6 +713,10 @@ function startPlayer(){
     video.play()
         .catch(console.warn);
 
+    // =========================
+    // PLAYER ERROR
+    // =========================
+
     player.on(
         mpegts.Events.ERROR,
         (type, detail) => {
@@ -687,6 +728,24 @@ function startPlayer(){
             );
 
             reconnect();
+        }
+    );
+
+    // =========================
+    // STATISTICS
+    // =========================
+
+    player.on(
+        mpegts.Events.STATISTICS_INFO,
+        (stats) => {
+
+            statsBox.innerHTML = `
+                Speed:
+                ${stats.speed} KB/s
+                |
+                Loader:
+                ${stats.loaderType}
+            `;
         }
     );
 }
@@ -742,7 +801,42 @@ video.addEventListener(
 );
 
 // =========================
-// RELOAD BUTTON
+// PLAY BUTTON
+// =========================
+
+playBtn.addEventListener(
+    'click',
+    () => {
+
+        const raw =
+            streamInput.value.trim();
+
+        if(!raw){
+
+            alert(
+                'Paste FLV URL'
+            );
+
+            return;
+        }
+
+        currentUrl = raw;
+
+        reconnectCount = 0;
+
+        startPlayer();
+
+        // UPDATE URL
+        history.replaceState(
+            null,
+            '',
+            `?url=${encodeURIComponent(raw)}`
+        );
+    }
+);
+
+// =========================
+// RELOAD
 // =========================
 
 reloadBtn.addEventListener(
@@ -756,7 +850,7 @@ reloadBtn.addEventListener(
 );
 
 // =========================
-// QUALITY SWITCH
+// QUALITY
 // =========================
 
 qualitySelect.addEventListener(
@@ -832,12 +926,6 @@ document.addEventListener(
         }
     }
 );
-
-// =========================
-// START
-// =========================
-
-startPlayer();
 
 </script>
 
