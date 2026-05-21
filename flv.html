@@ -1,161 +1,639 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huya Full Proxy FLV Player</title>
-    
-    <script src="mpegts.js"></script>
-    
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            background-color: #0b0b0c;
-            color: #ffffff;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .player-container {
-            width: 100%;
-            max-width: 480px;
-            background: #18181b;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            border: 1px solid #27272a;
-            padding: 12px;
-        }
-        .video-wrapper {
-            position: relative;
-            width: 100%;
-            background: #000000;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 16 / 9;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .controls-panel {
-            margin-top: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .btn-reload {
-            background-color: #0d9488;
-            color: #ffffff;
-            border: none;
-            padding: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-reload:hover { background-color: #0f766e; }
-        .status-badge {
-            font-size: 12px;
-            color: #a1a1aa;
-            text-align: center;
-            word-break: break-all;
-            background: #27272a;
-            padding: 6px;
-            border-radius: 4px;
-        }
-        .error-msg {
-            color: #ef4444;
-            font-size: 13px;
-            text-align: center;
-            margin-top: 4px;
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+<title>Ultra Low Latency FLV/HLS Live Player</title>
+
+<!-- MPEGTS -->
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.min.js"></script>
+
+<!-- HLS -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    background:#050505;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    overflow:hidden;
+    color:white;
+}
+
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:12px;
+}
+
+.player-shell{
+    width:100%;
+    max-width:520px;
+    background:#0f0f10;
+    border:1px solid #1f1f22;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.65),
+        inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.video-wrapper{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    background:black;
+    overflow:hidden;
+}
+
+video{
+    width:100%;
+    height:100%;
+    background:black;
+    object-fit:contain;
+}
+
+.top-ui{
+    position:absolute;
+    top:12px;
+    left:12px;
+    right:12px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    z-index:20;
+}
+
+.live-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(10px);
+
+    padding:8px 12px;
+    border-radius:999px;
+
+    font-size:13px;
+    font-weight:600;
+}
+
+.live-dot{
+    width:10px;
+    height:10px;
+    background:#ff2d55;
+    border-radius:50%;
+
+    animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+    0%{transform:scale(.9);opacity:.7}
+    50%{transform:scale(1.15);opacity:1}
+    100%{transform:scale(.9);opacity:.7}
+}
+
+.control-bar{
+    padding:14px;
+    background:#111214;
+}
+
+.status{
+    font-size:13px;
+    color:#a1a1aa;
+    margin-bottom:12px;
+    word-break:break-all;
+}
+
+.controls{
+    display:flex;
+    gap:10px;
+}
+
+button,select{
+    border:none;
+    outline:none;
+    border-radius:12px;
+    background:#1b1c20;
+    color:white;
+    padding:12px;
+    font-size:14px;
+}
+
+button{
+    cursor:pointer;
+    flex:1;
+    transition:.2s;
+}
+
+button:hover{
+    background:#24262b;
+}
+
+select{
+    width:120px;
+}
+
+.error{
+    margin-top:12px;
+    color:#ff5b5b;
+    font-size:13px;
+    display:none;
+}
+
+.loader{
+    position:absolute;
+    inset:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(4px);
+
+    z-index:15;
+}
+
+.spinner{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    border:4px solid rgba(255,255,255,.12);
+    border-top-color:white;
+    animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+
+.hidden{
+    display:none !important;
+}
+
+.fullscreen-btn{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+
+    z-index:30;
+
+    width:44px;
+    height:44px;
+
+    border-radius:12px;
+
+    border:none;
+
+    background:rgba(0,0,0,.55);
+
+    color:white;
+
+    cursor:pointer;
+
+    backdrop-filter:blur(10px);
+}
+
+@media(max-width:640px){
+
+    body{
+        padding:0;
+    }
+
+    .player-shell{
+        width:100%;
+        height:100%;
+        max-width:none;
+        border-radius:0;
+    }
+
+    .video-wrapper{
+        height:100vh;
+        aspect-ratio:auto;
+    }
+}
+</style>
 </head>
 <body>
 
-    <div class="player-container">
-        <div class="video-wrapper">
-            <video id="videoElement" controls crossorigin="anonymous" playsinline></video>
+<div class="player-shell">
+
+    <div class="video-wrapper">
+
+        <video
+            id="video"
+            autoplay
+            muted
+            controls
+            playsinline
+            webkit-playsinline
+            x5-playsinline>
+        </video>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
         </div>
-        <div class="controls-panel">
-            <button class="btn-reload" id="reloadBtn">Reload Stream Proxy</button>
-            <div class="status-badge" id="streamUrlBadge">Menghubungkan ke Proxy Workers...</div>
-            <div class="error-msg" id="errorMsg">Stream Terputus, Buffering Melebihi Batas, atau Server Timeout.</div>
+
+        <div class="top-ui">
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                LIVE
+            </div>
+
+            <select id="quality">
+                <option value="1080">1080p</option>
+                <option value="720" selected>720p</option>
+                <option value="480">480p</option>
+                <option value="360">360p</option>
+            </select>
         </div>
+
+        <button class="fullscreen-btn" id="fullscreenBtn">
+            ⛶
+        </button>
+
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const videoElement = document.getElementById('videoElement');
-            const reloadBtn = document.getElementById('reloadBtn');
-            const streamUrlBadge = document.getElementById('streamUrlBadge');
-            const errorMsg = document.getElementById('errorMsg');
-            let player = null;
+    <div class="control-bar">
 
-            // Membaca parameter query URL (?id=...)
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('id') || '30805928';
-            
-            // Mengarah ke Cloudflare Workers Full Proxy milikmu
-            const finalProxyUrl = `https://flv.northeastxyz.workers.dev/?id=${roomId}`;
-            streamUrlBadge.textContent = `Proxy: ${finalProxyUrl}`;
+        <div class="status" id="status">
+            Initializing...
+        </div>
 
-            function startLiveStream() {
-                if (player !== null) {
-                    player.unload();
-                    player.detachMediaElement();
-                    player.destroy();
-                    player = null;
-                }
+        <div class="controls">
+            <button id="reloadBtn">Reload Stream</button>
+        </div>
 
-                errorMsg.style.display = 'none';
+        <div class="error" id="errorBox">
+            Stream disconnected. Reconnecting...
+        </div>
 
-                if (typeof mpegts !== 'undefined' && mpegts.getFeatureList().isSupported) {
-                    player = mpegts.createPlayer({
-                        type: 'flv',
-                        isLive: true,
-                        url: finalProxyUrl,
-                        cors: true
-                    }, {
-                        enableWorker: true,
-                        lazyLoad: false,
-                        liveBufferLatencyChasing: true, // Otomatis memotong sisa buffer agar video selalu realtime
-                        stashInitialSize: 32           // Buffer kecil awal (32KB) agar video instan menyala tanpa menumpuk data
-                    });
+    </div>
 
-                    player.attachMediaElement(videoElement);
-                    player.load();
-                    
-                    // Kebijakan Autoplay Browser: Harus diawali dengan keadaan Muted (Tanpa Suara)
-                    videoElement.muted = true;
-                    
-                    player.play().catch(err => {
-                        console.log("Autoplay ditahan browser, klik ikon play secara manual.", err);
-                    });
+</div>
 
-                    // Penanganan Error jika Stream terputus di tengah jalan
-                    player.on(mpegts.Events.ERROR, (type, detail, info) => {
-                        console.error('Mpegts Player Error:', type, detail, info);
-                        errorMsg.style.display = 'block';
-                    });
+<script>
 
-                } else {
-                    alert('Objek mpegts tidak terdefinisi. Pastikan file mpegts.js berada di folder yang sama.');
-                }
-            }
+const video = document.getElementById('video');
+const statusText = document.getElementById('status');
+const reloadBtn = document.getElementById('reloadBtn');
+const errorBox = document.getElementById('errorBox');
+const qualitySelect = document.getElementById('quality');
+const loader = document.getElementById('loader');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-            // Jalankan player
-            startLiveStream();
-            reloadBtn.addEventListener('click', startLiveStream);
+let flvPlayer = null;
+let hlsPlayer = null;
+
+let reconnectAttempts = 0;
+let reconnectTimer = null;
+let watchdogTimer = null;
+
+const urlParams = new URLSearchParams(window.location.search);
+
+const roomId = urlParams.get('id') || '30805928';
+
+const proxyHost = 'https://flv.northeastxyz.workers.dev';
+
+function getFLVUrl(){
+
+    const quality = qualitySelect.value;
+
+    return `${proxyHost}/?id=${roomId}&q=${quality}`;
+}
+
+function getHLSUrl(){
+
+    const quality = qualitySelect.value;
+
+    return `${proxyHost}/hls?id=${roomId}&q=${quality}`;
+}
+
+function showLoader(){
+    loader.classList.remove('hidden');
+}
+
+function hideLoader(){
+    loader.classList.add('hidden');
+}
+
+function setStatus(text){
+    statusText.textContent = text;
+}
+
+function destroyPlayers(){
+
+    try{
+
+        if(flvPlayer){
+
+            flvPlayer.pause();
+
+            flvPlayer.unload();
+
+            flvPlayer.detachMediaElement();
+
+            flvPlayer.destroy();
+
+            flvPlayer = null;
+        }
+
+    }catch(e){
+        console.warn(e);
+    }
+
+    try{
+
+        if(hlsPlayer){
+
+            hlsPlayer.destroy();
+
+            hlsPlayer = null;
+        }
+
+    }catch(e){
+        console.warn(e);
+    }
+}
+
+function resetWatchdog(){
+
+    clearTimeout(watchdogTimer);
+
+    watchdogTimer = setTimeout(() => {
+
+        console.warn('Watchdog timeout');
+
+        reconnect();
+
+    }, 15000);
+}
+
+function reconnect(){
+
+    destroyPlayers();
+
+    errorBox.style.display = 'block';
+
+    const delay = Math.min(
+        15000,
+        1000 * (2 ** reconnectAttempts)
+    );
+
+    reconnectAttempts++;
+
+    setStatus(`Reconnecting in ${delay/1000}s...`);
+
+    clearTimeout(reconnectTimer);
+
+    reconnectTimer = setTimeout(() => {
+
+        startFLV();
+
+    }, delay);
+}
+
+function attachVideoEvents(){
+
+    video.addEventListener('playing', () => {
+
+        hideLoader();
+
+        errorBox.style.display = 'none';
+
+        reconnectAttempts = 0;
+
+        setStatus('LIVE');
+
+        resetWatchdog();
+    });
+
+    video.addEventListener('waiting', () => {
+
+        showLoader();
+
+        setStatus('Buffering...');
+    });
+
+    video.addEventListener('stalled', () => {
+
+        reconnect();
+    });
+
+    video.addEventListener('error', () => {
+
+        reconnect();
+    });
+
+    video.addEventListener('timeupdate', () => {
+
+        resetWatchdog();
+    });
+}
+
+async function safePlay(){
+
+    try{
+
+        await video.play();
+
+    }catch(err){
+
+        console.warn('Autoplay blocked', err);
+
+        setStatus('Tap play to start');
+    }
+}
+
+function startFLV(){
+
+    destroyPlayers();
+
+    showLoader();
+
+    setStatus('Connecting FLV...');
+
+    const flvUrl = getFLVUrl();
+
+    console.log('FLV:', flvUrl);
+
+    if(
+        typeof mpegts !== 'undefined' &&
+        mpegts.getFeatureList().mseLivePlayback
+    ){
+
+        flvPlayer = mpegts.createPlayer({
+
+            type:'flv',
+
+            isLive:true,
+
+            cors:true,
+
+            url:flvUrl
+
+        },{
+
+            enableWorker:true,
+
+            lazyLoad:false,
+
+            deferLoadAfterSourceOpen:false,
+
+            liveBufferLatencyChasing:true,
+
+            liveSync:true,
+
+            autoCleanupSourceBuffer:true,
+
+            autoCleanupMaxBackwardDuration:30,
+
+            autoCleanupMinBackwardDuration:10,
+
+            stashInitialSize:64,
+
+            fixAudioTimestampGap:false
+
         });
-    </script>
+
+        flvPlayer.attachMediaElement(video);
+
+        flvPlayer.load();
+
+        safePlay();
+
+        flvPlayer.on(mpegts.Events.ERROR, (type, detail) => {
+
+            console.error('FLV ERROR:', type, detail);
+
+            startHLS();
+        });
+
+    }else{
+
+        startHLS();
+    }
+}
+
+function startHLS(){
+
+    destroyPlayers();
+
+    showLoader();
+
+    setStatus('Switching to HLS fallback...');
+
+    const hlsUrl = getHLSUrl();
+
+    console.log('HLS:', hlsUrl);
+
+    if(Hls.isSupported()){
+
+        hlsPlayer = new Hls({
+
+            lowLatencyMode:true,
+
+            backBufferLength:30
+
+        });
+
+        hlsPlayer.loadSource(hlsUrl);
+
+        hlsPlayer.attachMedia(video);
+
+        hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+
+            safePlay();
+        });
+
+        hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
+
+            console.error('HLS ERROR:', data);
+
+            reconnect();
+        });
+
+    }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+
+        video.src = hlsUrl;
+
+        safePlay();
+
+    }else{
+
+        setStatus('Browser not supported');
+
+        errorBox.style.display = 'block';
+    }
+}
+
+reloadBtn.addEventListener('click', () => {
+
+    reconnectAttempts = 0;
+
+    startFLV();
+});
+
+qualitySelect.addEventListener('change', () => {
+
+    reconnectAttempts = 0;
+
+    startFLV();
+});
+
+fullscreenBtn.addEventListener('click', () => {
+
+    if(!document.fullscreenElement){
+
+        document.querySelector('.video-wrapper')
+            .requestFullscreen();
+
+    }else{
+
+        document.exitFullscreen();
+    }
+});
+
+document.addEventListener('visibilitychange', () => {
+
+    if(!document.hidden){
+
+        reconnectAttempts = 0;
+
+        startFLV();
+    }
+});
+
+window.addEventListener('online', () => {
+
+    reconnectAttempts = 0;
+
+    startFLV();
+});
+
+window.addEventListener('offline', () => {
+
+    setStatus('Network Offline');
+});
+
+attachVideoEvents();
+
+startFLV();
+
+</script>
 
 </body>
 </html>
