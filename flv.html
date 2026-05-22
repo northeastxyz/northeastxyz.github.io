@@ -676,28 +676,71 @@ function startPlayer(){
 
     player.load();
 
+    // =========================
     // AUDIO
+    // =========================
 
     video.muted = false;
 
     video.volume =
         volumeSlider.value;
 
-    video.play()
-    .catch(() => {
+    // =========================
+    // AUTOPLAY FIX
+    // =========================
 
-        document.body.addEventListener(
-            'click',
-            () => {
+    video.autoplay = true;
 
-                video.play();
+    const playPromise =
+        video.play();
 
-            },
-            { once:true }
-        );
-    });
+    if(playPromise !== undefined){
 
+        playPromise
+        .then(() => {
+
+            console.log(
+                'Autoplay success'
+            );
+
+        })
+        .catch(() => {
+
+            console.log(
+                'Autoplay blocked'
+            );
+
+            const forcePlay = () => {
+
+                video.play()
+                .catch(() => {});
+
+                document.removeEventListener(
+                    'touchstart',
+                    forcePlay
+                );
+
+                document.removeEventListener(
+                    'click',
+                    forcePlay
+                );
+            };
+
+            document.addEventListener(
+                'touchstart',
+                forcePlay
+            );
+
+            document.addEventListener(
+                'click',
+                forcePlay
+            );
+        });
+    }
+
+    // =========================
     // ERROR
+    // =========================
 
     player.on(
         mpegts.Events.ERROR,
@@ -707,7 +750,9 @@ function startPlayer(){
         }
     );
 
+    // =========================
     // STATS
+    // =========================
 
     player.on(
         mpegts.Events
@@ -791,28 +836,50 @@ volumeSlider.addEventListener(
 );
 
 // =========================
-// FULLSCREEN
+// FULLSCREEN + LANDSCAPE
 // =========================
 
 fullscreenBtn.addEventListener(
     'click',
-    () => {
+    async () => {
+
+        const player =
+            document.querySelector(
+                '.player'
+            );
 
         if(
-            !document
-                .fullscreenElement
+            !document.fullscreenElement
         ){
 
-            document
-                .querySelector(
-                    '.player'
-                )
+            await player
                 .requestFullscreen();
+
+            // FORCE LANDSCAPE
+
+            if(
+                screen.orientation &&
+                screen.orientation.lock
+            ){
+
+                screen.orientation
+                    .lock('landscape')
+                    .catch(() => {});
+            }
 
         }else{
 
             document
                 .exitFullscreen();
+
+            if(
+                screen.orientation &&
+                screen.orientation.unlock
+            ){
+
+                screen.orientation
+                    .unlock();
+            }
         }
     }
 );
