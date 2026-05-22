@@ -15,7 +15,7 @@
     "
 />
 
-<title>Android FLV Player</title>
+<title>Minimal FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -33,8 +33,6 @@ body{
     height:100%;
     background:black;
     overflow:hidden;
-
-    touch-action:manipulation;
 
     font-family:
         -apple-system,
@@ -62,10 +60,11 @@ video{
 }
 
 /* =========================
-MINIMAL PANEL
+MINIMAL CONTROLS
 ========================= */
 
 .controls{
+
     position:absolute;
 
     left:10px;
@@ -76,90 +75,50 @@ MINIMAL PANEL
 
 .panel{
 
-    width:290px;
+    background:rgba(0,0,0,.18);
 
-    background:rgba(0,0,0,.28);
+    backdrop-filter:blur(6px);
 
-    backdrop-filter:blur(10px);
+    border-radius:999px;
 
-    border-radius:12px;
+    padding:5px 8px;
 
-    padding:7px 9px;
+    border:1px solid rgba(255,255,255,.03);
 
-    border:1px solid rgba(255,255,255,.04);
-}
+    width:auto;
 
-.liveText{
     display:flex;
 
     align-items:center;
 
-    gap:5px;
-
-    color:white;
-
-    font-size:10px;
-
-    margin-bottom:5px;
-}
-
-.liveDot{
-    width:6px;
-    height:6px;
-
-    background:#ff2d55;
-
-    border-radius:50%;
-}
-
-.row{
-    display:flex;
-
-    align-items:center;
-
-    gap:7px;
+    gap:8px;
 }
 
 button{
+
+    width:28px;
+    height:28px;
+
     border:none;
 
-    outline:none;
+    border-radius:50%;
 
-    background:#141414;
+    background:rgba(255,255,255,.08);
 
     color:white;
 
-    padding:6px 10px;
-
-    border-radius:8px;
-
-    font-size:10px;
+    font-size:13px;
 
     cursor:pointer;
 }
 
 button:hover{
-    background:#1f1f1f;
-}
-
-.volumeWrap{
-    display:flex;
-
-    align-items:center;
-
-    gap:6px;
-
-    flex:1;
-}
-
-.volumeIcon{
-    color:white;
-
-    font-size:12px;
+    background:rgba(255,255,255,.14);
 }
 
 #volumeSlider{
-    flex:1;
+
+    width:70px;
 
     height:2px;
 
@@ -169,21 +128,12 @@ button:hover{
 }
 
 .stats{
-    margin-top:5px;
-
-    color:#9a9a9a;
-
-    font-size:9px;
-}
-
-.error{
-    margin-top:4px;
-
-    color:#ff7070;
 
     font-size:9px;
 
-    display:none;
+    color:rgba(255,255,255,.65);
+
+    min-width:40px;
 }
 
 /* =========================
@@ -201,19 +151,19 @@ FULLSCREEN
 
     border:none;
 
-    border-radius:12px;
+    border-radius:50%;
 
-    background:rgba(0,0,0,.28);
+    background:rgba(0,0,0,.20);
 
-    backdrop-filter:blur(10px);
+    backdrop-filter:blur(8px);
 
     color:white;
 
     font-size:14px;
 
-    z-index:60;
-
     cursor:pointer;
+
+    z-index:60;
 }
 
 /* =========================
@@ -231,14 +181,14 @@ LOADER
 
     align-items:center;
 
-    background:rgba(0,0,0,.4);
+    background:rgba(0,0,0,.35);
 
     z-index:40;
 }
 
 .spinner{
-    width:46px;
-    height:46px;
+    width:42px;
+    height:42px;
 
     border-radius:50%;
 
@@ -357,56 +307,26 @@ EMPTY
 
         <div class="panel">
 
-            <div class="liveText">
+            <button id="reloadBtn">
 
-                <div class="liveDot"></div>
+                ↻
 
-                LIVE
+            </button>
 
-            </div>
-
-            <div class="row">
-
-                <button id="reloadBtn">
-
-                    Reload
-
-                </button>
-
-                <div class="volumeWrap">
-
-                    <div class="volumeIcon">
-
-                        🔊
-
-                    </div>
-
-                    <input
-                        type="range"
-                        id="volumeSlider"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value="1"
-                    >
-
-                </div>
-
-            </div>
-
-            <div
-                class="error"
-                id="errorBox">
-
-                Stream disconnected...
-
-            </div>
+            <input
+                type="range"
+                id="volumeSlider"
+                min="0"
+                max="1"
+                step="0.01"
+                value="1"
+            >
 
             <div
                 class="stats"
                 id="stats">
 
-                Waiting stream...
+                LIVE
 
             </div>
 
@@ -459,11 +379,6 @@ const video =
 const loader =
     document.getElementById(
         'loader'
-    );
-
-const errorBox =
-    document.getElementById(
-        'errorBox'
     );
 
 const statsBox =
@@ -591,9 +506,6 @@ function reconnect(){
 
     destroyPlayer();
 
-    errorBox.style.display =
-        'block';
-
     reconnectCount++;
 
     const delay =
@@ -636,9 +548,6 @@ function startPlayer(){
 
     showLoader();
 
-    errorBox.style.display =
-        'none';
-
     if(
         typeof mpegts ===
         'undefined'
@@ -675,18 +584,14 @@ function startPlayer(){
 
     player.load();
 
-    // =========================
     // AUDIO
-    // =========================
 
     video.muted = false;
 
     video.volume =
         volumeSlider.value;
 
-    // =========================
     // AUTOPLAY
-    // =========================
 
     const tryPlay = () => {
 
@@ -708,18 +613,14 @@ function startPlayer(){
         { once:true }
     );
 
-    // =========================
     // ERROR
-    // =========================
 
     player.on(
         mpegts.Events.ERROR,
         reconnect
     );
 
-    // =========================
     // STATS
-    // =========================
 
     player.on(
         mpegts.Events
@@ -728,9 +629,7 @@ function startPlayer(){
         stats => {
 
             statsBox.innerHTML = `
-                ${stats.speed} KB/s
-                |
-                ${stats.loaderType}
+                LIVE
             `;
         }
     );
@@ -747,9 +646,6 @@ video.addEventListener(
         hideLoader();
 
         reconnectCount = 0;
-
-        errorBox.style.display =
-            'none';
     }
 );
 
