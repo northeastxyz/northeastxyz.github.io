@@ -15,7 +15,7 @@
     "
 />
 
-<title>Minimal FLV Player</title>
+<title>Ultra Minimal FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -31,7 +31,7 @@ html,
 body{
     width:100%;
     height:100%;
-    background:black;
+    background:#000;
     overflow:hidden;
 
     font-family:
@@ -84,8 +84,6 @@ MINIMAL CONTROLS
     padding:5px 8px;
 
     border:1px solid rgba(255,255,255,.03);
-
-    width:auto;
 
     display:flex;
 
@@ -257,6 +255,7 @@ EMPTY
     <video
         id="video"
         autoplay
+        preload="auto"
         controls
         playsinline
         webkit-playsinline
@@ -571,11 +570,17 @@ function startPlayer(){
 
             lazyLoad:false,
 
-            liveSync:true,
+            liveSync:false,
 
-            liveBufferLatencyChasing:true,
+            liveBufferLatencyChasing:false,
 
-            autoCleanupSourceBuffer:true
+            stashInitialSize:384,
+
+            autoCleanupSourceBuffer:true,
+
+            autoCleanupMaxBackwardDuration:90,
+
+            autoCleanupMinBackwardDuration:30
         });
 
     player.attachMediaElement(
@@ -584,14 +589,18 @@ function startPlayer(){
 
     player.load();
 
+    // =========================
     // AUDIO
+    // =========================
 
     video.muted = false;
 
     video.volume =
         volumeSlider.value;
 
+    // =========================
     // AUTOPLAY
+    // =========================
 
     const tryPlay = () => {
 
@@ -613,14 +622,18 @@ function startPlayer(){
         { once:true }
     );
 
+    // =========================
     // ERROR
+    // =========================
 
     player.on(
         mpegts.Events.ERROR,
         reconnect
     );
 
+    // =========================
     // STATS
+    // =========================
 
     player.on(
         mpegts.Events
@@ -628,9 +641,8 @@ function startPlayer(){
 
         stats => {
 
-            statsBox.innerHTML = `
-                LIVE
-            `;
+            statsBox.innerHTML =
+                'LIVE';
         }
     );
 }
@@ -651,7 +663,19 @@ video.addEventListener(
 
 video.addEventListener(
     'waiting',
-    showLoader
+    () => {
+
+        showLoader();
+
+        // AUTO RESUME
+
+        setTimeout(() => {
+
+            video.play()
+            .catch(() => {});
+
+        }, 500);
+    }
 );
 
 video.addEventListener(
