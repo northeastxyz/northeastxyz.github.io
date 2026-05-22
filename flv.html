@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 
 <meta
     name="viewport"
@@ -21,23 +21,18 @@
     box-sizing:border-box;
 }
 
-html,body{
+html,
+body{
     width:100%;
     height:100%;
-    background:#050505;
+    background:#000;
+    overflow:hidden;
+
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
-        Roboto,
         sans-serif;
-    overflow:hidden;
-}
-
-body{
-    display:flex;
-    justify-content:center;
-    align-items:center;
 }
 
 .player{
@@ -55,102 +50,194 @@ video{
 }
 
 /* =========================
-BOTTOM PANEL
+MINIMAL CONTROLS
 ========================= */
 
 .controls{
     position:absolute;
-    left:24px;
-    bottom:20px;
+    left:12px;
+    bottom:12px;
     z-index:50;
 }
 
 .panel{
-    background:rgba(0,0,0,.45);
-    backdrop-filter:blur(14px);
-    border-radius:18px;
-    padding:14px 16px;
-    color:white;
-    border:1px solid rgba(255,255,255,.06);
-    width:420px;
+    background:rgba(0,0,0,.30);
+
+    backdrop-filter:blur(10px);
+
+    border-radius:12px;
+
+    padding:8px 10px;
+
+    width:370px;
+
+    border:1px solid rgba(255,255,255,.04);
 }
 
 .liveText{
-    font-size:13px;
-    color:white;
-    margin-bottom:12px;
     display:flex;
+
     align-items:center;
-    gap:8px;
+
+    gap:5px;
+
+    font-size:10px;
+
+    color:white;
+
+    margin-bottom:6px;
 }
 
 .liveDot{
-    width:8px;
-    height:8px;
+    width:6px;
+    height:6px;
+
     background:red;
+
     border-radius:50%;
 }
 
 .row{
     display:flex;
+
     align-items:center;
-    gap:16px;
+
+    gap:8px;
 }
 
 button{
     border:none;
+
     outline:none;
-    background:#18181b;
+
+    background:#151515;
+
     color:white;
-    border-radius:12px;
-    padding:10px 16px;
-    font-size:14px;
+
+    border-radius:8px;
+
+    padding:6px 10px;
+
+    font-size:11px;
+
     cursor:pointer;
+
     transition:.2s;
 }
 
 button:hover{
-    background:#232327;
+    background:#202020;
 }
 
 .volumeWrap{
     display:flex;
+
     align-items:center;
-    gap:10px;
+
+    gap:6px;
+
     flex:1;
 }
 
 .volumeIcon{
-    font-size:22px;
+    font-size:14px;
+
+    color:white;
 }
 
 #volumeSlider{
     flex:1;
+
+    height:2px;
+
     cursor:pointer;
+
     accent-color:white;
 }
 
+.stats{
+    margin-top:5px;
+
+    font-size:10px;
+
+    color:#a0a0a0;
+}
+
+.error{
+    margin-top:4px;
+
+    font-size:10px;
+
+    color:#ff6b6b;
+
+    display:none;
+}
+
+/* =========================
+FULLSCREEN
+========================= */
+
+.fullscreen{
+    position:absolute;
+
+    right:14px;
+    bottom:14px;
+
+    width:42px;
+    height:42px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:rgba(0,0,0,.35);
+
+    backdrop-filter:blur(10px);
+
+    color:white;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    z-index:60;
+}
+
+/* =========================
+LOADER
+========================= */
+
 .loader{
     position:absolute;
+
     inset:0;
-    background:rgba(0,0,0,.45);
-    backdrop-filter:blur(3px);
+
+    background:rgba(0,0,0,.4);
+
     display:flex;
+
     justify-content:center;
+
     align-items:center;
+
     z-index:40;
 }
 
 .spinner{
-    width:60px;
-    height:60px;
+    width:50px;
+    height:50px;
+
     border-radius:50%;
-    border:4px solid rgba(255,255,255,.12);
+
+    border:3px solid rgba(255,255,255,.15);
+
     border-top-color:white;
+
     animation:spin .8s linear infinite;
 }
 
 @keyframes spin{
+
     to{
         transform:rotate(360deg);
     }
@@ -160,85 +247,50 @@ button:hover{
     display:none !important;
 }
 
-.error{
-    color:#ff5b5b;
-    margin-top:10px;
-    font-size:12px;
-    display:none;
-}
-
-.fullscreen{
-    position:absolute;
-    right:22px;
-    bottom:22px;
-    width:52px;
-    height:52px;
-    border:none;
-    border-radius:16px;
-    background:rgba(0,0,0,.45);
-    backdrop-filter:blur(10px);
-    color:white;
-    z-index:60;
-    cursor:pointer;
-    font-size:18px;
-    border:1px solid rgba(255,255,255,.08);
-}
-
-.stats{
-    margin-top:10px;
-    font-size:12px;
-    color:#b0b0b0;
-}
+/* =========================
+EMPTY
+========================= */
 
 .empty{
     position:absolute;
+
     inset:0;
+
     display:flex;
+
     justify-content:center;
+
     align-items:center;
+
     flex-direction:column;
+
     color:white;
+
     z-index:30;
+
     text-align:center;
-    padding:20px;
 }
 
 .empty h1{
-    font-size:22px;
+    font-size:20px;
+
     margin-bottom:10px;
 }
 
 .empty p{
-    font-size:14px;
+    font-size:13px;
+
     color:#999;
-    line-height:1.6;
-    word-break:break-all;
 }
 
 @media(max-width:700px){
 
-    .controls{
-        left:10px;
-        bottom:10px;
-    }
-
     .panel{
-        width:320px;
-        padding:12px;
-    }
-
-    .row{
-        gap:10px;
+        width:300px;
     }
 
     button{
-        padding:9px 12px;
-        font-size:13px;
-    }
-
-    .fullscreen{
-        right:12px;
-        bottom:12px;
+        font-size:10px;
     }
 }
 
@@ -260,6 +312,7 @@ button:hover{
     </video>
 
     <!-- EMPTY -->
+
     <div
         class="empty"
         id="emptyBox">
@@ -269,15 +322,13 @@ button:hover{
         </h1>
 
         <p>
-            Example:
-            <br><br>
-
             flv.html?url=https://example.com/live.flv
         </p>
 
     </div>
 
     <!-- LOADER -->
+
     <div
         class="loader hidden"
         id="loader">
@@ -287,6 +338,7 @@ button:hover{
     </div>
 
     <!-- FULLSCREEN -->
+
     <button
         class="fullscreen"
         id="fullscreenBtn">
@@ -296,6 +348,7 @@ button:hover{
     </button>
 
     <!-- CONTROLS -->
+
     <div class="controls">
 
         <div class="panel">
@@ -311,13 +364,17 @@ button:hover{
             <div class="row">
 
                 <button id="reloadBtn">
+
                     Reload Stream
+
                 </button>
 
                 <div class="volumeWrap">
 
                     <div class="volumeIcon">
+
                         🔊
+
                     </div>
 
                     <input
@@ -337,8 +394,7 @@ button:hover{
                 class="error"
                 id="errorBox">
 
-                Stream disconnected.
-                Reconnecting...
+                Stream disconnected...
 
             </div>
 
@@ -357,6 +413,47 @@ button:hover{
 </div>
 
 <script>
+
+// =========================
+// FORCE ANDROID USER AGENT
+// =========================
+
+Object.defineProperty(
+    navigator,
+    'userAgent',
+    {
+        get: function () {
+
+            return 'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
+        }
+    }
+);
+
+// =========================
+// FAKE MOBILE DEVICE
+// =========================
+
+Object.defineProperty(
+    navigator,
+    'platform',
+    {
+        get: function () {
+
+            return 'Android';
+        }
+    }
+);
+
+Object.defineProperty(
+    navigator,
+    'maxTouchPoints',
+    {
+        get: function () {
+
+            return 5;
+        }
+    }
+);
 
 // =========================
 // ELEMENT
@@ -394,12 +491,10 @@ let player = null;
 
 let reconnectTimer = null;
 
-let watchdogTimer = null;
-
 let reconnectCount = 0;
 
 // =========================
-// GET FULL URL PARAM
+// GET STREAM URL
 // =========================
 
 function getRawUrl(){
@@ -425,10 +520,6 @@ const rawUrl =
 
 let currentUrl = null;
 
-// =========================
-// VALIDATE URL
-// =========================
-
 if(
     rawUrl &&
     rawUrl.trim() !== ''
@@ -436,10 +527,6 @@ if(
 
     currentUrl =
         decodeURIComponent(rawUrl);
-
-}else{
-
-    currentUrl = null;
 }
 
 // =========================
@@ -484,24 +571,6 @@ function destroyPlayer(){
 }
 
 // =========================
-// WATCHDOG
-// =========================
-
-function resetWatchdog(){
-
-    clearTimeout(
-        watchdogTimer
-    );
-
-    watchdogTimer =
-        setTimeout(() => {
-
-            reconnect();
-
-        }, 15000);
-}
-
-// =========================
 // RECONNECT
 // =========================
 
@@ -518,7 +587,7 @@ function reconnect(){
         'block';
 
     const delay = Math.min(
-        15000,
+        10000,
         1000 * (
             2 ** reconnectCount
         )
@@ -546,18 +615,8 @@ function startPlayer(){
 
     if(!currentUrl){
 
-        destroyPlayer();
-
-        hideLoader();
-
         emptyBox.style.display =
             'flex';
-
-        statsBox.innerHTML =
-            'Waiting stream...';
-
-        errorBox.style.display =
-            'none';
 
         return;
     }
@@ -604,21 +663,11 @@ function startPlayer(){
 
             lazyLoad:false,
 
-            deferLoadAfterSourceOpen:false,
-
             liveBufferLatencyChasing:true,
 
             liveSync:true,
 
-            autoCleanupSourceBuffer:true,
-
-            autoCleanupMaxBackwardDuration:30,
-
-            autoCleanupMinBackwardDuration:10,
-
-            stashInitialSize:64,
-
-            fixAudioTimestampGap:false
+            autoCleanupSourceBuffer:true
         });
 
     player.attachMediaElement(
@@ -670,7 +719,6 @@ function startPlayer(){
                 Speed:
                 ${stats.speed} KB/s
                 |
-                Loader:
                 ${stats.loaderType}
             `;
         }
@@ -691,8 +739,6 @@ video.addEventListener(
 
         errorBox.style.display =
             'none';
-
-        resetWatchdog();
     }
 );
 
@@ -701,14 +747,6 @@ video.addEventListener(
     () => {
 
         showLoader();
-    }
-);
-
-video.addEventListener(
-    'timeupdate',
-    () => {
-
-        resetWatchdog();
     }
 );
 
@@ -747,16 +785,8 @@ volumeSlider.addEventListener(
         video.volume =
             volumeSlider.value;
 
-        if(
-            volumeSlider.value == 0
-        ){
-
-            video.muted = true;
-
-        }else{
-
-            video.muted = false;
-        }
+        video.muted =
+            volumeSlider.value == 0;
     }
 );
 
@@ -788,21 +818,7 @@ fullscreenBtn.addEventListener(
 );
 
 // =========================
-// ONLINE/OFFLINE
-// =========================
-
-window.addEventListener(
-    'online',
-    () => {
-
-        reconnectCount = 0;
-
-        startPlayer();
-    }
-);
-
-// =========================
-// TAB VISIBILITY
+// KEEP PLAYING BACKGROUND
 // =========================
 
 document.addEventListener(
@@ -810,13 +826,11 @@ document.addEventListener(
     () => {
 
         if(
-            !document.hidden &&
             currentUrl
         ){
 
-            reconnectCount = 0;
-
-            startPlayer();
+            video.play()
+            .catch(() => {});
         }
     }
 );
