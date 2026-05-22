@@ -214,7 +214,6 @@ button:hover{
         id="video"
         controls
         autoplay
-        muted
         playsinline
         webkit-playsinline
         x5-playsinline>
@@ -600,10 +599,42 @@ function startPlayer(){
 
     player.load();
 
-    video.muted = true;
+    // =========================
+    // AUDIO ENABLE
+    // =========================
+
+    video.muted = false;
+    video.volume = 1;
 
     video.play()
-        .catch(() => {});
+    .then(() => {
+
+        console.log(
+            'Autoplay success'
+        );
+
+    })
+    .catch(err => {
+
+        console.log(
+            'Autoplay blocked'
+        );
+
+        // browser block suara
+        document.body.addEventListener(
+            'click',
+            () => {
+
+                video.play();
+
+            },
+            { once:true }
+        );
+    });
+
+    // =========================
+    // PLAYER ERROR
+    // =========================
 
     player.on(
         mpegts.Events.ERROR,
@@ -612,6 +643,10 @@ function startPlayer(){
             reconnect();
         }
     );
+
+    // =========================
+    // STATISTICS
+    // =========================
 
     player.on(
         mpegts.Events
