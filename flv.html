@@ -6,10 +6,16 @@
 
 <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="
+        width=device-width,
+        initial-scale=1.0,
+        maximum-scale=1.0,
+        user-scalable=no,
+        viewport-fit=cover
+    "
 />
 
-<title>Professional FLV Live Player</title>
+<title>Android FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -25,8 +31,10 @@ html,
 body{
     width:100%;
     height:100%;
-    background:#000;
+    background:black;
     overflow:hidden;
+
+    touch-action:manipulation;
 
     font-family:
         -apple-system,
@@ -36,40 +44,47 @@ body{
 }
 
 .player{
+    position:relative;
+
     width:100%;
     height:100%;
-    position:relative;
+
     background:black;
 }
 
 video{
     width:100%;
     height:100%;
+
     object-fit:contain;
+
     background:black;
 }
 
 /* =========================
-MINIMAL CONTROLS
+MINIMAL PANEL
 ========================= */
 
 .controls{
     position:absolute;
-    left:12px;
-    bottom:12px;
+
+    left:10px;
+    bottom:10px;
+
     z-index:50;
 }
 
 .panel{
-    background:rgba(0,0,0,.30);
+
+    width:290px;
+
+    background:rgba(0,0,0,.28);
 
     backdrop-filter:blur(10px);
 
     border-radius:12px;
 
-    padding:8px 10px;
-
-    width:370px;
+    padding:7px 9px;
 
     border:1px solid rgba(255,255,255,.04);
 }
@@ -81,18 +96,18 @@ MINIMAL CONTROLS
 
     gap:5px;
 
-    font-size:10px;
-
     color:white;
 
-    margin-bottom:6px;
+    font-size:10px;
+
+    margin-bottom:5px;
 }
 
 .liveDot{
     width:6px;
     height:6px;
 
-    background:red;
+    background:#ff2d55;
 
     border-radius:50%;
 }
@@ -102,7 +117,7 @@ MINIMAL CONTROLS
 
     align-items:center;
 
-    gap:8px;
+    gap:7px;
 }
 
 button{
@@ -110,23 +125,21 @@ button{
 
     outline:none;
 
-    background:#151515;
+    background:#141414;
 
     color:white;
 
-    border-radius:8px;
-
     padding:6px 10px;
 
-    font-size:11px;
+    border-radius:8px;
+
+    font-size:10px;
 
     cursor:pointer;
-
-    transition:.2s;
 }
 
 button:hover{
-    background:#202020;
+    background:#1f1f1f;
 }
 
 .volumeWrap{
@@ -140,9 +153,9 @@ button:hover{
 }
 
 .volumeIcon{
-    font-size:14px;
-
     color:white;
+
+    font-size:12px;
 }
 
 #volumeSlider{
@@ -150,25 +163,25 @@ button:hover{
 
     height:2px;
 
-    cursor:pointer;
-
     accent-color:white;
+
+    cursor:pointer;
 }
 
 .stats{
     margin-top:5px;
 
-    font-size:10px;
+    color:#9a9a9a;
 
-    color:#a0a0a0;
+    font-size:9px;
 }
 
 .error{
     margin-top:4px;
 
-    font-size:10px;
+    color:#ff7070;
 
-    color:#ff6b6b;
+    font-size:9px;
 
     display:none;
 }
@@ -180,17 +193,17 @@ FULLSCREEN
 .fullscreen{
     position:absolute;
 
-    right:14px;
-    bottom:14px;
+    right:10px;
+    bottom:10px;
 
-    width:42px;
-    height:42px;
+    width:40px;
+    height:40px;
 
     border:none;
 
     border-radius:12px;
 
-    background:rgba(0,0,0,.35);
+    background:rgba(0,0,0,.28);
 
     backdrop-filter:blur(10px);
 
@@ -198,9 +211,9 @@ FULLSCREEN
 
     font-size:14px;
 
-    cursor:pointer;
-
     z-index:60;
+
+    cursor:pointer;
 }
 
 /* =========================
@@ -212,24 +225,24 @@ LOADER
 
     inset:0;
 
-    background:rgba(0,0,0,.4);
-
     display:flex;
 
     justify-content:center;
 
     align-items:center;
 
+    background:rgba(0,0,0,.4);
+
     z-index:40;
 }
 
 .spinner{
-    width:50px;
-    height:50px;
+    width:46px;
+    height:46px;
 
     border-radius:50%;
 
-    border:3px solid rgba(255,255,255,.15);
+    border:3px solid rgba(255,255,255,.12);
 
     border-top-color:white;
 
@@ -258,40 +271,29 @@ EMPTY
 
     display:flex;
 
+    flex-direction:column;
+
     justify-content:center;
 
     align-items:center;
 
-    flex-direction:column;
-
     color:white;
 
-    z-index:30;
-
     text-align:center;
+
+    z-index:30;
 }
 
 .empty h1{
-    font-size:20px;
+    font-size:18px;
 
-    margin-bottom:10px;
+    margin-bottom:8px;
 }
 
 .empty p{
-    font-size:13px;
+    color:#888;
 
-    color:#999;
-}
-
-@media(max-width:700px){
-
-    .panel{
-        width:300px;
-    }
-
-    button{
-        font-size:10px;
-    }
+    font-size:12px;
 }
 
 </style>
@@ -304,11 +306,13 @@ EMPTY
 
     <video
         id="video"
-        controls
         autoplay
+        controls
         playsinline
         webkit-playsinline
-        x5-playsinline>
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="true"
+        x5-video-orientation="landscape">
     </video>
 
     <!-- EMPTY -->
@@ -322,7 +326,7 @@ EMPTY
         </h1>
 
         <p>
-            flv.html?url=https://example.com/live.flv
+            ?url=https://example.com/live.flv
         </p>
 
     </div>
@@ -365,7 +369,7 @@ EMPTY
 
                 <button id="reloadBtn">
 
-                    Reload Stream
+                    Reload
 
                 </button>
 
@@ -415,32 +419,23 @@ EMPTY
 <script>
 
 // =========================
-// FORCE ANDROID USER AGENT
+// FORCE MOBILE ENVIRONMENT
 // =========================
 
 Object.defineProperty(
     navigator,
     'userAgent',
     {
-        get: function () {
-
-            return 'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
-        }
+        get: () =>
+        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
     }
 );
-
-// =========================
-// FAKE MOBILE DEVICE
-// =========================
 
 Object.defineProperty(
     navigator,
     'platform',
     {
-        get: function () {
-
-            return 'Android';
-        }
+        get: () => 'Android'
     }
 );
 
@@ -448,10 +443,7 @@ Object.defineProperty(
     navigator,
     'maxTouchPoints',
     {
-        get: function () {
-
-            return 5;
-        }
+        get: () => 5
     }
 );
 
@@ -460,28 +452,44 @@ Object.defineProperty(
 // =========================
 
 const video =
-    document.getElementById('video');
+    document.getElementById(
+        'video'
+    );
 
 const loader =
-    document.getElementById('loader');
+    document.getElementById(
+        'loader'
+    );
 
 const errorBox =
-    document.getElementById('errorBox');
-
-const fullscreenBtn =
-    document.getElementById('fullscreenBtn');
-
-const reloadBtn =
-    document.getElementById('reloadBtn');
+    document.getElementById(
+        'errorBox'
+    );
 
 const statsBox =
-    document.getElementById('stats');
+    document.getElementById(
+        'stats'
+    );
 
-const emptyBox =
-    document.getElementById('emptyBox');
+const reloadBtn =
+    document.getElementById(
+        'reloadBtn'
+    );
+
+const fullscreenBtn =
+    document.getElementById(
+        'fullscreenBtn'
+    );
 
 const volumeSlider =
-    document.getElementById('volumeSlider');
+    document.getElementById(
+        'volumeSlider'
+    );
+
+const emptyBox =
+    document.getElementById(
+        'emptyBox'
+    );
 
 // =========================
 // PLAYER STATE
@@ -489,12 +497,12 @@ const volumeSlider =
 
 let player = null;
 
-let reconnectTimer = null;
-
 let reconnectCount = 0;
 
+let reconnectTimer = null;
+
 // =========================
-// GET STREAM URL
+// GET URL
 // =========================
 
 function getRawUrl(){
@@ -520,13 +528,12 @@ const rawUrl =
 
 let currentUrl = null;
 
-if(
-    rawUrl &&
-    rawUrl.trim() !== ''
-){
+if(rawUrl){
 
     currentUrl =
-        decodeURIComponent(rawUrl);
+        decodeURIComponent(
+            rawUrl
+        );
 }
 
 // =========================
@@ -535,16 +542,20 @@ if(
 
 function showLoader(){
 
-    loader.classList.remove('hidden');
+    loader.classList.remove(
+        'hidden'
+    );
 }
 
 function hideLoader(){
 
-    loader.classList.add('hidden');
+    loader.classList.add(
+        'hidden'
+    );
 }
 
 // =========================
-// DESTROY PLAYER
+// DESTROY
 // =========================
 
 function destroyPlayer(){
@@ -564,10 +575,7 @@ function destroyPlayer(){
             player = null;
         }
 
-    }catch(err){
-
-        console.warn(err);
-    }
+    }catch(e){}
 }
 
 // =========================
@@ -586,25 +594,25 @@ function reconnect(){
     errorBox.style.display =
         'block';
 
-    const delay = Math.min(
-        10000,
-        1000 * (
-            2 ** reconnectCount
-        )
-    );
-
     reconnectCount++;
+
+    const delay =
+        Math.min(
+            10000,
+            1000 * (
+                2 ** reconnectCount
+            )
+        );
 
     clearTimeout(
         reconnectTimer
     );
 
     reconnectTimer =
-        setTimeout(() => {
-
-            startPlayer();
-
-        }, delay);
+        setTimeout(
+            startPlayer,
+            delay
+        );
 }
 
 // =========================
@@ -639,15 +647,6 @@ function startPlayer(){
         return;
     }
 
-    if(
-        !mpegts
-            .getFeatureList()
-            .mseLivePlayback
-    ){
-
-        return;
-    }
-
     player =
         mpegts.createPlayer({
 
@@ -663,9 +662,9 @@ function startPlayer(){
 
             lazyLoad:false,
 
-            liveBufferLatencyChasing:true,
-
             liveSync:true,
+
+            liveBufferLatencyChasing:true,
 
             autoCleanupSourceBuffer:true
         });
@@ -686,57 +685,28 @@ function startPlayer(){
         volumeSlider.value;
 
     // =========================
-    // AUTOPLAY FIX
+    // AUTOPLAY
     // =========================
 
-    video.autoplay = true;
+    const tryPlay = () => {
 
-    const playPromise =
-        video.play();
+        video.play()
+        .catch(() => {});
+    };
 
-    if(playPromise !== undefined){
+    tryPlay();
 
-        playPromise
-        .then(() => {
+    document.addEventListener(
+        'touchstart',
+        tryPlay,
+        { once:true }
+    );
 
-            console.log(
-                'Autoplay success'
-            );
-
-        })
-        .catch(() => {
-
-            console.log(
-                'Autoplay blocked'
-            );
-
-            const forcePlay = () => {
-
-                video.play()
-                .catch(() => {});
-
-                document.removeEventListener(
-                    'touchstart',
-                    forcePlay
-                );
-
-                document.removeEventListener(
-                    'click',
-                    forcePlay
-                );
-            };
-
-            document.addEventListener(
-                'touchstart',
-                forcePlay
-            );
-
-            document.addEventListener(
-                'click',
-                forcePlay
-            );
-        });
-    }
+    document.addEventListener(
+        'click',
+        tryPlay,
+        { once:true }
+    );
 
     // =========================
     // ERROR
@@ -744,10 +714,7 @@ function startPlayer(){
 
     player.on(
         mpegts.Events.ERROR,
-        () => {
-
-            reconnect();
-        }
+        reconnect
     );
 
     // =========================
@@ -758,10 +725,9 @@ function startPlayer(){
         mpegts.Events
             .STATISTICS_INFO,
 
-        (stats) => {
+        stats => {
 
             statsBox.innerHTML = `
-                Speed:
                 ${stats.speed} KB/s
                 |
                 ${stats.loaderType}
@@ -771,7 +737,7 @@ function startPlayer(){
 }
 
 // =========================
-// VIDEO EVENTS
+// EVENTS
 // =========================
 
 video.addEventListener(
@@ -789,10 +755,7 @@ video.addEventListener(
 
 video.addEventListener(
     'waiting',
-    () => {
-
-        showLoader();
-    }
+    showLoader
 );
 
 video.addEventListener(
@@ -836,26 +799,25 @@ volumeSlider.addEventListener(
 );
 
 // =========================
-// FULLSCREEN + LANDSCAPE
+// FULLSCREEN LANDSCAPE
 // =========================
 
 fullscreenBtn.addEventListener(
     'click',
     async () => {
 
-        const player =
+        const playerWrap =
             document.querySelector(
                 '.player'
             );
 
         if(
-            !document.fullscreenElement
+            !document
+                .fullscreenElement
         ){
 
-            await player
+            await playerWrap
                 .requestFullscreen();
-
-            // FORCE LANDSCAPE
 
             if(
                 screen.orientation &&
@@ -863,7 +825,9 @@ fullscreenBtn.addEventListener(
             ){
 
                 screen.orientation
-                    .lock('landscape')
+                    .lock(
+                        'landscape'
+                    )
                     .catch(() => {});
             }
 
@@ -885,20 +849,15 @@ fullscreenBtn.addEventListener(
 );
 
 // =========================
-// KEEP PLAYING BACKGROUND
+// KEEP PLAYING
 // =========================
 
 document.addEventListener(
     'visibilitychange',
     () => {
 
-        if(
-            currentUrl
-        ){
-
-            video.play()
-            .catch(() => {});
-        }
+        video.play()
+        .catch(() => {});
     }
 );
 
