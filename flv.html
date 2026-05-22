@@ -22,123 +22,36 @@
 }
 
 html,body{
-
     width:100%;
     height:100%;
-
     background:#050505;
-
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         Roboto,
         sans-serif;
-
     overflow:hidden;
 }
 
 body{
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
 }
 
 .player{
-
     width:100%;
     height:100%;
-
     position:relative;
-
     background:black;
 }
 
 video{
-
     width:100%;
     height:100%;
-
     object-fit:contain;
-
     background:black;
-}
-
-/* =========================
-TOPBAR
-========================= */
-
-.topbar{
-
-    position:absolute;
-
-    top:14px;
-    left:14px;
-    right:14px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    z-index:50;
-}
-
-.live{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:8px;
-
-    background:rgba(0,0,0,.55);
-
-    backdrop-filter:blur(10px);
-
-    padding:10px 14px;
-
-    border-radius:999px;
-
-    color:white;
-
-    font-size:13px;
-
-    font-weight:700;
-}
-
-.dot{
-
-    width:10px;
-    height:10px;
-
-    border-radius:50%;
-
-    background:#ff2d55;
-
-    animation:pulse 1s infinite;
-}
-
-@keyframes pulse{
-
-    0%{
-        transform:scale(.8);
-        opacity:.6;
-    }
-
-    50%{
-        transform:scale(1.2);
-        opacity:1;
-    }
-
-    100%{
-        transform:scale(.8);
-        opacity:.6;
-    }
 }
 
 /* =========================
@@ -146,114 +59,71 @@ BOTTOM PANEL
 ========================= */
 
 .controls{
-
     position:absolute;
-
     left:14px;
     right:14px;
     bottom:14px;
-
     z-index:50;
 }
 
 .panel{
-
     background:rgba(0,0,0,.55);
-
     backdrop-filter:blur(14px);
-
-    border-radius:18px;
-
-    padding:14px;
-
+    border-radius:22px;
+    padding:18px;
     color:white;
+    border:1px solid rgba(255,255,255,.08);
 }
 
 .status{
-
-    font-size:13px;
-
-    color:#b3b3b3;
-
-    margin-bottom:12px;
-
+    font-size:15px;
+    color:#d1d1d1;
+    margin-bottom:16px;
     word-break:break-all;
 }
 
 .row{
-
     display:flex;
-
     gap:10px;
 }
 
-button,select{
-
-    border:none;
-
-    outline:none;
-
-    background:#18181b;
-
-    color:white;
-
-    border-radius:12px;
-
-    padding:12px;
-
-    font-size:14px;
-}
-
 button{
-
+    border:none;
+    outline:none;
+    background:#18181b;
+    color:white;
+    border-radius:14px;
+    padding:14px 20px;
+    font-size:15px;
     cursor:pointer;
+    transition:.2s;
 }
 
 button:hover{
-
     background:#232327;
 }
 
-select{
-
-    width:120px;
-}
-
 .loader{
-
     position:absolute;
-
     inset:0;
-
     background:rgba(0,0,0,.45);
-
     backdrop-filter:blur(3px);
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     z-index:40;
 }
 
 .spinner{
-
     width:60px;
     height:60px;
-
     border-radius:50%;
-
     border:4px solid rgba(255,255,255,.12);
-
     border-top-color:white;
-
     animation:spin .8s linear infinite;
 }
 
 @keyframes spin{
-
     to{
         transform:rotate(360deg);
     }
@@ -264,105 +134,71 @@ select{
 }
 
 .error{
-
     color:#ff5b5b;
-
     margin-top:12px;
-
     font-size:13px;
-
     display:none;
 }
 
 .fullscreen{
-
     position:absolute;
-
-    right:14px;
-    bottom:140px;
-
-    width:48px;
-    height:48px;
-
+    right:24px;
+    bottom:150px;
+    width:56px;
+    height:56px;
     border:none;
-
-    border-radius:14px;
-
+    border-radius:18px;
     background:rgba(0,0,0,.55);
-
     backdrop-filter:blur(10px);
-
     color:white;
-
     z-index:60;
-
     cursor:pointer;
+    font-size:20px;
+    border:1px solid rgba(255,255,255,.08);
 }
 
 .stats{
-
-    margin-top:10px;
-
-    font-size:12px;
-
-    color:#888;
+    margin-top:14px;
+    font-size:13px;
+    color:#8d8d8d;
 }
 
 .empty{
-
     position:absolute;
-
     inset:0;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     flex-direction:column;
-
     color:white;
-
     z-index:30;
-
     text-align:center;
-
     padding:20px;
 }
 
 .empty h1{
-
     font-size:22px;
-
     margin-bottom:10px;
 }
 
 .empty p{
-
     font-size:14px;
-
     color:#999;
-
     line-height:1.6;
-
     word-break:break-all;
 }
 
 @media(max-width:700px){
 
     .controls{
-
         left:10px;
         right:10px;
         bottom:10px;
     }
 
-    .topbar{
-
-        left:10px;
-        right:10px;
-        top:10px;
+    .fullscreen{
+        right:14px;
+        bottom:140px;
     }
 }
 
@@ -397,7 +233,7 @@ select{
             Example:
             <br><br>
 
-            flv.html?url=https://example.com/live.flv?token=abc&sid=123
+            flv.html?url=https://example.com/live.flv
         </p>
 
     </div>
@@ -408,43 +244,6 @@ select{
         id="loader">
 
         <div class="spinner"></div>
-
-    </div>
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-
-        <div class="live">
-
-            <div class="dot"></div>
-
-            LIVE
-
-        </div>
-
-        <select id="quality">
-
-            <option value="1080">
-                1080p
-            </option>
-
-            <option
-                value="720"
-                selected>
-
-                720p
-
-            </option>
-
-            <option value="480">
-                480p
-            </option>
-
-            <option value="360">
-                360p
-            </option>
-
-        </select>
 
     </div>
 
@@ -519,9 +318,6 @@ const loader =
 const errorBox =
     document.getElementById('errorBox');
 
-const qualitySelect =
-    document.getElementById('quality');
-
 const fullscreenBtn =
     document.getElementById('fullscreenBtn');
 
@@ -585,18 +381,9 @@ if(
     currentUrl =
         decodeURIComponent(rawUrl);
 
-    console.log(
-        'FULL STREAM URL:',
-        currentUrl
-    );
-
 }else{
 
     currentUrl = null;
-
-    console.warn(
-        'No stream URL'
-    );
 }
 
 // =========================
@@ -662,10 +449,6 @@ function resetWatchdog(){
     watchdogTimer =
         setTimeout(() => {
 
-            console.warn(
-                'Watchdog timeout'
-            );
-
             reconnect();
 
         }, 15000);
@@ -718,10 +501,6 @@ function reconnect(){
 
 function startPlayer(){
 
-    // =========================
-    // EMPTY URL
-    // =========================
-
     if(!currentUrl){
 
         destroyPlayer();
@@ -744,10 +523,6 @@ function startPlayer(){
         return;
     }
 
-    // =========================
-    // HAS URL
-    // =========================
-
     emptyBox.style.display =
         'none';
 
@@ -762,15 +537,6 @@ function startPlayer(){
     errorBox.style.display =
         'none';
 
-    console.log(
-        'STREAM:',
-        currentUrl
-    );
-
-    // =========================
-    // CHECK MPEGTS
-    // =========================
-
     if(
         typeof mpegts ===
         'undefined'
@@ -782,10 +548,6 @@ function startPlayer(){
 
         return;
     }
-
-    // =========================
-    // CHECK BROWSER
-    // =========================
 
     if(
         !mpegts
@@ -799,10 +561,6 @@ function startPlayer(){
 
         return;
     }
-
-    // =========================
-    // CREATE PLAYER
-    // =========================
 
     player =
         mpegts.createPlayer({
@@ -842,49 +600,18 @@ function startPlayer(){
 
     player.load();
 
-    // =========================
-    // AUTOPLAY
-    // =========================
-
     video.muted = true;
 
     video.play()
-        .then(() => {
-
-            console.log(
-                'Autoplay success'
-            );
-
-        })
-        .catch(err => {
-
-            console.warn(
-                'Autoplay blocked',
-                err
-            );
-        });
-
-    // =========================
-    // PLAYER ERROR
-    // =========================
+        .catch(() => {});
 
     player.on(
         mpegts.Events.ERROR,
-        (type, detail) => {
-
-            console.error(
-                'FLV ERROR',
-                type,
-                detail
-            );
+        () => {
 
             reconnect();
         }
     );
-
-    // =========================
-    // STATISTICS
-    // =========================
 
     player.on(
         mpegts.Events
@@ -962,20 +689,6 @@ video.addEventListener(
 
 reloadBtn.addEventListener(
     'click',
-    () => {
-
-        reconnectCount = 0;
-
-        startPlayer();
-    }
-);
-
-// =========================
-// QUALITY
-// =========================
-
-qualitySelect.addEventListener(
-    'change',
     () => {
 
         reconnectCount = 0;
