@@ -15,7 +15,7 @@
     "
 />
 
-<title>Huya Proxy FLV Player</title>
+<title>Huya Proxy Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -287,7 +287,7 @@ EMPTY
         </h1>
 
         <p>
-            ?url=https://your-proxy/live
+            ?url=https://gabriel-zum-consultancy-plasma.trycloudflare.com/live
         </p>
 
     </div>
@@ -554,6 +554,13 @@ function startPlayer(){
         return;
     }
 
+    // =========================
+    // FORCE PROXY URL
+    // =========================
+
+    const proxyUrl =
+        currentUrl;
+
     player =
         mpegts.createPlayer({
 
@@ -561,7 +568,7 @@ function startPlayer(){
 
             isLive:true,
 
-            url:currentUrl
+            url:proxyUrl
 
         },{
 
@@ -579,7 +586,19 @@ function startPlayer(){
 
             autoCleanupMaxBackwardDuration:120,
 
-            autoCleanupMinBackwardDuration:60
+            autoCleanupMinBackwardDuration:60,
+
+            headers:{
+
+                'Origin':
+                    'https://www.huya.com',
+
+                'Referer':
+                    'https://www.huya.com/',
+
+                'User-Agent':
+                    navigator.userAgent
+            }
         });
 
     player.attachMediaElement(
@@ -655,7 +674,7 @@ function startPlayer(){
         mpegts.Events
             .STATISTICS_INFO,
 
-        stats => {
+        () => {
 
             statsBox.innerHTML =
                 'LIVE';
@@ -802,7 +821,7 @@ document.addEventListener(
 );
 
 // =========================
-// NETWORK WATCHDOG
+// WATCHDOG
 // =========================
 
 setInterval(() => {
