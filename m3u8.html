@@ -15,9 +15,9 @@
     "
 />
 
-<title>Ultra Minimal HLS Player</title>
+<title>JWPlayer Live</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.jwplayer.com/libraries/IDzF9Zmk.js"></script>
 
 <style>
 
@@ -33,7 +33,7 @@ body{
     width:100%;
     height:100%;
 
-    background:#000;
+    background:black;
 
     overflow:hidden;
 
@@ -54,14 +54,10 @@ body{
     background:black;
 }
 
-video{
+#jwplayerDiv{
 
     width:100%;
     height:100%;
-
-    object-fit:contain;
-
-    background:black;
 }
 
 /* =========================
@@ -75,7 +71,7 @@ MINIMAL CONTROLS
     left:10px;
     bottom:10px;
 
-    z-index:50;
+    z-index:9999;
 }
 
 .panel{
@@ -113,8 +109,6 @@ button{
     font-size:13px;
 
     cursor:pointer;
-
-    transition:.2s;
 }
 
 button:hover{
@@ -170,7 +164,7 @@ FULLSCREEN
 
     cursor:pointer;
 
-    z-index:60;
+    z-index:9999;
 }
 
 /* =========================
@@ -191,7 +185,7 @@ LOADER
 
     background:rgba(0,0,0,.30);
 
-    z-index:40;
+    z-index:9998;
 }
 
 .spinner{
@@ -241,7 +235,7 @@ EMPTY
 
     text-align:center;
 
-    z-index:30;
+    z-index:9997;
 }
 
 .empty h1{
@@ -266,18 +260,9 @@ EMPTY
 
 <div class="player">
 
-    <video
-        id="video"
-        autoplay
-        preload="auto"
-        controls
-        playsinline
-        webkit-playsinline
-        crossorigin="anonymous"
-        x5-video-player-type="h5"
-        x5-video-player-fullscreen="true"
-        x5-video-orientation="landscape">
-    </video>
+    <!-- JWPLAYER -->
+
+    <div id="jwplayerDiv"></div>
 
     <!-- EMPTY -->
 
@@ -286,7 +271,7 @@ EMPTY
         id="emptyBox">
 
         <h1>
-            No HLS URL
+            No Stream URL
         </h1>
 
         <p>
@@ -331,9 +316,9 @@ EMPTY
                 type="range"
                 id="volumeSlider"
                 min="0"
-                max="1"
-                step="0.01"
-                value="1"
+                max="100"
+                step="1"
+                value="100"
             >
 
             <div
@@ -353,7 +338,7 @@ EMPTY
 <script>
 
 // =========================
-// FORCE MOBILE
+// MOBILE SPOOF
 // =========================
 
 Object.defineProperty(
@@ -368,11 +353,6 @@ Object.defineProperty(
 // =========================
 // ELEMENT
 // =========================
-
-const video =
-    document.getElementById(
-        'video'
-    );
 
 const loader =
     document.getElementById(
@@ -405,10 +385,8 @@ const emptyBox =
     );
 
 // =========================
-// PLAYER
+// PLAYER STATE
 // =========================
-
-let hls = null;
 
 let reconnectCount = 0;
 
@@ -468,35 +446,10 @@ function hideLoader(){
 }
 
 // =========================
-// DESTROY
-// =========================
-
-function destroyPlayer(){
-
-    try{
-
-        if(hls){
-
-            hls.destroy();
-
-            hls = null;
-        }
-
-    }catch(e){}
-}
-
-// =========================
 // RECONNECT
 // =========================
 
 function reconnect(){
-
-    if(!currentUrl){
-
-        return;
-    }
-
-    destroyPlayer();
 
     reconnectCount++;
 
@@ -523,38 +476,6 @@ function reconnect(){
 }
 
 // =========================
-// PLAY VIDEO
-// =========================
-
-function playVideo(){
-
-    video.muted = false;
-
-    video.volume =
-        volumeSlider.value;
-
-    const tryPlay = () => {
-
-        video.play()
-        .catch(() => {});
-    };
-
-    tryPlay();
-
-    document.addEventListener(
-        'touchstart',
-        tryPlay,
-        { once:true }
-    );
-
-    document.addEventListener(
-        'click',
-        tryPlay,
-        { once:true }
-    );
-}
-
-// =========================
 // START PLAYER
 // =========================
 
@@ -571,154 +492,101 @@ function startPlayer(){
     emptyBox.style.display =
         'none';
 
-    destroyPlayer();
-
     showLoader();
 
-    // =========================
-    // NATIVE HLS
-    // =========================
+    jwplayer(
+        'jwplayerDiv'
+    ).setup({
 
-    if(
-        video.canPlayType(
-            'application/vnd.apple.mpegurl'
-        )
-    ){
+        file:currentUrl,
 
-        video.src =
-            currentUrl;
+        autostart:true,
 
-        playVideo();
+        mute:false,
 
-        return;
-    }
+        volume:100,
 
-    // =========================
-    // HLS.JS
-    // =========================
+        stretching:'uniform',
 
-    if(
-        Hls.isSupported()
-    ){
+        width:'100%',
 
-        hls =
-            new Hls({
+        height:'100%',
 
-                debug:false,
+        primary:'html5',
 
-                enableWorker:true,
+        preload:'auto',
 
-                lowLatencyMode:false,
+        liveTimeout:60,
 
-                liveSyncDurationCount:5,
+        repeat:false,
 
-                liveMaxLatencyDurationCount:10,
+        playbackRateControls:false
+    });
 
-                maxBufferLength:30,
-
-                maxMaxBufferLength:60,
-
-                backBufferLength:90,
-
-                xhrSetup:
-                    function(xhr){
-
-                        xhr.withCredentials =
-                            false;
-
-                        xhr.setRequestHeader(
-                            'X-Requested-With',
-                            'XMLHttpRequest'
-                        );
-                    }
-            });
-
-        hls.loadSource(
-            currentUrl
+    const player =
+        jwplayer(
+            'jwplayerDiv'
         );
 
-        hls.attachMedia(
-            video
-        );
+    // =========================
+    // EVENTS
+    // =========================
 
-        hls.on(
-            Hls.Events.MANIFEST_PARSED,
-            () => {
+    player.on(
+        'ready',
+        () => {
 
-                statsBox.innerHTML =
-                    'LIVE';
+            statsBox.innerHTML =
+                'READY';
+        }
+    );
 
-                playVideo();
-            }
-        );
+    player.on(
+        'play',
+        () => {
 
-        hls.on(
-            Hls.Events.ERROR,
+            hideLoader();
 
-            (event,data) => {
+            reconnectCount = 0;
 
-                console.log(
-                    data
-                );
+            statsBox.innerHTML =
+                'LIVE';
+        }
+    );
 
-                if(
-                    data.fatal
-                ){
+    player.on(
+        'buffer',
+        () => {
 
-                    statsBox.innerHTML =
-                        'ERROR';
+            showLoader();
 
-                    reconnect();
-                }
-            }
-        );
-    }
+            statsBox.innerHTML =
+                'BUFFER';
+        }
+    );
+
+    player.on(
+        'error',
+        () => {
+
+            statsBox.innerHTML =
+                'ERROR';
+
+            reconnect();
+        }
+    );
+
+    player.on(
+        'setupError',
+        () => {
+
+            statsBox.innerHTML =
+                'SETUP';
+
+            reconnect();
+        }
+    );
 }
-
-// =========================
-// VIDEO EVENTS
-// =========================
-
-video.addEventListener(
-    'playing',
-    () => {
-
-        hideLoader();
-
-        reconnectCount = 0;
-
-        statsBox.innerHTML =
-            'LIVE';
-    }
-);
-
-video.addEventListener(
-    'waiting',
-    () => {
-
-        showLoader();
-
-        statsBox.innerHTML =
-            'BUFFER';
-
-        setTimeout(() => {
-
-            video.play()
-            .catch(() => {});
-
-        }, 700);
-    }
-);
-
-video.addEventListener(
-    'stalled',
-    reconnect
-);
-
-video.addEventListener(
-    'error',
-    reconnect
-);
 
 // =========================
 // RELOAD
@@ -742,11 +610,13 @@ volumeSlider.addEventListener(
     'input',
     () => {
 
-        video.volume =
-            volumeSlider.value;
-
-        video.muted =
-            volumeSlider.value == 0;
+        jwplayer(
+            'jwplayerDiv'
+        ).setVolume(
+            parseInt(
+                volumeSlider.value
+            )
+        );
     }
 );
 
@@ -787,29 +657,7 @@ fullscreenBtn.addEventListener(
 
             document
                 .exitFullscreen();
-
-            if(
-                screen.orientation &&
-                screen.orientation.unlock
-            ){
-
-                screen.orientation
-                    .unlock();
-            }
         }
-    }
-);
-
-// =========================
-// KEEP PLAYING
-// =========================
-
-document.addEventListener(
-    'visibilitychange',
-    () => {
-
-        video.play()
-        .catch(() => {});
     }
 );
 
@@ -819,14 +667,22 @@ document.addEventListener(
 
 setInterval(() => {
 
+    const player =
+        jwplayer(
+            'jwplayerDiv'
+        );
+
+    const state =
+        player.getState();
+
     if(
-        video.readyState <= 2
+        state !== 'playing'
     ){
 
         reconnect();
     }
 
-}, 20000);
+}, 25000);
 
 // =========================
 // AUTO START
