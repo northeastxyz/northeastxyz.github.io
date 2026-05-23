@@ -139,7 +139,7 @@ button:hover{
 
     color:rgba(255,255,255,.65);
 
-    min-width:45px;
+    min-width:55px;
 }
 
 /* =========================
@@ -273,6 +273,7 @@ EMPTY
         controls
         playsinline
         webkit-playsinline
+        crossorigin="anonymous"
         x5-video-player-type="h5"
         x5-video-player-fullscreen="true"
         x5-video-orientation="landscape">
@@ -339,7 +340,7 @@ EMPTY
                 class="stats"
                 id="stats">
 
-                LIVE
+                READY
 
             </div>
 
@@ -352,7 +353,7 @@ EMPTY
 <script>
 
 // =========================
-// MOBILE SPOOF
+// FORCE MOBILE
 // =========================
 
 Object.defineProperty(
@@ -404,7 +405,7 @@ const emptyBox =
     );
 
 // =========================
-// PLAYER STATE
+// PLAYER
 // =========================
 
 let hls = null;
@@ -467,7 +468,7 @@ function hideLoader(){
 }
 
 // =========================
-// DESTROY PLAYER
+// DESTROY
 // =========================
 
 function destroyPlayer(){
@@ -522,98 +523,6 @@ function reconnect(){
 }
 
 // =========================
-// START PLAYER
-// =========================
-
-function startPlayer(){
-
-    if(!currentUrl){
-
-        emptyBox.style.display =
-            'flex';
-
-        return;
-    }
-
-    emptyBox.style.display =
-        'none';
-
-    destroyPlayer();
-
-    showLoader();
-
-    // =========================
-    // HLS.JS
-    // =========================
-
-    if(
-        Hls.isSupported()
-    ){
-
-        hls =
-            new Hls({
-
-                lowLatencyMode:true,
-
-                backBufferLength:90,
-
-                maxBufferLength:30,
-
-                maxMaxBufferLength:60,
-
-                liveSyncDurationCount:3,
-
-                liveMaxLatencyDurationCount:10,
-
-                enableWorker:true
-            });
-
-        hls.loadSource(
-            currentUrl
-        );
-
-        hls.attachMedia(
-            video
-        );
-
-        hls.on(
-            Hls.Events.MANIFEST_PARSED,
-            () => {
-
-                playVideo();
-            }
-        );
-
-        hls.on(
-            Hls.Events.ERROR,
-
-            (event,data) => {
-
-                if(
-                    data.fatal
-                ){
-
-                    reconnect();
-                }
-            }
-        );
-
-    }else if(
-        video.canPlayType(
-            'application/vnd.apple.mpegurl'
-        )
-    ){
-
-        // SAFARI / IOS
-
-        video.src =
-            currentUrl;
-
-        playVideo();
-    }
-}
-
-// =========================
 // PLAY VIDEO
 // =========================
 
@@ -643,9 +552,127 @@ function playVideo(){
         tryPlay,
         { once:true }
     );
+}
 
-    statsBox.innerHTML =
-        'LIVE';
+// =========================
+// START PLAYER
+// =========================
+
+function startPlayer(){
+
+    if(!currentUrl){
+
+        emptyBox.style.display =
+            'flex';
+
+        return;
+    }
+
+    emptyBox.style.display =
+        'none';
+
+    destroyPlayer();
+
+    showLoader();
+
+    // =========================
+    // NATIVE HLS
+    // =========================
+
+    if(
+        video.canPlayType(
+            'application/vnd.apple.mpegurl'
+        )
+    ){
+
+        video.src =
+            currentUrl;
+
+        playVideo();
+
+        return;
+    }
+
+    // =========================
+    // HLS.JS
+    // =========================
+
+    if(
+        Hls.isSupported()
+    ){
+
+        hls =
+            new Hls({
+
+                debug:false,
+
+                enableWorker:true,
+
+                lowLatencyMode:false,
+
+                liveSyncDurationCount:5,
+
+                liveMaxLatencyDurationCount:10,
+
+                maxBufferLength:30,
+
+                maxMaxBufferLength:60,
+
+                backBufferLength:90,
+
+                xhrSetup:
+                    function(xhr){
+
+                        xhr.withCredentials =
+                            false;
+
+                        xhr.setRequestHeader(
+                            'X-Requested-With',
+                            'XMLHttpRequest'
+                        );
+                    }
+            });
+
+        hls.loadSource(
+            currentUrl
+        );
+
+        hls.attachMedia(
+            video
+        );
+
+        hls.on(
+            Hls.Events.MANIFEST_PARSED,
+            () => {
+
+                statsBox.innerHTML =
+                    'LIVE';
+
+                playVideo();
+            }
+        );
+
+        hls.on(
+            Hls.Events.ERROR,
+
+            (event,data) => {
+
+                console.log(
+                    data
+                );
+
+                if(
+                    data.fatal
+                ){
+
+                    statsBox.innerHTML =
+                        'ERROR';
+
+                    reconnect();
+                }
+            }
+        );
+    }
 }
 
 // =========================
@@ -724,7 +751,7 @@ volumeSlider.addEventListener(
 );
 
 // =========================
-// FULLSCREEN LANDSCAPE
+// FULLSCREEN
 // =========================
 
 fullscreenBtn.addEventListener(
