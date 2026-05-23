@@ -15,7 +15,9 @@
     "
 />
 
-<title>Hybrid ExoPlayer UI</title>
+<title>FLV.js Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/flv.js/dist/flv.min.js"></script>
 
 <style>
 
@@ -27,12 +29,9 @@
 
 html,
 body{
-
     width:100%;
     height:100%;
-
     background:black;
-
     overflow:hidden;
 
     font-family:
@@ -43,7 +42,6 @@ body{
 }
 
 .player{
-
     position:relative;
 
     width:100%;
@@ -52,18 +50,11 @@ body{
     background:black;
 }
 
-/* =========================
-NATIVE EXOPLAYER SURFACE
-========================= */
-
-#nativePlayer{
-
-    position:absolute;
-
-    inset:0;
-
+video{
     width:100%;
     height:100%;
+
+    object-fit:contain;
 
     background:black;
 }
@@ -79,7 +70,7 @@ MINIMAL CONTROLS
     left:10px;
     bottom:10px;
 
-    z-index:9999;
+    z-index:50;
 }
 
 .panel{
@@ -119,11 +110,6 @@ button{
     cursor:pointer;
 }
 
-button:hover{
-
-    background:rgba(255,255,255,.14);
-}
-
 #volumeSlider{
 
     width:70px;
@@ -140,8 +126,6 @@ button:hover{
     font-size:9px;
 
     color:rgba(255,255,255,.65);
-
-    min-width:40px;
 }
 
 /* =========================
@@ -149,7 +133,6 @@ FULLSCREEN
 ========================= */
 
 .fullscreen{
-
     position:absolute;
 
     right:10px;
@@ -172,7 +155,7 @@ FULLSCREEN
 
     cursor:pointer;
 
-    z-index:9999;
+    z-index:60;
 }
 
 /* =========================
@@ -180,7 +163,6 @@ LOADER
 ========================= */
 
 .loader{
-
     position:absolute;
 
     inset:0;
@@ -193,11 +175,10 @@ LOADER
 
     background:rgba(0,0,0,.35);
 
-    z-index:9998;
+    z-index:40;
 }
 
 .spinner{
-
     width:42px;
     height:42px;
 
@@ -221,45 +202,6 @@ LOADER
     display:none !important;
 }
 
-/* =========================
-EMPTY
-========================= */
-
-.empty{
-
-    position:absolute;
-
-    inset:0;
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    align-items:center;
-
-    color:white;
-
-    text-align:center;
-
-    z-index:9997;
-}
-
-.empty h1{
-
-    font-size:18px;
-
-    margin-bottom:8px;
-}
-
-.empty p{
-
-    color:#888;
-
-    font-size:12px;
-}
-
 </style>
 
 </head>
@@ -268,25 +210,14 @@ EMPTY
 
 <div class="player">
 
-    <!-- EXOPLAYER SURFACE -->
-
-    <div id="nativePlayer"></div>
-
-    <!-- EMPTY -->
-
-    <div
-        class="empty"
-        id="emptyBox">
-
-        <h1>
-            No Stream URL
-        </h1>
-
-        <p>
-            ?url=https://example.com/live.flv
-        </p>
-
-    </div>
+    <video
+        id="video"
+        autoplay
+        preload="auto"
+        controls
+        playsinline
+        webkit-playsinline>
+    </video>
 
     <!-- LOADER -->
 
@@ -345,21 +276,13 @@ EMPTY
 <script>
 
 // =========================
-// FORCE MOBILE ENVIRONMENT
-// =========================
-
-Object.defineProperty(
-    navigator,
-    'userAgent',
-    {
-        get: () =>
-        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
-    }
-);
-
-// =========================
 // ELEMENT
 // =========================
+
+const video =
+    document.getElementById(
+        'video'
+    );
 
 const loader =
     document.getElementById(
@@ -386,13 +309,14 @@ const volumeSlider =
         'volumeSlider'
     );
 
-const emptyBox =
-    document.getElementById(
-        'emptyBox'
-    );
+// =========================
+// PLAYER
+// =========================
+
+let player = null;
 
 // =========================
-// GET STREAM URL
+// GET URL
 // =========================
 
 function getRawUrl(){
@@ -445,63 +369,71 @@ function hideLoader(){
 }
 
 // =========================
-// EXOPLAYER BRIDGE
+// START PLAYER
 // =========================
 
-function playNativeStream(){
+function startPlayer(){
 
     if(!currentUrl){
-
-        emptyBox.style.display =
-            'flex';
 
         return;
     }
 
-    emptyBox.style.display =
-        'none';
+    if(player){
+
+        player.destroy();
+
+        player = null;
+    }
 
     showLoader();
 
-    // =========================
-    // CALL NATIVE ANDROID
-    // =========================
-
     if(
-        window.Android &&
-        Android.playStream
+        flvjs.isSupported()
     ){
 
-        Android.playStream(
-            currentUrl
+        player =
+            flvjs.createPlayer({
+
+                type:'flv',
+
+                url:currentUrl,
+
+                isLive:true
+
+            },{
+
+                enableWorker:true,
+
+                lazyLoad:false,
+
+                stashInitialSize:384,
+
+                autoCleanupSourceBuffer:true
+            });
+
+        player.attachMediaElement(
+            video
         );
 
-        Android.setVolume(
-            parseFloat(
-                volumeSlider.value
-            )
-        );
+        player.load();
 
-        statsBox.innerHTML =
-            'EXOPLAYER';
+        video.volume =
+            volumeSlider.value;
 
-        // READY
+        video.play()
+        .catch(() => {});
 
-        setTimeout(() => {
+        player.on(
+            flvjs.Events.ERROR,
+            () => {
 
-            hideLoader();
+                setTimeout(() => {
 
-        }, 1000);
+                    startPlayer();
 
-    }else{
-
-        // WEB FALLBACK
-
-        statsBox.innerHTML =
-            'WEB MODE';
-
-        console.warn(
-            'Android bridge not detected'
+                }, 3000);
+            }
         );
 
         hideLoader();
@@ -509,15 +441,36 @@ function playNativeStream(){
 }
 
 // =========================
+// VIDEO EVENTS
+// =========================
+
+video.addEventListener(
+    'waiting',
+    () => {
+
+        showLoader();
+
+        setTimeout(() => {
+
+            video.play()
+            .catch(() => {});
+
+        }, 500);
+    }
+);
+
+video.addEventListener(
+    'playing',
+    hideLoader
+);
+
+// =========================
 // RELOAD
 // =========================
 
 reloadBtn.addEventListener(
     'click',
-    () => {
-
-        playNativeStream();
-    }
+    startPlayer
 );
 
 // =========================
@@ -528,17 +481,11 @@ volumeSlider.addEventListener(
     'input',
     () => {
 
-        if(
-            window.Android &&
-            Android.setVolume
-        ){
+        video.volume =
+            volumeSlider.value;
 
-            Android.setVolume(
-                parseFloat(
-                    volumeSlider.value
-                )
-            );
-        }
+        video.muted =
+            volumeSlider.value == 0;
     }
 );
 
@@ -550,17 +497,16 @@ fullscreenBtn.addEventListener(
     'click',
     async () => {
 
-        const player =
+        const wrap =
             document.querySelector(
                 '.player'
             );
 
         if(
-            !document
-                .fullscreenElement
+            !document.fullscreenElement
         ){
 
-            await player
+            await wrap
                 .requestFullscreen();
 
             if(
@@ -575,55 +521,10 @@ fullscreenBtn.addEventListener(
                     .catch(() => {});
             }
 
-            // ANDROID NATIVE FULLSCREEN
-
-            if(
-                window.Android &&
-                Android.enterFullscreen
-            ){
-
-                Android.enterFullscreen();
-            }
-
         }else{
 
             document
                 .exitFullscreen();
-
-            if(
-                screen.orientation &&
-                screen.orientation.unlock
-            ){
-
-                screen.orientation
-                    .unlock();
-            }
-
-            if(
-                window.Android &&
-                Android.exitFullscreen
-            ){
-
-                Android.exitFullscreen();
-            }
-        }
-    }
-);
-
-// =========================
-// PAGE EVENTS
-// =========================
-
-document.addEventListener(
-    'visibilitychange',
-    () => {
-
-        if(
-            window.Android &&
-            Android.resumePlayback
-        ){
-
-            Android.resumePlayback();
         }
     }
 );
@@ -632,7 +533,7 @@ document.addEventListener(
 // AUTO START
 // =========================
 
-playNativeStream();
+startPlayer();
 
 </script>
 
