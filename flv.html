@@ -15,7 +15,7 @@
     "
 />
 
-<title>Huya Signed FLV Player</title>
+<title>Ultra Minimal FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -29,12 +29,9 @@
 
 html,
 body{
-
     width:100%;
     height:100%;
-
-    background:black;
-
+    background:#000;
     overflow:hidden;
 
     font-family:
@@ -45,7 +42,6 @@ body{
 }
 
 .player{
-
     position:relative;
 
     width:100%;
@@ -55,7 +51,6 @@ body{
 }
 
 video{
-
     width:100%;
     height:100%;
 
@@ -116,7 +111,6 @@ button{
 }
 
 button:hover{
-
     background:rgba(255,255,255,.14);
 }
 
@@ -137,7 +131,7 @@ button:hover{
 
     color:rgba(255,255,255,.65);
 
-    min-width:55px;
+    min-width:40px;
 }
 
 /* =========================
@@ -145,7 +139,6 @@ FULLSCREEN
 ========================= */
 
 .fullscreen{
-
     position:absolute;
 
     right:10px;
@@ -176,7 +169,6 @@ LOADER
 ========================= */
 
 .loader{
-
     position:absolute;
 
     inset:0;
@@ -193,7 +185,6 @@ LOADER
 }
 
 .spinner{
-
     width:42px;
     height:42px;
 
@@ -222,7 +213,6 @@ EMPTY
 ========================= */
 
 .empty{
-
     position:absolute;
 
     inset:0;
@@ -243,14 +233,12 @@ EMPTY
 }
 
 .empty h1{
-
     font-size:18px;
 
     margin-bottom:8px;
 }
 
 .empty p{
-
     color:#888;
 
     font-size:12px;
@@ -283,11 +271,11 @@ EMPTY
         id="emptyBox">
 
         <h1>
-            No Room ID
+            No Stream URL
         </h1>
 
         <p>
-            ?id=30805928
+            ?url=https://example.com/live.flv
         </p>
 
     </div>
@@ -337,7 +325,7 @@ EMPTY
                 class="stats"
                 id="stats">
 
-                READY
+                LIVE
 
             </div>
 
@@ -350,7 +338,7 @@ EMPTY
 <script>
 
 // =========================
-// MOBILE SPOOF
+// FORCE MOBILE ENVIRONMENT
 // =========================
 
 Object.defineProperty(
@@ -359,6 +347,22 @@ Object.defineProperty(
     {
         get: () =>
         'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+    }
+);
+
+Object.defineProperty(
+    navigator,
+    'platform',
+    {
+        get: () => 'Android'
+    }
+);
+
+Object.defineProperty(
+    navigator,
+    'maxTouchPoints',
+    {
+        get: () => 5
     }
 );
 
@@ -402,15 +406,6 @@ const emptyBox =
     );
 
 // =========================
-// CONFIG
-// =========================
-
-// GANTI DENGAN API KAMU
-
-const API_BASE =
-'https://your-api-domain.com/huya/';
-
-// =========================
 // PLAYER STATE
 // =========================
 
@@ -421,21 +416,39 @@ let reconnectCount = 0;
 let reconnectTimer = null;
 
 // =========================
-// GET ROOM ID
+// GET URL
 // =========================
 
-function getRoomId(){
+function getRawUrl(){
 
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
+    const href =
+        window.location.href;
 
-    return params.get('id');
+    const index =
+        href.indexOf('?url=');
+
+    if(index === -1){
+
+        return null;
+    }
+
+    return href.substring(
+        index + 5
+    );
 }
 
-const roomId =
-    getRoomId();
+const rawUrl =
+    getRawUrl();
+
+let currentUrl = null;
+
+if(rawUrl){
+
+    currentUrl =
+        decodeURIComponent(
+            rawUrl
+        );
+}
 
 // =========================
 // LOADER
@@ -456,7 +469,7 @@ function hideLoader(){
 }
 
 // =========================
-// DESTROY PLAYER
+// DESTROY
 // =========================
 
 function destroyPlayer(){
@@ -480,58 +493,23 @@ function destroyPlayer(){
 }
 
 // =========================
-// FETCH REAL FLV URL
-// =========================
-
-async function fetchRealFlv(){
-
-    try{
-
-        statsBox.innerHTML =
-            'FETCH';
-
-        const response =
-            await fetch(
-                API_BASE + roomId
-            );
-
-        const data =
-            await response.json();
-
-        if(!data.ok){
-
-            throw new Error(
-                'Failed get url'
-            );
-        }
-
-        return data.url;
-
-    }catch(err){
-
-        statsBox.innerHTML =
-            'ERROR';
-
-        throw err;
-    }
-}
-
-// =========================
 // RECONNECT
 // =========================
 
 function reconnect(){
 
-    reconnectCount++;
+    if(!currentUrl){
 
-    statsBox.innerHTML =
-        'RETRY';
+        return;
+    }
 
     destroyPlayer();
 
+    reconnectCount++;
+
     const delay =
         Math.min(
-            8000,
+            10000,
             1000 * (
                 2 ** reconnectCount
             )
@@ -552,9 +530,9 @@ function reconnect(){
 // START PLAYER
 // =========================
 
-async function startPlayer(){
+function startPlayer(){
 
-    if(!roomId){
+    if(!currentUrl){
 
         emptyBox.style.display =
             'flex';
@@ -565,128 +543,112 @@ async function startPlayer(){
     emptyBox.style.display =
         'none';
 
-    showLoader();
-
     destroyPlayer();
 
-    try{
+    showLoader();
 
-        // =========================
-        // GET SIGNED FLV
-        // =========================
+    if(
+        typeof mpegts ===
+        'undefined'
+    ){
 
-        const realFlv =
-            await fetchRealFlv();
-
-        statsBox.innerHTML =
-            'CONNECT';
-
-        // =========================
-        // CREATE PLAYER
-        // =========================
-
-        player =
-            mpegts.createPlayer({
-
-                type:'flv',
-
-                isLive:true,
-
-                url:realFlv
-
-            },{
-
-                enableWorker:true,
-
-                lazyLoad:false,
-
-                liveSync:false,
-
-                liveBufferLatencyChasing:false,
-
-                stashInitialSize:768,
-
-                autoCleanupSourceBuffer:true,
-
-                autoCleanupMaxBackwardDuration:120,
-
-                autoCleanupMinBackwardDuration:60
-            });
-
-        player.attachMediaElement(
-            video
-        );
-
-        player.load();
-
-        // =========================
-        // AUDIO
-        // =========================
-
-        video.muted = false;
-
-        video.volume =
-            volumeSlider.value;
-
-        // =========================
-        // AUTOPLAY
-        // =========================
-
-        const tryPlay = () => {
-
-            video.play()
-            .catch(() => {});
-        };
-
-        tryPlay();
-
-        document.addEventListener(
-            'touchstart',
-            tryPlay,
-            { once:true }
-        );
-
-        document.addEventListener(
-            'click',
-            tryPlay,
-            { once:true }
-        );
-
-        // =========================
-        // EVENTS
-        // =========================
-
-        player.on(
-            mpegts.Events.ERROR,
-            reconnect
-        );
-
-        player.on(
-            mpegts.Events
-                .LOADING_COMPLETE,
-
-            reconnect
-        );
-
-        player.on(
-            mpegts.Events
-                .STATISTICS_INFO,
-
-            () => {
-
-                statsBox.innerHTML =
-                    'LIVE';
-            }
-        );
-
-    }catch(err){
-
-        reconnect();
+        return;
     }
+
+    player =
+        mpegts.createPlayer({
+
+            type:'flv',
+
+            isLive:true,
+
+            url:currentUrl
+
+        },{
+
+            enableWorker:true,
+
+            lazyLoad:false,
+
+            liveSync:false,
+
+            liveBufferLatencyChasing:false,
+
+            stashInitialSize:384,
+
+            autoCleanupSourceBuffer:true,
+
+            autoCleanupMaxBackwardDuration:90,
+
+            autoCleanupMinBackwardDuration:30
+        });
+
+    player.attachMediaElement(
+        video
+    );
+
+    player.load();
+
+    // =========================
+    // AUDIO
+    // =========================
+
+    video.muted = false;
+
+    video.volume =
+        volumeSlider.value;
+
+    // =========================
+    // AUTOPLAY
+    // =========================
+
+    const tryPlay = () => {
+
+        video.play()
+        .catch(() => {});
+    };
+
+    tryPlay();
+
+    document.addEventListener(
+        'touchstart',
+        tryPlay,
+        { once:true }
+    );
+
+    document.addEventListener(
+        'click',
+        tryPlay,
+        { once:true }
+    );
+
+    // =========================
+    // ERROR
+    // =========================
+
+    player.on(
+        mpegts.Events.ERROR,
+        reconnect
+    );
+
+    // =========================
+    // STATS
+    // =========================
+
+    player.on(
+        mpegts.Events
+            .STATISTICS_INFO,
+
+        stats => {
+
+            statsBox.innerHTML =
+                'LIVE';
+        }
+    );
 }
 
 // =========================
-// VIDEO EVENTS
+// EVENTS
 // =========================
 
 video.addEventListener(
@@ -696,9 +658,6 @@ video.addEventListener(
         hideLoader();
 
         reconnectCount = 0;
-
-        statsBox.innerHTML =
-            'LIVE';
     }
 );
 
@@ -708,15 +667,14 @@ video.addEventListener(
 
         showLoader();
 
-        statsBox.innerHTML =
-            'BUFFER';
+        // AUTO RESUME
 
         setTimeout(() => {
 
             video.play()
             .catch(() => {});
 
-        }, 1000);
+        }, 500);
     }
 );
 
@@ -761,7 +719,7 @@ volumeSlider.addEventListener(
 );
 
 // =========================
-// FULLSCREEN
+// FULLSCREEN LANDSCAPE
 // =========================
 
 fullscreenBtn.addEventListener(
@@ -822,21 +780,6 @@ document.addEventListener(
         .catch(() => {});
     }
 );
-
-// =========================
-// WATCHDOG
-// =========================
-
-setInterval(() => {
-
-    if(
-        video.readyState < 2
-    ){
-
-        reconnect();
-    }
-
-}, 15000);
 
 // =========================
 // AUTO START
