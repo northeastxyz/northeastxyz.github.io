@@ -75,7 +75,7 @@ MINIMAL CONTROLS
 
 .panel{
 
-    background:rgba(0,0,0,.18);
+    background:rgba(0,0,0,.16);
 
     backdrop-filter:blur(6px);
 
@@ -108,9 +108,12 @@ button{
     font-size:13px;
 
     cursor:pointer;
+
+    transition:.2s;
 }
 
 button:hover{
+
     background:rgba(255,255,255,.14);
 }
 
@@ -131,7 +134,7 @@ button:hover{
 
     color:rgba(255,255,255,.65);
 
-    min-width:40px;
+    min-width:45px;
 }
 
 /* =========================
@@ -139,6 +142,7 @@ FULLSCREEN
 ========================= */
 
 .fullscreen{
+
     position:absolute;
 
     right:10px;
@@ -151,7 +155,7 @@ FULLSCREEN
 
     border-radius:50%;
 
-    background:rgba(0,0,0,.20);
+    background:rgba(0,0,0,.18);
 
     backdrop-filter:blur(8px);
 
@@ -169,6 +173,7 @@ LOADER
 ========================= */
 
 .loader{
+
     position:absolute;
 
     inset:0;
@@ -179,12 +184,13 @@ LOADER
 
     align-items:center;
 
-    background:rgba(0,0,0,.35);
+    background:rgba(0,0,0,.30);
 
     z-index:40;
 }
 
 .spinner{
+
     width:42px;
     height:42px;
 
@@ -213,6 +219,7 @@ EMPTY
 ========================= */
 
 .empty{
+
     position:absolute;
 
     inset:0;
@@ -233,12 +240,14 @@ EMPTY
 }
 
 .empty h1{
+
     font-size:18px;
 
     margin-bottom:8px;
 }
 
 .empty p{
+
     color:#888;
 
     font-size:12px;
@@ -469,7 +478,7 @@ function hideLoader(){
 }
 
 // =========================
-// DESTROY
+// DESTROY PLAYER
 // =========================
 
 function destroyPlayer(){
@@ -507,11 +516,14 @@ function reconnect(){
 
     reconnectCount++;
 
+    statsBox.innerHTML =
+        'RETRY';
+
     const delay =
         Math.min(
-            10000,
-            1000 * (
-                2 ** reconnectCount
+            12000,
+            2000 * (
+                reconnectCount + 1
             )
         );
 
@@ -574,7 +586,9 @@ function startPlayer(){
 
             liveBufferLatencyChasing:false,
 
-            stashInitialSize:384,
+            stashInitialSize:768,
+
+            fixAudioTimestampGap:true,
 
             autoCleanupSourceBuffer:true,
 
@@ -623,7 +637,7 @@ function startPlayer(){
     );
 
     // =========================
-    // ERROR
+    // PLAYER EVENTS
     // =========================
 
     player.on(
@@ -631,15 +645,11 @@ function startPlayer(){
         reconnect
     );
 
-    // =========================
-    // STATS
-    // =========================
-
     player.on(
         mpegts.Events
             .STATISTICS_INFO,
 
-        stats => {
+        () => {
 
             statsBox.innerHTML =
                 'LIVE';
@@ -648,7 +658,7 @@ function startPlayer(){
 }
 
 // =========================
-// EVENTS
+// VIDEO EVENTS
 // =========================
 
 video.addEventListener(
@@ -658,6 +668,9 @@ video.addEventListener(
         hideLoader();
 
         reconnectCount = 0;
+
+        statsBox.innerHTML =
+            'LIVE';
     }
 );
 
@@ -667,14 +680,15 @@ video.addEventListener(
 
         showLoader();
 
-        // AUTO RESUME
+        statsBox.innerHTML =
+            'BUFFER';
 
         setTimeout(() => {
 
             video.play()
             .catch(() => {});
 
-        }, 500);
+        }, 700);
     }
 );
 
@@ -780,6 +794,21 @@ document.addEventListener(
         .catch(() => {});
     }
 );
+
+// =========================
+// WATCHDOG
+// =========================
+
+setInterval(() => {
+
+    if(
+        video.readyState <= 2
+    ){
+
+        reconnect();
+    }
+
+}, 20000);
 
 // =========================
 // AUTO START
