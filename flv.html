@@ -15,9 +15,7 @@
     "
 />
 
-<title>Ultra Minimal FLV Player</title>
-
-<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
+<title>Hybrid ExoPlayer UI</title>
 
 <style>
 
@@ -29,9 +27,12 @@
 
 html,
 body{
+
     width:100%;
     height:100%;
-    background:#000;
+
+    background:black;
+
     overflow:hidden;
 
     font-family:
@@ -42,6 +43,7 @@ body{
 }
 
 .player{
+
     position:relative;
 
     width:100%;
@@ -50,11 +52,18 @@ body{
     background:black;
 }
 
-video{
+/* =========================
+NATIVE EXOPLAYER SURFACE
+========================= */
+
+#nativePlayer{
+
+    position:absolute;
+
+    inset:0;
+
     width:100%;
     height:100%;
-
-    object-fit:contain;
 
     background:black;
 }
@@ -70,7 +79,7 @@ MINIMAL CONTROLS
     left:10px;
     bottom:10px;
 
-    z-index:50;
+    z-index:9999;
 }
 
 .panel{
@@ -111,6 +120,7 @@ button{
 }
 
 button:hover{
+
     background:rgba(255,255,255,.14);
 }
 
@@ -139,6 +149,7 @@ FULLSCREEN
 ========================= */
 
 .fullscreen{
+
     position:absolute;
 
     right:10px;
@@ -161,7 +172,7 @@ FULLSCREEN
 
     cursor:pointer;
 
-    z-index:60;
+    z-index:9999;
 }
 
 /* =========================
@@ -169,6 +180,7 @@ LOADER
 ========================= */
 
 .loader{
+
     position:absolute;
 
     inset:0;
@@ -181,10 +193,11 @@ LOADER
 
     background:rgba(0,0,0,.35);
 
-    z-index:40;
+    z-index:9998;
 }
 
 .spinner{
+
     width:42px;
     height:42px;
 
@@ -213,6 +226,7 @@ EMPTY
 ========================= */
 
 .empty{
+
     position:absolute;
 
     inset:0;
@@ -229,16 +243,18 @@ EMPTY
 
     text-align:center;
 
-    z-index:30;
+    z-index:9997;
 }
 
 .empty h1{
+
     font-size:18px;
 
     margin-bottom:8px;
 }
 
 .empty p{
+
     color:#888;
 
     font-size:12px;
@@ -252,17 +268,9 @@ EMPTY
 
 <div class="player">
 
-    <video
-        id="video"
-        autoplay
-        preload="auto"
-        controls
-        playsinline
-        webkit-playsinline
-        x5-video-player-type="h5"
-        x5-video-player-fullscreen="true"
-        x5-video-orientation="landscape">
-    </video>
+    <!-- EXOPLAYER SURFACE -->
+
+    <div id="nativePlayer"></div>
 
     <!-- EMPTY -->
 
@@ -326,7 +334,6 @@ EMPTY
                 id="stats">
 
                 LIVE
-
             </div>
 
         </div>
@@ -350,30 +357,9 @@ Object.defineProperty(
     }
 );
 
-Object.defineProperty(
-    navigator,
-    'platform',
-    {
-        get: () => 'Android'
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'maxTouchPoints',
-    {
-        get: () => 5
-    }
-);
-
 // =========================
 // ELEMENT
 // =========================
-
-const video =
-    document.getElementById(
-        'video'
-    );
 
 const loader =
     document.getElementById(
@@ -406,17 +392,7 @@ const emptyBox =
     );
 
 // =========================
-// PLAYER STATE
-// =========================
-
-let player = null;
-
-let reconnectCount = 0;
-
-let reconnectTimer = null;
-
-// =========================
-// GET URL
+// GET STREAM URL
 // =========================
 
 function getRawUrl(){
@@ -469,68 +445,10 @@ function hideLoader(){
 }
 
 // =========================
-// DESTROY
+// EXOPLAYER BRIDGE
 // =========================
 
-function destroyPlayer(){
-
-    try{
-
-        if(player){
-
-            player.pause();
-
-            player.unload();
-
-            player.detachMediaElement();
-
-            player.destroy();
-
-            player = null;
-        }
-
-    }catch(e){}
-}
-
-// =========================
-// RECONNECT
-// =========================
-
-function reconnect(){
-
-    if(!currentUrl){
-
-        return;
-    }
-
-    destroyPlayer();
-
-    reconnectCount++;
-
-    const delay =
-        Math.min(
-            10000,
-            1000 * (
-                2 ** reconnectCount
-            )
-        );
-
-    clearTimeout(
-        reconnectTimer
-    );
-
-    reconnectTimer =
-        setTimeout(
-            startPlayer,
-            delay
-        );
-}
-
-// =========================
-// START PLAYER
-// =========================
-
-function startPlayer(){
+function playNativeStream(){
 
     if(!currentUrl){
 
@@ -543,150 +461,52 @@ function startPlayer(){
     emptyBox.style.display =
         'none';
 
-    destroyPlayer();
-
     showLoader();
 
+    // =========================
+    // CALL NATIVE ANDROID
+    // =========================
+
     if(
-        typeof mpegts ===
-        'undefined'
+        window.Android &&
+        Android.playStream
     ){
 
-        return;
-    }
+        Android.playStream(
+            currentUrl
+        );
 
-    player =
-        mpegts.createPlayer({
+        Android.setVolume(
+            parseFloat(
+                volumeSlider.value
+            )
+        );
 
-            type:'flv',
+        statsBox.innerHTML =
+            'EXOPLAYER';
 
-            isLive:true,
-
-            url:currentUrl
-
-        },{
-
-            enableWorker:true,
-
-            lazyLoad:false,
-
-            liveSync:false,
-
-            liveBufferLatencyChasing:false,
-
-            stashInitialSize:384,
-
-            autoCleanupSourceBuffer:true,
-
-            autoCleanupMaxBackwardDuration:90,
-
-            autoCleanupMinBackwardDuration:30
-        });
-
-    player.attachMediaElement(
-        video
-    );
-
-    player.load();
-
-    // =========================
-    // AUDIO
-    // =========================
-
-    video.muted = false;
-
-    video.volume =
-        volumeSlider.value;
-
-    // =========================
-    // AUTOPLAY
-    // =========================
-
-    const tryPlay = () => {
-
-        video.play()
-        .catch(() => {});
-    };
-
-    tryPlay();
-
-    document.addEventListener(
-        'touchstart',
-        tryPlay,
-        { once:true }
-    );
-
-    document.addEventListener(
-        'click',
-        tryPlay,
-        { once:true }
-    );
-
-    // =========================
-    // ERROR
-    // =========================
-
-    player.on(
-        mpegts.Events.ERROR,
-        reconnect
-    );
-
-    // =========================
-    // STATS
-    // =========================
-
-    player.on(
-        mpegts.Events
-            .STATISTICS_INFO,
-
-        stats => {
-
-            statsBox.innerHTML =
-                'LIVE';
-        }
-    );
-}
-
-// =========================
-// EVENTS
-// =========================
-
-video.addEventListener(
-    'playing',
-    () => {
-
-        hideLoader();
-
-        reconnectCount = 0;
-    }
-);
-
-video.addEventListener(
-    'waiting',
-    () => {
-
-        showLoader();
-
-        // AUTO RESUME
+        // READY
 
         setTimeout(() => {
 
-            video.play()
-            .catch(() => {});
+            hideLoader();
 
-        }, 500);
+        }, 1000);
+
+    }else{
+
+        // WEB FALLBACK
+
+        statsBox.innerHTML =
+            'WEB MODE';
+
+        console.warn(
+            'Android bridge not detected'
+        );
+
+        hideLoader();
     }
-);
-
-video.addEventListener(
-    'stalled',
-    reconnect
-);
-
-video.addEventListener(
-    'error',
-    reconnect
-);
+}
 
 // =========================
 // RELOAD
@@ -696,9 +516,7 @@ reloadBtn.addEventListener(
     'click',
     () => {
 
-        reconnectCount = 0;
-
-        startPlayer();
+        playNativeStream();
     }
 );
 
@@ -710,23 +528,29 @@ volumeSlider.addEventListener(
     'input',
     () => {
 
-        video.volume =
-            volumeSlider.value;
+        if(
+            window.Android &&
+            Android.setVolume
+        ){
 
-        video.muted =
-            volumeSlider.value == 0;
+            Android.setVolume(
+                parseFloat(
+                    volumeSlider.value
+                )
+            );
+        }
     }
 );
 
 // =========================
-// FULLSCREEN LANDSCAPE
+// FULLSCREEN
 // =========================
 
 fullscreenBtn.addEventListener(
     'click',
     async () => {
 
-        const playerWrap =
+        const player =
             document.querySelector(
                 '.player'
             );
@@ -736,7 +560,7 @@ fullscreenBtn.addEventListener(
                 .fullscreenElement
         ){
 
-            await playerWrap
+            await player
                 .requestFullscreen();
 
             if(
@@ -749,6 +573,16 @@ fullscreenBtn.addEventListener(
                         'landscape'
                     )
                     .catch(() => {});
+            }
+
+            // ANDROID NATIVE FULLSCREEN
+
+            if(
+                window.Android &&
+                Android.enterFullscreen
+            ){
+
+                Android.enterFullscreen();
             }
 
         }else{
@@ -764,20 +598,33 @@ fullscreenBtn.addEventListener(
                 screen.orientation
                     .unlock();
             }
+
+            if(
+                window.Android &&
+                Android.exitFullscreen
+            ){
+
+                Android.exitFullscreen();
+            }
         }
     }
 );
 
 // =========================
-// KEEP PLAYING
+// PAGE EVENTS
 // =========================
 
 document.addEventListener(
     'visibilitychange',
     () => {
 
-        video.play()
-        .catch(() => {});
+        if(
+            window.Android &&
+            Android.resumePlayback
+        ){
+
+            Android.resumePlayback();
+        }
     }
 );
 
@@ -785,7 +632,7 @@ document.addEventListener(
 // AUTO START
 // =========================
 
-startPlayer();
+playNativeStream();
 
 </script>
 
