@@ -1,13 +1,21 @@
 <!DOCTYPE html>
-<html lang="id">
-
+<html lang="en">
 <head>
 
-<meta charset="UTF-8">
+<meta charset="UTF-8"/>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="
+        width=device-width,
+        initial-scale=1.0,
+        maximum-scale=1.0,
+        user-scalable=no,
+        viewport-fit=cover
+    "
+/>
 
-<title>Universal HLS Proxy Player</title>
+<title>Ultra Minimal HLS Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
@@ -19,41 +27,235 @@
     box-sizing:border-box;
 }
 
+html,
 body{
-    width:100vw;
-    height:100vh;
+
+    width:100%;
+    height:100%;
+
     background:#000;
+
     overflow:hidden;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
 
-#video{
-    width:100vw;
-    height:100vh;
-    background:#000;
+.player{
+
+    position:relative;
+
+    width:100%;
+    height:100%;
+
+    background:black;
+}
+
+video{
+
+    width:100%;
+    height:100%;
+
     object-fit:contain;
+
+    background:black;
 }
 
-#loading{
-    position:absolute;
-    color:#fff;
-    font-family:sans-serif;
-    font-size:14px;
-    z-index:999;
-}
+/* =========================
+MINIMAL CONTROLS
+========================= */
 
-#error{
+.controls{
+
     position:absolute;
-    bottom:10px;
+
     left:10px;
+    bottom:10px;
+
+    z-index:50;
+}
+
+.panel{
+
+    background:rgba(0,0,0,.16);
+
+    backdrop-filter:blur(6px);
+
+    border-radius:999px;
+
+    padding:5px 8px;
+
+    border:1px solid rgba(255,255,255,.03);
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+}
+
+button{
+
+    width:28px;
+    height:28px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.08);
+
+    color:white;
+
+    font-size:13px;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+button:hover{
+
+    background:rgba(255,255,255,.14);
+}
+
+#volumeSlider{
+
+    width:70px;
+
+    height:2px;
+
+    accent-color:white;
+
+    cursor:pointer;
+}
+
+.stats{
+
+    font-size:9px;
+
+    color:rgba(255,255,255,.65);
+
+    min-width:45px;
+}
+
+/* =========================
+FULLSCREEN
+========================= */
+
+.fullscreen{
+
+    position:absolute;
+
     right:10px;
-    color:red;
-    font-family:sans-serif;
+    bottom:10px;
+
+    width:40px;
+    height:40px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:rgba(0,0,0,.18);
+
+    backdrop-filter:blur(8px);
+
+    color:white;
+
+    font-size:14px;
+
+    cursor:pointer;
+
+    z-index:60;
+}
+
+/* =========================
+LOADER
+========================= */
+
+.loader{
+
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:rgba(0,0,0,.30);
+
+    z-index:40;
+}
+
+.spinner{
+
+    width:42px;
+    height:42px;
+
+    border-radius:50%;
+
+    border:3px solid rgba(255,255,255,.12);
+
+    border-top-color:white;
+
+    animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+.hidden{
+    display:none !important;
+}
+
+/* =========================
+EMPTY
+========================= */
+
+.empty{
+
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:white;
+
+    text-align:center;
+
+    z-index:30;
+}
+
+.empty h1{
+
+    font-size:18px;
+
+    margin-bottom:8px;
+}
+
+.empty p{
+
+    color:#888;
+
     font-size:12px;
-    z-index:999;
-    word-break:break-word;
 }
 
 </style>
@@ -62,241 +264,548 @@ body{
 
 <body>
 
-<div id="loading">Loading stream...</div>
+<div class="player">
 
-<div id="error"></div>
+    <video
+        id="video"
+        autoplay
+        preload="auto"
+        controls
+        playsinline
+        webkit-playsinline
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="true"
+        x5-video-orientation="landscape">
+    </video>
 
-<video
-    id="video"
-    controls
-    autoplay
-    muted
-    playsinline
-></video>
+    <!-- EMPTY -->
+
+    <div
+        class="empty"
+        id="emptyBox">
+
+        <h1>
+            No HLS URL
+        </h1>
+
+        <p>
+            ?url=https://example.com/live.m3u8
+        </p>
+
+    </div>
+
+    <!-- LOADER -->
+
+    <div
+        class="loader hidden"
+        id="loader">
+
+        <div class="spinner"></div>
+
+    </div>
+
+    <!-- FULLSCREEN -->
+
+    <button
+        class="fullscreen"
+        id="fullscreenBtn">
+
+        ⛶
+
+    </button>
+
+    <!-- CONTROLS -->
+
+    <div class="controls">
+
+        <div class="panel">
+
+            <button id="reloadBtn">
+
+                ↻
+
+            </button>
+
+            <input
+                type="range"
+                id="volumeSlider"
+                min="0"
+                max="1"
+                step="0.01"
+                value="1"
+            >
+
+            <div
+                class="stats"
+                id="stats">
+
+                LIVE
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 <script>
 
-const video = document.getElementById('video');
+// =========================
+// MOBILE SPOOF
+// =========================
 
-const loading = document.getElementById('loading');
+Object.defineProperty(
+    navigator,
+    'userAgent',
+    {
+        get: () =>
+        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+    }
+);
 
-const errorBox = document.getElementById('error');
+// =========================
+// ELEMENT
+// =========================
 
-function showError(msg){
+const video =
+    document.getElementById(
+        'video'
+    );
 
-    console.error(msg);
+const loader =
+    document.getElementById(
+        'loader'
+    );
 
-    errorBox.innerText = msg;
+const statsBox =
+    document.getElementById(
+        'stats'
+    );
+
+const reloadBtn =
+    document.getElementById(
+        'reloadBtn'
+    );
+
+const fullscreenBtn =
+    document.getElementById(
+        'fullscreenBtn'
+    );
+
+const volumeSlider =
+    document.getElementById(
+        'volumeSlider'
+    );
+
+const emptyBox =
+    document.getElementById(
+        'emptyBox'
+    );
+
+// =========================
+// PLAYER STATE
+// =========================
+
+let hls = null;
+
+let reconnectCount = 0;
+
+let reconnectTimer = null;
+
+// =========================
+// GET URL
+// =========================
+
+function getRawUrl(){
+
+    const href =
+        window.location.href;
+
+    const index =
+        href.indexOf('?url=');
+
+    if(index === -1){
+
+        return null;
+    }
+
+    return href.substring(
+        index + 5
+    );
 }
 
-async function init() {
+const rawUrl =
+    getRawUrl();
 
-    const params = new URLSearchParams(window.location.search);
+let currentUrl = null;
 
-    // =====================================
-    // INPUT URL
-    // =====================================
+if(rawUrl){
 
-    let streamUrl =
-        params.get('m3u8') ||
-        params.get('url');
+    currentUrl =
+        decodeURIComponent(
+            rawUrl
+        );
+}
 
-    if (!streamUrl) {
+// =========================
+// LOADER
+// =========================
 
-        showError('Missing ?m3u8=');
+function showLoader(){
+
+    loader.classList.remove(
+        'hidden'
+    );
+}
+
+function hideLoader(){
+
+    loader.classList.add(
+        'hidden'
+    );
+}
+
+// =========================
+// DESTROY PLAYER
+// =========================
+
+function destroyPlayer(){
+
+    try{
+
+        if(hls){
+
+            hls.destroy();
+
+            hls = null;
+        }
+
+    }catch(e){}
+}
+
+// =========================
+// RECONNECT
+// =========================
+
+function reconnect(){
+
+    if(!currentUrl){
 
         return;
     }
 
-    // =====================================
-    // AUTO PROXY
-    // =====================================
+    destroyPlayer();
 
-    // GANTI dengan proxy kamu sendiri nanti
+    reconnectCount++;
 
-    const proxyPrefix =
-        'http://43.168.176.59/';
+    statsBox.innerHTML =
+        'RETRY';
 
-    // kalau bukan proxy
-    // otomatis lewat proxy
+    const delay =
+        Math.min(
+            12000,
+            2000 * (
+                reconnectCount + 1
+            )
+        );
 
-    if (
-        !streamUrl.includes('43.168.176.59')
-    ){
+    clearTimeout(
+        reconnectTimer
+    );
 
-        streamUrl =
-            proxyPrefix +
-            streamUrl
-                .replace(/^https?:\/\//, '');
+    reconnectTimer =
+        setTimeout(
+            startPlayer,
+            delay
+        );
+}
 
+// =========================
+// START PLAYER
+// =========================
+
+function startPlayer(){
+
+    if(!currentUrl){
+
+        emptyBox.style.display =
+            'flex';
+
+        return;
     }
 
-    console.log('FINAL URL:', streamUrl);
+    emptyBox.style.display =
+        'none';
 
-    // =====================================
-    // Native HLS dulu
-    // =====================================
+    destroyPlayer();
 
-    if (
+    showLoader();
+
+    // =========================
+    // HLS.JS
+    // =========================
+
+    if(
+        Hls.isSupported()
+    ){
+
+        hls =
+            new Hls({
+
+                lowLatencyMode:true,
+
+                backBufferLength:90,
+
+                maxBufferLength:30,
+
+                maxMaxBufferLength:60,
+
+                liveSyncDurationCount:3,
+
+                liveMaxLatencyDurationCount:10,
+
+                enableWorker:true
+            });
+
+        hls.loadSource(
+            currentUrl
+        );
+
+        hls.attachMedia(
+            video
+        );
+
+        hls.on(
+            Hls.Events.MANIFEST_PARSED,
+            () => {
+
+                playVideo();
+            }
+        );
+
+        hls.on(
+            Hls.Events.ERROR,
+
+            (event,data) => {
+
+                if(
+                    data.fatal
+                ){
+
+                    reconnect();
+                }
+            }
+        );
+
+    }else if(
         video.canPlayType(
             'application/vnd.apple.mpegurl'
         )
     ){
 
-        console.log('Using Native HLS');
+        // SAFARI / IOS
 
-        video.src = streamUrl;
+        video.src =
+            currentUrl;
 
-        video.addEventListener(
-            'loadedmetadata',
-            async () => {
-
-                loading.style.display = 'none';
-
-                try {
-
-                    await video.play();
-
-                } catch(e) {
-
-                    console.error(e);
-
-                }
-            }
-        );
-
-        video.addEventListener('error', () => {
-
-            console.log(
-                'Native failed -> HLS.js'
-            );
-
-            startHls(streamUrl);
-
-        });
-
-    } else {
-
-        startHls(streamUrl);
-
+        playVideo();
     }
 }
 
-function startHls(url){
+// =========================
+// PLAY VIDEO
+// =========================
 
-    if (!Hls.isSupported()) {
+function playVideo(){
 
-        showError('HLS not supported');
+    video.muted = false;
 
-        return;
-    }
+    video.volume =
+        volumeSlider.value;
 
-    console.log('Using HLS.js');
+    const tryPlay = () => {
 
-    const hls = new Hls({
+        video.play()
+        .catch(() => {});
+    };
 
-        enableWorker: true,
+    tryPlay();
 
-        lowLatencyMode: false,
-
-        backBufferLength: 30,
-
-        maxBufferLength: 60
-
-    });
-
-    hls.loadSource(url);
-
-    hls.attachMedia(video);
-
-    hls.on(
-        Hls.Events.MANIFEST_PARSED,
-        async function() {
-
-            loading.style.display = 'none';
-
-            try {
-
-                await video.play();
-
-            } catch(e) {
-
-                console.error(e);
-
-            }
-        }
+    document.addEventListener(
+        'touchstart',
+        tryPlay,
+        { once:true }
     );
 
-    hls.on(
-        Hls.Events.ERROR,
-        function(event, data) {
+    document.addEventListener(
+        'click',
+        tryPlay,
+        { once:true }
+    );
 
-            console.error(data);
+    statsBox.innerHTML =
+        'LIVE';
+}
 
-            showError(
-                'HLS Error: ' +
-                data.type +
-                ' | ' +
-                data.details
+// =========================
+// VIDEO EVENTS
+// =========================
+
+video.addEventListener(
+    'playing',
+    () => {
+
+        hideLoader();
+
+        reconnectCount = 0;
+
+        statsBox.innerHTML =
+            'LIVE';
+    }
+);
+
+video.addEventListener(
+    'waiting',
+    () => {
+
+        showLoader();
+
+        statsBox.innerHTML =
+            'BUFFER';
+
+        setTimeout(() => {
+
+            video.play()
+            .catch(() => {});
+
+        }, 700);
+    }
+);
+
+video.addEventListener(
+    'stalled',
+    reconnect
+);
+
+video.addEventListener(
+    'error',
+    reconnect
+);
+
+// =========================
+// RELOAD
+// =========================
+
+reloadBtn.addEventListener(
+    'click',
+    () => {
+
+        reconnectCount = 0;
+
+        startPlayer();
+    }
+);
+
+// =========================
+// VOLUME
+// =========================
+
+volumeSlider.addEventListener(
+    'input',
+    () => {
+
+        video.volume =
+            volumeSlider.value;
+
+        video.muted =
+            volumeSlider.value == 0;
+    }
+);
+
+// =========================
+// FULLSCREEN LANDSCAPE
+// =========================
+
+fullscreenBtn.addEventListener(
+    'click',
+    async () => {
+
+        const playerWrap =
+            document.querySelector(
+                '.player'
             );
 
-            if (data.fatal) {
+        if(
+            !document
+                .fullscreenElement
+        ){
 
-                switch(data.type) {
+            await playerWrap
+                .requestFullscreen();
 
-                    case Hls.ErrorTypes.NETWORK_ERROR:
+            if(
+                screen.orientation &&
+                screen.orientation.lock
+            ){
 
-                        console.log(
-                            'Recover NETWORK_ERROR'
-                        );
+                screen.orientation
+                    .lock(
+                        'landscape'
+                    )
+                    .catch(() => {});
+            }
 
-                        hls.startLoad();
+        }else{
 
-                        break;
+            document
+                .exitFullscreen();
 
-                    case Hls.ErrorTypes.MEDIA_ERROR:
+            if(
+                screen.orientation &&
+                screen.orientation.unlock
+            ){
 
-                        console.log(
-                            'Recover MEDIA_ERROR'
-                        );
-
-                        hls.recoverMediaError();
-
-                        break;
-
-                    default:
-
-                        hls.destroy();
-
-                        break;
-                }
+                screen.orientation
+                    .unlock();
             }
         }
-    );
+    }
+);
 
-    video.addEventListener('playing', () => {
-
-        loading.style.display = 'none';
-
-    });
-
-    video.addEventListener('waiting', () => {
-
-        loading.style.display = 'block';
-
-    });
-
-    video.addEventListener('click', () => {
-
-        video.play().catch(() => {});
-
-    });
-}
+// =========================
+// KEEP PLAYING
+// =========================
 
 document.addEventListener(
-    'DOMContentLoaded',
-    init
+    'visibilitychange',
+    () => {
+
+        video.play()
+        .catch(() => {});
+    }
 );
+
+// =========================
+// WATCHDOG
+// =========================
+
+setInterval(() => {
+
+    if(
+        video.readyState <= 2
+    ){
+
+        reconnect();
+    }
+
+}, 20000);
+
+// =========================
+// AUTO START
+// =========================
+
+startPlayer();
 
 </script>
 
