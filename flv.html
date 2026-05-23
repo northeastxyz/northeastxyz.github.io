@@ -15,7 +15,7 @@
     "
 />
 
-<title>Huya Proxy Player</title>
+<title>Huya Signed FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -137,7 +137,7 @@ button:hover{
 
     color:rgba(255,255,255,.65);
 
-    min-width:40px;
+    min-width:55px;
 }
 
 /* =========================
@@ -283,11 +283,11 @@ EMPTY
         id="emptyBox">
 
         <h1>
-            No Stream URL
+            No Room ID
         </h1>
 
         <p>
-            ?url=https://gabriel-zum-consultancy-plasma.trycloudflare.com/live
+            ?id=30805928
         </p>
 
     </div>
@@ -337,7 +337,7 @@ EMPTY
                 class="stats"
                 id="stats">
 
-                LIVE
+                READY
 
             </div>
 
@@ -402,6 +402,15 @@ const emptyBox =
     );
 
 // =========================
+// CONFIG
+// =========================
+
+// GANTI DENGAN API KAMU
+
+const API_BASE =
+'https://your-api-domain.com/huya/';
+
+// =========================
 // PLAYER STATE
 // =========================
 
@@ -412,39 +421,21 @@ let reconnectCount = 0;
 let reconnectTimer = null;
 
 // =========================
-// GET URL
+// GET ROOM ID
 // =========================
 
-function getRawUrl(){
+function getRoomId(){
 
-    const href =
-        window.location.href;
-
-    const index =
-        href.indexOf('?url=');
-
-    if(index === -1){
-
-        return null;
-    }
-
-    return href.substring(
-        index + 5
-    );
-}
-
-const rawUrl =
-    getRawUrl();
-
-let currentUrl = null;
-
-if(rawUrl){
-
-    currentUrl =
-        decodeURIComponent(
-            rawUrl
+    const params =
+        new URLSearchParams(
+            window.location.search
         );
+
+    return params.get('id');
 }
+
+const roomId =
+    getRoomId();
 
 // =========================
 // LOADER
@@ -489,22 +480,54 @@ function destroyPlayer(){
 }
 
 // =========================
+// FETCH REAL FLV URL
+// =========================
+
+async function fetchRealFlv(){
+
+    try{
+
+        statsBox.innerHTML =
+            'FETCH';
+
+        const response =
+            await fetch(
+                API_BASE + roomId
+            );
+
+        const data =
+            await response.json();
+
+        if(!data.ok){
+
+            throw new Error(
+                'Failed get url'
+            );
+        }
+
+        return data.url;
+
+    }catch(err){
+
+        statsBox.innerHTML =
+            'ERROR';
+
+        throw err;
+    }
+}
+
+// =========================
 // RECONNECT
 // =========================
 
 function reconnect(){
 
-    if(!currentUrl){
-
-        return;
-    }
-
-    destroyPlayer();
-
     reconnectCount++;
 
     statsBox.innerHTML =
-        'RECONNECT';
+        'RETRY';
+
+    destroyPlayer();
 
     const delay =
         Math.min(
@@ -529,9 +552,9 @@ function reconnect(){
 // START PLAYER
 // =========================
 
-function startPlayer(){
+async function startPlayer(){
 
-    if(!currentUrl){
+    if(!roomId){
 
         emptyBox.style.display =
             'flex';
@@ -542,144 +565,124 @@ function startPlayer(){
     emptyBox.style.display =
         'none';
 
-    destroyPlayer();
-
     showLoader();
 
-    if(
-        typeof mpegts ===
-        'undefined'
-    ){
+    destroyPlayer();
 
-        return;
-    }
+    try{
 
-    // =========================
-    // FORCE PROXY URL
-    // =========================
+        // =========================
+        // GET SIGNED FLV
+        // =========================
 
-    const proxyUrl =
-        currentUrl;
+        const realFlv =
+            await fetchRealFlv();
 
-    player =
-        mpegts.createPlayer({
+        statsBox.innerHTML =
+            'CONNECT';
 
-            type:'flv',
+        // =========================
+        // CREATE PLAYER
+        // =========================
 
-            isLive:true,
+        player =
+            mpegts.createPlayer({
 
-            url:proxyUrl
+                type:'flv',
 
-        },{
+                isLive:true,
 
-            enableWorker:true,
+                url:realFlv
 
-            lazyLoad:false,
+            },{
 
-            liveSync:false,
+                enableWorker:true,
 
-            liveBufferLatencyChasing:false,
+                lazyLoad:false,
 
-            stashInitialSize:768,
+                liveSync:false,
 
-            autoCleanupSourceBuffer:true,
+                liveBufferLatencyChasing:false,
 
-            autoCleanupMaxBackwardDuration:120,
+                stashInitialSize:768,
 
-            autoCleanupMinBackwardDuration:60,
+                autoCleanupSourceBuffer:true,
 
-            headers:{
+                autoCleanupMaxBackwardDuration:120,
 
-                'Origin':
-                    'https://www.huya.com',
+                autoCleanupMinBackwardDuration:60
+            });
 
-                'Referer':
-                    'https://www.huya.com/',
+        player.attachMediaElement(
+            video
+        );
 
-                'User-Agent':
-                    navigator.userAgent
+        player.load();
+
+        // =========================
+        // AUDIO
+        // =========================
+
+        video.muted = false;
+
+        video.volume =
+            volumeSlider.value;
+
+        // =========================
+        // AUTOPLAY
+        // =========================
+
+        const tryPlay = () => {
+
+            video.play()
+            .catch(() => {});
+        };
+
+        tryPlay();
+
+        document.addEventListener(
+            'touchstart',
+            tryPlay,
+            { once:true }
+        );
+
+        document.addEventListener(
+            'click',
+            tryPlay,
+            { once:true }
+        );
+
+        // =========================
+        // EVENTS
+        // =========================
+
+        player.on(
+            mpegts.Events.ERROR,
+            reconnect
+        );
+
+        player.on(
+            mpegts.Events
+                .LOADING_COMPLETE,
+
+            reconnect
+        );
+
+        player.on(
+            mpegts.Events
+                .STATISTICS_INFO,
+
+            () => {
+
+                statsBox.innerHTML =
+                    'LIVE';
             }
-        });
+        );
 
-    player.attachMediaElement(
-        video
-    );
+    }catch(err){
 
-    player.load();
-
-    // =========================
-    // AUDIO
-    // =========================
-
-    video.muted = false;
-
-    video.volume =
-        volumeSlider.value;
-
-    // =========================
-    // AUTOPLAY
-    // =========================
-
-    const tryPlay = () => {
-
-        video.play()
-        .catch(() => {});
-    };
-
-    tryPlay();
-
-    document.addEventListener(
-        'touchstart',
-        tryPlay,
-        { once:true }
-    );
-
-    document.addEventListener(
-        'click',
-        tryPlay,
-        { once:true }
-    );
-
-    // =========================
-    // PLAYER EVENTS
-    // =========================
-
-    player.on(
-        mpegts.Events.ERROR,
-        reconnect
-    );
-
-    player.on(
-        mpegts.Events
-            .LOADING_COMPLETE,
-
-        () => {
-
-            reconnect();
-        }
-    );
-
-    player.on(
-        mpegts.Events
-            .RECOVERED_EARLY_EOF,
-
-        () => {
-
-            statsBox.innerHTML =
-                'RECOVER';
-        }
-    );
-
-    player.on(
-        mpegts.Events
-            .STATISTICS_INFO,
-
-        () => {
-
-            statsBox.innerHTML =
-                'LIVE';
-        }
-    );
+        reconnect();
+    }
 }
 
 // =========================
