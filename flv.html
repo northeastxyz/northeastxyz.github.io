@@ -15,9 +15,9 @@
     "
 />
 
-<title>FLV.js Player</title>
+<title>Huya Proxy FLV Player</title>
 
-<script src="https://cdn.jsdelivr.net/npm/flv.js/dist/flv.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
 <style>
 
@@ -29,9 +29,12 @@
 
 html,
 body{
+
     width:100%;
     height:100%;
+
     background:black;
+
     overflow:hidden;
 
     font-family:
@@ -42,6 +45,7 @@ body{
 }
 
 .player{
+
     position:relative;
 
     width:100%;
@@ -51,6 +55,7 @@ body{
 }
 
 video{
+
     width:100%;
     height:100%;
 
@@ -110,6 +115,11 @@ button{
     cursor:pointer;
 }
 
+button:hover{
+
+    background:rgba(255,255,255,.14);
+}
+
 #volumeSlider{
 
     width:70px;
@@ -126,6 +136,8 @@ button{
     font-size:9px;
 
     color:rgba(255,255,255,.65);
+
+    min-width:40px;
 }
 
 /* =========================
@@ -133,6 +145,7 @@ FULLSCREEN
 ========================= */
 
 .fullscreen{
+
     position:absolute;
 
     right:10px;
@@ -163,6 +176,7 @@ LOADER
 ========================= */
 
 .loader{
+
     position:absolute;
 
     inset:0;
@@ -179,6 +193,7 @@ LOADER
 }
 
 .spinner{
+
     width:42px;
     height:42px;
 
@@ -202,6 +217,45 @@ LOADER
     display:none !important;
 }
 
+/* =========================
+EMPTY
+========================= */
+
+.empty{
+
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:white;
+
+    text-align:center;
+
+    z-index:30;
+}
+
+.empty h1{
+
+    font-size:18px;
+
+    margin-bottom:8px;
+}
+
+.empty p{
+
+    color:#888;
+
+    font-size:12px;
+}
+
 </style>
 
 </head>
@@ -216,8 +270,27 @@ LOADER
         preload="auto"
         controls
         playsinline
-        webkit-playsinline>
+        webkit-playsinline
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="true"
+        x5-video-orientation="landscape">
     </video>
+
+    <!-- EMPTY -->
+
+    <div
+        class="empty"
+        id="emptyBox">
+
+        <h1>
+            No Stream URL
+        </h1>
+
+        <p>
+            ?url=https://your-proxy/live
+        </p>
+
+    </div>
 
     <!-- LOADER -->
 
@@ -265,6 +338,7 @@ LOADER
                 id="stats">
 
                 LIVE
+
             </div>
 
         </div>
@@ -274,6 +348,19 @@ LOADER
 </div>
 
 <script>
+
+// =========================
+// MOBILE SPOOF
+// =========================
+
+Object.defineProperty(
+    navigator,
+    'userAgent',
+    {
+        get: () =>
+        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+    }
+);
 
 // =========================
 // ELEMENT
@@ -309,11 +396,20 @@ const volumeSlider =
         'volumeSlider'
     );
 
+const emptyBox =
+    document.getElementById(
+        'emptyBox'
+    );
+
 // =========================
-// PLAYER
+// PLAYER STATE
 // =========================
 
 let player = null;
+
+let reconnectCount = 0;
+
+let reconnectTimer = null;
 
 // =========================
 // GET URL
@@ -369,6 +465,67 @@ function hideLoader(){
 }
 
 // =========================
+// DESTROY PLAYER
+// =========================
+
+function destroyPlayer(){
+
+    try{
+
+        if(player){
+
+            player.pause();
+
+            player.unload();
+
+            player.detachMediaElement();
+
+            player.destroy();
+
+            player = null;
+        }
+
+    }catch(e){}
+}
+
+// =========================
+// RECONNECT
+// =========================
+
+function reconnect(){
+
+    if(!currentUrl){
+
+        return;
+    }
+
+    destroyPlayer();
+
+    reconnectCount++;
+
+    statsBox.innerHTML =
+        'RECONNECT';
+
+    const delay =
+        Math.min(
+            8000,
+            1000 * (
+                2 ** reconnectCount
+            )
+        );
+
+    clearTimeout(
+        reconnectTimer
+    );
+
+    reconnectTimer =
+        setTimeout(
+            startPlayer,
+            delay
+        );
+}
+
+// =========================
 // START PLAYER
 // =========================
 
@@ -376,68 +533,134 @@ function startPlayer(){
 
     if(!currentUrl){
 
+        emptyBox.style.display =
+            'flex';
+
         return;
     }
 
-    if(player){
+    emptyBox.style.display =
+        'none';
 
-        player.destroy();
-
-        player = null;
-    }
+    destroyPlayer();
 
     showLoader();
 
     if(
-        flvjs.isSupported()
+        typeof mpegts ===
+        'undefined'
     ){
 
-        player =
-            flvjs.createPlayer({
+        return;
+    }
 
-                type:'flv',
+    player =
+        mpegts.createPlayer({
 
-                url:currentUrl,
+            type:'flv',
 
-                isLive:true
+            isLive:true,
 
-            },{
+            url:currentUrl
 
-                enableWorker:true,
+        },{
 
-                lazyLoad:false,
+            enableWorker:true,
 
-                stashInitialSize:384,
+            lazyLoad:false,
 
-                autoCleanupSourceBuffer:true
-            });
+            liveSync:false,
 
-        player.attachMediaElement(
-            video
-        );
+            liveBufferLatencyChasing:false,
 
-        player.load();
+            stashInitialSize:768,
 
-        video.volume =
-            volumeSlider.value;
+            autoCleanupSourceBuffer:true,
+
+            autoCleanupMaxBackwardDuration:120,
+
+            autoCleanupMinBackwardDuration:60
+        });
+
+    player.attachMediaElement(
+        video
+    );
+
+    player.load();
+
+    // =========================
+    // AUDIO
+    // =========================
+
+    video.muted = false;
+
+    video.volume =
+        volumeSlider.value;
+
+    // =========================
+    // AUTOPLAY
+    // =========================
+
+    const tryPlay = () => {
 
         video.play()
         .catch(() => {});
+    };
 
-        player.on(
-            flvjs.Events.ERROR,
-            () => {
+    tryPlay();
 
-                setTimeout(() => {
+    document.addEventListener(
+        'touchstart',
+        tryPlay,
+        { once:true }
+    );
 
-                    startPlayer();
+    document.addEventListener(
+        'click',
+        tryPlay,
+        { once:true }
+    );
 
-                }, 3000);
-            }
-        );
+    // =========================
+    // PLAYER EVENTS
+    // =========================
 
-        hideLoader();
-    }
+    player.on(
+        mpegts.Events.ERROR,
+        reconnect
+    );
+
+    player.on(
+        mpegts.Events
+            .LOADING_COMPLETE,
+
+        () => {
+
+            reconnect();
+        }
+    );
+
+    player.on(
+        mpegts.Events
+            .RECOVERED_EARLY_EOF,
+
+        () => {
+
+            statsBox.innerHTML =
+                'RECOVER';
+        }
+    );
+
+    player.on(
+        mpegts.Events
+            .STATISTICS_INFO,
+
+        stats => {
+
+            statsBox.innerHTML =
+                'LIVE';
+        }
+    );
 }
 
 // =========================
@@ -445,23 +668,44 @@ function startPlayer(){
 // =========================
 
 video.addEventListener(
+    'playing',
+    () => {
+
+        hideLoader();
+
+        reconnectCount = 0;
+
+        statsBox.innerHTML =
+            'LIVE';
+    }
+);
+
+video.addEventListener(
     'waiting',
     () => {
 
         showLoader();
+
+        statsBox.innerHTML =
+            'BUFFER';
 
         setTimeout(() => {
 
             video.play()
             .catch(() => {});
 
-        }, 500);
+        }, 1000);
     }
 );
 
 video.addEventListener(
-    'playing',
-    hideLoader
+    'stalled',
+    reconnect
+);
+
+video.addEventListener(
+    'error',
+    reconnect
 );
 
 // =========================
@@ -470,7 +714,12 @@ video.addEventListener(
 
 reloadBtn.addEventListener(
     'click',
-    startPlayer
+    () => {
+
+        reconnectCount = 0;
+
+        startPlayer();
+    }
 );
 
 // =========================
@@ -497,16 +746,17 @@ fullscreenBtn.addEventListener(
     'click',
     async () => {
 
-        const wrap =
+        const playerWrap =
             document.querySelector(
                 '.player'
             );
 
         if(
-            !document.fullscreenElement
+            !document
+                .fullscreenElement
         ){
 
-            await wrap
+            await playerWrap
                 .requestFullscreen();
 
             if(
@@ -525,9 +775,46 @@ fullscreenBtn.addEventListener(
 
             document
                 .exitFullscreen();
+
+            if(
+                screen.orientation &&
+                screen.orientation.unlock
+            ){
+
+                screen.orientation
+                    .unlock();
+            }
         }
     }
 );
+
+// =========================
+// KEEP PLAYING
+// =========================
+
+document.addEventListener(
+    'visibilitychange',
+    () => {
+
+        video.play()
+        .catch(() => {});
+    }
+);
+
+// =========================
+// NETWORK WATCHDOG
+// =========================
+
+setInterval(() => {
+
+    if(
+        video.readyState < 2
+    ){
+
+        reconnect();
+    }
+
+}, 15000);
 
 // =========================
 // AUTO START
