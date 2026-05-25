@@ -1,40 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta
-    name="viewport"
-    content="
-        width=device-width,
-        initial-scale=1.0,
-        maximum-scale=1.0,
-        user-scalable=no,
-        viewport-fit=cover
-    "
-/>
-
-<title>Shaka Player</title>
-
-<!-- SHAKA PLAYER -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Native Player</title>
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 html,body{
-    width:100%;
-    height:100%;
-    background:black;
-    overflow:hidden;
-}
-
-.player{
-    position:relative;
+    margin:0;
     width:100%;
     height:100%;
     background:black;
@@ -43,298 +17,48 @@ html,body{
 video{
     width:100%;
     height:100%;
-    background:black;
     object-fit:contain;
-}
-
-.loader{
-    position:absolute;
-    inset:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:rgba(0,0,0,.35);
-    z-index:999;
-}
-
-.spinner{
-    width:42px;
-    height:42px;
-    border-radius:50%;
-    border:3px solid rgba(255,255,255,.15);
-    border-top-color:white;
-    animation:spin .8s linear infinite;
-}
-
-@keyframes spin{
-    to{
-        transform:rotate(360deg);
-    }
-}
-
-.hidden{
-    display:none;
-}
-
-.controls{
-    position:absolute;
-    left:10px;
-    bottom:10px;
-    z-index:9999;
-}
-
-.panel{
-    background:rgba(0,0,0,.25);
-    backdrop-filter:blur(6px);
-    border-radius:999px;
-    padding:5px 8px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-button{
-    width:30px;
-    height:30px;
-    border:none;
-    border-radius:50%;
-    background:rgba(255,255,255,.1);
-    color:white;
-    cursor:pointer;
-}
-
-#stats{
-    color:white;
-    font-size:11px;
+    background:black;
 }
 
 </style>
 </head>
-
 <body>
 
-<div class="player">
-
-    <video
-        id="video"
-        autoplay
-        playsinline
-        controls
-    ></video>
-
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
-    </div>
-
-    <div class="controls">
-        <div class="panel">
-
-            <button id="reloadBtn">
-                ↻
-            </button>
-
-            <div id="stats">
-                READY
-            </div>
-
-        </div>
-    </div>
-
-</div>
+<video
+    id="video"
+    controls
+    autoplay
+    playsinline
+></video>
 
 <script>
 
-// =========================
-// GET URL
-// =========================
+function getUrl(){
 
-function getRawUrl(){
+    const params =
+        new URLSearchParams(
+            location.search
+        );
 
-    const href = window.location.href;
-
-    const index = href.indexOf('?url=');
-
-    if(index === -1){
-        return null;
-    }
-
-    return decodeURIComponent(
-        href.substring(index + 5)
-    );
+    return params.get('url');
 }
 
-const streamUrl = getRawUrl();
+const url = getUrl();
 
 const video =
     document.getElementById('video');
 
-const loader =
-    document.getElementById('loader');
+if(url){
 
-const stats =
-    document.getElementById('stats');
+    // browser native playback
+    video.src = url;
 
-const reloadBtn =
-    document.getElementById('reloadBtn');
+    video.load();
 
-let player;
-
-// =========================
-// UI
-// =========================
-
-function showLoader(){
-    loader.classList.remove('hidden');
+    video.play()
+    .catch(console.error);
 }
-
-function hideLoader(){
-    loader.classList.add('hidden');
-}
-
-// =========================
-// START PLAYER
-// =========================
-
-async function startPlayer(){
-
-    if(!streamUrl){
-
-        stats.innerHTML =
-            'NO URL';
-
-        return;
-    }
-
-    showLoader();
-
-    // destroy old player
-    if(player){
-        await player.destroy();
-    }
-
-    // install polyfills
-    shaka.polyfill.installAll();
-
-    // browser support
-    if(!shaka.Player.isBrowserSupported()){
-
-        stats.innerHTML =
-            'UNSUPPORTED';
-
-        return;
-    }
-
-    // create player
-    player = new shaka.Player(video);
-
-    // config
-    player.configure({
-
-        streaming: {
-            lowLatencyMode: true,
-            bufferingGoal: 30,
-            rebufferingGoal: 2
-        }
-
-    });
-
-    // errors
-    player.addEventListener(
-        'error',
-        onErrorEvent
-    );
-
-    try{
-
-        await player.load(streamUrl);
-
-        await video.play();
-
-        stats.innerHTML =
-            'SHAKA';
-
-    }
-
-    catch(error){
-
-        onError(error);
-    }
-}
-
-// =========================
-// ERROR
-// =========================
-
-function onErrorEvent(event){
-    onError(event.detail);
-}
-
-function onError(error){
-
-    console.error(error);
-
-    stats.innerHTML =
-        'ERROR';
-}
-
-// =========================
-// VIDEO EVENTS
-// =========================
-
-video.addEventListener(
-    'playing',
-    () => {
-
-        hideLoader();
-
-        stats.innerHTML =
-            'LIVE';
-    }
-);
-
-video.addEventListener(
-    'waiting',
-    () => {
-
-        showLoader();
-
-        stats.innerHTML =
-            'BUFFER';
-    }
-);
-
-video.addEventListener(
-    'error',
-    () => {
-
-        stats.innerHTML =
-            'VIDEO ERROR';
-    }
-);
-
-// =========================
-// RELOAD
-// =========================
-
-reloadBtn.addEventListener(
-    'click',
-    async () => {
-
-        video.pause();
-
-        if(player){
-            await player.destroy();
-        }
-
-        startPlayer();
-    }
-);
-
-// =========================
-// AUTO START
-// =========================
-
-startPlayer();
 
 </script>
 
