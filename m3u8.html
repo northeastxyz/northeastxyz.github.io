@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+
 <meta
     name="viewport"
     content="
@@ -13,9 +14,10 @@
     "
 />
 
-<title>Direct Browser Player</title>
+<title>JWPlayer Browser Player</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- GANTI DENGAN LIBRARY JWPLAYER KAMU -->
+<script src="https://cdn.jwplayer.com/libraries/AbCdEf12.js"></script>
 
 <style>
 
@@ -25,43 +27,44 @@
     box-sizing:border-box;
 }
 
-html,body{
+html,
+body{
     width:100%;
     height:100%;
     background:black;
     overflow:hidden;
+    font-family:sans-serif;
 }
 
-.player{
-    position:relative;
+#player{
     width:100%;
     height:100%;
-    background:black;
-}
-
-video{
-    width:100%;
-    height:100%;
-    background:black;
-    object-fit:contain;
 }
 
 .loader{
-    position:absolute;
+
+    position:fixed;
     inset:0;
+
     display:flex;
     justify-content:center;
     align-items:center;
-    background:rgba(0,0,0,.35);
-    z-index:999;
+
+    background:black;
+
+    z-index:9999;
 }
 
 .spinner{
-    width:42px;
-    height:42px;
+
+    width:45px;
+    height:45px;
+
     border-radius:50%;
+
     border:3px solid rgba(255,255,255,.15);
     border-top-color:white;
+
     animation:spin .8s linear infinite;
 }
 
@@ -75,36 +78,26 @@ video{
     display:none;
 }
 
-.controls{
-    position:absolute;
+.info{
+
+    position:fixed;
+
     left:10px;
     bottom:10px;
-    z-index:9999;
-}
 
-.panel{
-    background:rgba(0,0,0,.25);
-    backdrop-filter:blur(6px);
+    z-index:99999;
+
+    background:rgba(0,0,0,.45);
+
+    padding:6px 10px;
+
     border-radius:999px;
-    padding:5px 8px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
 
-button{
-    width:30px;
-    height:30px;
-    border:none;
-    border-radius:50%;
-    background:rgba(255,255,255,.1);
     color:white;
-    cursor:pointer;
-}
 
-#stats{
-    color:white;
-    font-size:11px;
+    font-size:12px;
+
+    backdrop-filter:blur(5px);
 }
 
 </style>
@@ -112,40 +105,21 @@ button{
 
 <body>
 
-<div class="player">
+<div id="player"></div>
 
-    <video
-        id="video"
-        autoplay
-        playsinline
-        controls
-    ></video>
+<div class="loader" id="loader">
+    <div class="spinner"></div>
+</div>
 
-    <div class="loader" id="loader">
-        <div class="spinner"></div>
-    </div>
-
-    <div class="controls">
-        <div class="panel">
-
-            <button id="reloadBtn">
-                ↻
-            </button>
-
-            <div id="stats">
-                READY
-            </div>
-
-        </div>
-    </div>
-
+<div class="info" id="status">
+    READY
 </div>
 
 <script>
 
-// =========================
-// GET URL
-// =========================
+// ===============================
+// GET STREAM URL
+// ===============================
 
 function getRawUrl(){
 
@@ -164,23 +138,15 @@ function getRawUrl(){
 
 const streamUrl = getRawUrl();
 
-const video =
-    document.getElementById('video');
-
 const loader =
     document.getElementById('loader');
 
-const stats =
-    document.getElementById('stats');
+const statusText =
+    document.getElementById('status');
 
-const reloadBtn =
-    document.getElementById('reloadBtn');
-
-let hls;
-
-// =========================
+// ===============================
 // UI
-// =========================
+// ===============================
 
 function showLoader(){
     loader.classList.remove('hidden');
@@ -190,152 +156,127 @@ function hideLoader(){
     loader.classList.add('hidden');
 }
 
-// =========================
-// START PLAYER
-// =========================
-
-function startPlayer(){
-
-    if(!streamUrl){
-
-        stats.innerHTML =
-            'NO URL';
-
-        return;
-    }
-
-    showLoader();
-
-    // destroy old hls
-    if(hls){
-        hls.destroy();
-    }
-
-    // =========================
-    // NATIVE HLS
-    // =========================
-
-    if(video.canPlayType(
-        'application/vnd.apple.mpegurl'
-    )){
-
-        video.src = streamUrl;
-
-        video.play();
-
-        stats.innerHTML =
-            'NATIVE';
-
-    }
-
-    // =========================
-    // HLS.JS FALLBACK
-    // =========================
-
-    else if(Hls.isSupported()){
-
-        hls = new Hls({
-
-            enableWorker:true,
-
-            lowLatencyMode:true,
-
-            backBufferLength:90
-
-        });
-
-        hls.loadSource(streamUrl);
-
-        hls.attachMedia(video);
-
-        hls.on(
-            Hls.Events.MANIFEST_PARSED,
-            () => {
-
-                video.play();
-
-                stats.innerHTML =
-                    'HLS.JS';
-            }
-        );
-
-        hls.on(
-            Hls.Events.ERROR,
-            (event, data) => {
-
-                stats.innerHTML =
-                    'ERROR';
-
-                console.log(data);
-            }
-        );
-    }
-
-    else{
-
-        stats.innerHTML =
-            'UNSUPPORTED';
-    }
+function setStatus(text){
+    statusText.innerHTML = text;
 }
 
-// =========================
-// EVENTS
-// =========================
+// ===============================
+// CHECK URL
+// ===============================
 
-video.addEventListener(
-    'playing',
-    () => {
+if(!streamUrl){
+
+    setStatus('NO URL');
+
+    document.body.innerHTML = `
+        <div style="
+            width:100%;
+            height:100%;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            color:white;
+            font-size:18px;
+        ">
+            NO STREAM URL
+        </div>
+    `;
+
+}
+else{
+
+    // ===============================
+    // JWPLAYER SETUP
+    // ===============================
+
+    const player = jwplayer("player");
+
+    player.setup({
+
+        file: streamUrl,
+
+        type: "hls",
+
+        width: "100%",
+        height: "100%",
+
+        autostart: true,
+
+        mute: false,
+
+        controls: true,
+
+        stretching: "uniform",
+
+        primary: "html5",
+
+        playbackRateControls: true,
+
+        repeat: false,
+
+        preload: "auto",
+
+        skin: {
+            name: "seven"
+        }
+
+    });
+
+    // ===============================
+    // EVENTS
+    // ===============================
+
+    player.on('ready', () => {
+
+        setStatus('READY');
+    });
+
+    player.on('play', () => {
 
         hideLoader();
 
-        stats.innerHTML =
-            'LIVE';
-    }
-);
+        setStatus('PLAYING');
+    });
 
-video.addEventListener(
-    'waiting',
-    () => {
+    player.on('buffer', () => {
 
         showLoader();
 
-        stats.innerHTML =
-            'BUFFER';
-    }
-);
+        setStatus('BUFFERING');
+    });
 
-video.addEventListener(
-    'error',
-    () => {
+    player.on('bufferChange', (e) => {
 
-        stats.innerHTML =
-            'VIDEO ERROR';
-    }
-);
+        if(e.bufferPercent >= 100){
 
-// =========================
-// RELOAD
-// =========================
+            hideLoader();
+        }
+    });
 
-reloadBtn.addEventListener(
-    'click',
-    () => {
+    player.on('error', (e) => {
 
-        video.pause();
+        showLoader();
 
-        video.removeAttribute('src');
+        setStatus('ERROR');
 
-        video.load();
+        console.log(e);
+    });
 
-        startPlayer();
-    }
-);
+    player.on('setupError', (e) => {
 
-// =========================
-// AUTO START
-// =========================
+        showLoader();
 
-startPlayer();
+        setStatus('SETUP ERROR');
+
+        console.log(e);
+    });
+
+    player.on('complete', () => {
+
+        setStatus('COMPLETE');
+    });
+
+}
 
 </script>
 
