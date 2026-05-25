@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8" />
 
 <meta
@@ -14,15 +15,9 @@
     "
 />
 
-<title>Universal Player</title>
+<title>Fluid Player</title>
 
-<!-- PLYR -->
-<link
-    rel="stylesheet"
-    href="https://cdn.plyr.io/3.7.8/plyr.css"
-/>
-
-<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="https://cdn.fluidplayer.com/v3/current/fluidplayer.min.js"></script>
 
 <style>
 
@@ -53,47 +48,44 @@ video{
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="wrapper">
 
-    <video
-        id="player"
-        playsinline
-        controls
-        autoplay
-    ></video>
+<video
+    id="videoPlayer"
+    controls
+    playsinline
+    webkit-playsinline
+    autoplay
+    muted
+></video>
 
 </div>
 
 <script>
 
 // =========================
-// GET URL
+// GET STREAM URL
 // =========================
 
-function getStreamUrl(){
-
-    const params =
-        new URLSearchParams(
-            location.search
-        );
-
-    return params.get('url');
-}
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
 
 const streamUrl =
-    getStreamUrl();
+    params.get('url');
 
 const video =
     document.getElementById(
-        'player'
+        'videoPlayer'
     );
 
 // =========================
-// LOAD STREAM
+// LOAD VIDEO
 // =========================
 
 if(streamUrl){
@@ -101,48 +93,45 @@ if(streamUrl){
     // native playback
     video.src = streamUrl;
 
-    video.load();
-
-    // autoplay
-    video.play()
-    .catch(() => {});
-
 }
 
 // =========================
-// INIT PLYR
+// INIT FLUID PLAYER
 // =========================
 
-const player = new Plyr(
-    '#player',
+fluidPlayer(
+    'videoPlayer',
     {
 
-        controls: [
+        layoutControls: {
 
-            'play-large',
+            fillToContainer: true,
 
-            'play',
+            autoPlay: true,
 
-            'progress',
+            mute: false,
 
-            'current-time',
+            allowDownload: false,
 
-            'mute',
+            playbackRateEnabled: true,
 
-            'volume',
+            allowTheatre: false,
 
-            'settings',
+            controlBar: {
+                autoHide: true,
+                autoHideTimeout: 3
+            },
 
-            'pip',
+            fullscreen: true,
 
-            'airplay',
+            posterImage: ''
 
-            'fullscreen'
+        },
 
-        ],
+        vastOptions: {
 
-        fullscreen: {
-            iosNative: true
+            adList: []
+
         }
 
     }
