@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -16,16 +16,10 @@
     "
 />
 
-<title>JWPlayer CDNBye Player</title>
+<title>Shaka Player Browser</title>
 
-<!-- CDNBye -->
-<script src="https://cdn.jsdelivr.net/npm/cdnbye@latest"></script>
-
-<!-- JW HLS Provider -->
-<script src="https://cdn.jsdelivr.net/gh/teranode/jw-provider@0.0.9/provider.hlsjs.js"></script>
-
-<!-- JWPLAYER -->
-<script src="https://ssl.p.jwpcdn.com/player/v/8.22.0/jwplayer.js"></script>
+<!-- SHAKA PLAYER -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js"></script>
 
 <style>
 
@@ -44,21 +38,32 @@ body{
     font-family:sans-serif;
 }
 
-#player{
+.player-container{
+    position:relative;
     width:100%;
     height:100%;
+    background:black;
 }
+
+video{
+    width:100%;
+    height:100%;
+    background:black;
+    object-fit:contain;
+}
+
+/* LOADER */
 
 .loader{
 
-    position:fixed;
+    position:absolute;
     inset:0;
 
     display:flex;
     justify-content:center;
     align-items:center;
 
-    background:black;
+    background:rgba(0,0,0,.4);
 
     z-index:9999;
 }
@@ -86,26 +91,28 @@ body{
     display:none;
 }
 
+/* STATUS */
+
 .status{
 
-    position:fixed;
+    position:absolute;
 
     left:10px;
     bottom:10px;
 
-    padding:6px 10px;
-
-    border-radius:999px;
+    z-index:99999;
 
     background:rgba(0,0,0,.45);
 
     backdrop-filter:blur(5px);
 
+    border-radius:999px;
+
+    padding:6px 10px;
+
     color:white;
 
     font-size:12px;
-
-    z-index:99999;
 }
 
 </style>
@@ -114,24 +121,26 @@ body{
 
 <body>
 
-<div id="player"></div>
+<div class="player-container">
 
-<div class="loader" id="loader">
-    <div class="spinner"></div>
-</div>
+    <video
+        id="video"
+        autoplay
+        playsinline
+        controls
+    ></video>
 
-<div class="status" id="status">
-    READY
+    <div class="loader" id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="status" id="status">
+        READY
+    </div>
+
 </div>
 
 <script>
-
-// ======================================
-// JWPLAYER LICENSE
-// ======================================
-
-jwplayer.key =
-"uoW6qHjBL3KNudxKVnwa3rt5LlTakbko9e6aQ6VUyKQ=";
 
 // ======================================
 // GET STREAM URL
@@ -153,6 +162,9 @@ function getRawUrl(){
 }
 
 const streamUrl = getRawUrl();
+
+const video =
+    document.getElementById('video');
 
 const loader =
     document.getElementById('loader');
@@ -177,181 +189,155 @@ function setStatus(text){
 }
 
 // ======================================
-// NO URL
+// SHAKA SUPPORT CHECK
 // ======================================
 
-if(!streamUrl){
+shaka.polyfill.installAll();
 
-    document.body.innerHTML = `
-        <div style="
-            width:100%;
-            height:100%;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            color:white;
-            font-size:18px;
-        ">
-            NO STREAM URL
-        </div>
-    `;
+if(!shaka.Player.isBrowserSupported()){
 
+    setStatus('UNSUPPORTED');
+
+    throw new Error(
+        'Browser not supported!'
+    );
 }
-else{
+
+// ======================================
+// PLAYER INIT
+// ======================================
+
+async function initPlayer(){
+
+    if(!streamUrl){
+
+        document.body.innerHTML = `
+            <div style="
+                width:100%;
+                height:100%;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                color:white;
+                font-size:18px;
+            ">
+                NO STREAM URL
+            </div>
+        `;
+
+        return;
+    }
+
+    showLoader();
+
+    const player =
+        new shaka.Player(video);
 
     // ======================================
-    // PLAYER SETUP
+    // CONFIG
     // ======================================
 
-    const player = jwplayer("player");
+    player.configure({
 
-    player.setup({
-
-        file: streamUrl,
-
-        width: "100%",
-        height: "100%",
-
-        autostart: true,
-
-        mute: false,
-
-        controls: true,
-
-        stretching: "uniform",
-
-        primary: "html5",
-
-        preload: "auto",
-
-        playbackRateControls: true,
-
-        repeat: false,
-
-        hlsjsdefault: true,
-
-        hlsjsConfig: {
-
-            enableWorker: true,
+        streaming: {
 
             lowLatencyMode: true,
 
-            backBufferLength: 90,
+            bufferingGoal: 30,
 
-            p2pConfig: {
-
-                live: true
-
-                // token: "ISI_TOKEN_JIKA_PAKAI"
-
-            }
+            rebufferingGoal: 2
 
         }
 
     });
 
     // ======================================
-    // EVENTS
+    // ERROR
     // ======================================
 
-    player.on('ready', function () {
+    player.addEventListener(
+        'error',
+        onPlayerError
+    );
 
-        setStatus('READY');
-    });
+    try{
 
-    player.on('play', function () {
-
-        hideLoader();
+        await player.load(streamUrl);
 
         setStatus('PLAYING');
 
-        // ======================================
-        // CDNBYE STATS
-        // ======================================
+        hideLoader();
 
-        if(
-            player.hls &&
-            player.hls.p2pEngine
-        ){
+        await video.play();
 
-            player.hls.p2pEngine.on(
-                'stats',
-                function ({
-                    totalHTTPDownloaded,
-                    totalP2PDownloaded
-                }){
+    }
+    catch(error){
 
-                    const httpMB =
-                        (
-                            totalHTTPDownloaded
-                            / 1024
-                            / 1024
-                        ).toFixed(1);
+        onPlayerError({
+            detail:error
+        });
 
-                    const p2pMB =
-                        (
-                            totalP2PDownloaded
-                            / 1024
-                            / 1024
-                        ).toFixed(1);
+    }
 
-                    setStatus(
-                        'P2P '
-                        + p2pMB
-                        + 'MB | HTTP '
-                        + httpMB
-                        + 'MB'
-                    );
-                }
-            );
+    // ======================================
+    // VIDEO EVENTS
+    // ======================================
+
+    video.addEventListener(
+        'waiting',
+        () => {
+
+            showLoader();
+
+            setStatus('BUFFERING');
 
         }
+    );
 
-    });
-
-    player.on('buffer', function () {
-
-        showLoader();
-
-        setStatus('BUFFERING');
-    });
-
-    player.on('bufferChange', function (e) {
-
-        if(e.bufferPercent >= 100){
+    video.addEventListener(
+        'playing',
+        () => {
 
             hideLoader();
+
+            setStatus('LIVE');
+
         }
+    );
 
-    });
+    video.addEventListener(
+        'error',
+        () => {
 
-    player.on('error', function (e) {
+            setStatus('VIDEO ERROR');
 
-        showLoader();
-
-        setStatus('ERROR');
-
-        console.log(e);
-
-    });
-
-    player.on('setupError', function (e) {
-
-        showLoader();
-
-        setStatus('SETUP ERROR');
-
-        console.log(e);
-
-    });
-
-    player.on('complete', function () {
-
-        setStatus('COMPLETE');
-
-    });
+        }
+    );
 
 }
+
+// ======================================
+// ERROR HANDLER
+// ======================================
+
+function onPlayerError(event){
+
+    console.error(event);
+
+    showLoader();
+
+    setStatus('ERROR');
+
+}
+
+// ======================================
+// START
+// ======================================
+
+window.addEventListener(
+    'load',
+    initPlayer
+);
 
 </script>
 
