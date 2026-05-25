@@ -1,14 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Native Player</title>
+<meta charset="UTF-8" />
+
+<meta
+    name="viewport"
+    content="
+        width=device-width,
+        initial-scale=1,
+        maximum-scale=1,
+        user-scalable=no,
+        viewport-fit=cover
+    "
+/>
+
+<title>Universal Player</title>
+
+<!-- PLYR -->
+<link
+    rel="stylesheet"
+    href="https://cdn.plyr.io/3.7.8/plyr.css"
+/>
+
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
 <style>
 
-html,body{
+*{
     margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    background:black;
+    overflow:hidden;
+}
+
+.wrapper{
     width:100%;
     height:100%;
     background:black;
@@ -23,18 +54,27 @@ video{
 
 </style>
 </head>
+
 <body>
 
-<video
-    id="video"
-    controls
-    autoplay
-    playsinline
-></video>
+<div class="wrapper">
+
+    <video
+        id="player"
+        playsinline
+        controls
+        autoplay
+    ></video>
+
+</div>
 
 <script>
 
-function getUrl(){
+// =========================
+// GET URL
+// =========================
+
+function getStreamUrl(){
 
     const params =
         new URLSearchParams(
@@ -44,21 +84,69 @@ function getUrl(){
     return params.get('url');
 }
 
-const url = getUrl();
+const streamUrl =
+    getStreamUrl();
 
 const video =
-    document.getElementById('video');
+    document.getElementById(
+        'player'
+    );
 
-if(url){
+// =========================
+// LOAD STREAM
+// =========================
 
-    // browser native playback
-    video.src = url;
+if(streamUrl){
+
+    // native playback
+    video.src = streamUrl;
 
     video.load();
 
+    // autoplay
     video.play()
-    .catch(console.error);
+    .catch(() => {});
+
 }
+
+// =========================
+// INIT PLYR
+// =========================
+
+const player = new Plyr(
+    '#player',
+    {
+
+        controls: [
+
+            'play-large',
+
+            'play',
+
+            'progress',
+
+            'current-time',
+
+            'mute',
+
+            'volume',
+
+            'settings',
+
+            'pip',
+
+            'airplay',
+
+            'fullscreen'
+
+        ],
+
+        fullscreen: {
+            iosNative: true
+        }
+
+    }
+);
 
 </script>
 
