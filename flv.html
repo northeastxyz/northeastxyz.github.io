@@ -2,12 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<title>Clean Player</title>
-
-<script src="https://cdn.jsdelivr.net/npm/flv.js@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<title>Native HLS Player</title>
 
 <style>
 
@@ -25,12 +23,6 @@ body{
     background:#000;
 }
 
-.player{
-    width:100%;
-    height:100%;
-    background:#000;
-}
-
 video{
     width:100%;
     height:100%;
@@ -39,21 +31,18 @@ video{
 }
 
 </style>
+
 </head>
 
 <body>
 
-<div class="player">
-
-    <video
-        id="videoPlayer"
-        autoplay
-        controls
-        playsinline
-        webkit-playsinline>
-    </video>
-
-</div>
+<video
+    id="video"
+    controls
+    autoplay
+    playsinline
+    webkit-playsinline>
+</video>
 
 <script>
 
@@ -67,142 +56,26 @@ function getQueryParam(param){
     return params.get(param);
 }
 
-function isIOS(){
-
-    return /iPad|iPhone|iPod/.test(
-        navigator.userAgent
-    ) && !window.MSStream;
-}
-
 const video =
     document.getElementById(
-        'videoPlayer'
+        'video'
     );
 
-let flvPlayer = null;
-
-let hlsPlayer = null;
+/*
+    Example:
+    ?url=https://domain.com/live.m3u8
+*/
 
 const videoUrl =
     getQueryParam('url');
 
-function destroyPlayers(){
+if(videoUrl){
 
-    try{
+    video.src = videoUrl;
 
-        if(flvPlayer){
-
-            flvPlayer.destroy();
-
-            flvPlayer = null;
-        }
-
-        if(hlsPlayer){
-
-            hlsPlayer.destroy();
-
-            hlsPlayer = null;
-        }
-
-    }catch(e){}
+    video.play()
+    .catch(()=>{});
 }
-
-function startPlayer(){
-
-    if(!videoUrl){
-
-        return;
-    }
-
-    destroyPlayers();
-
-    // ====================
-    // FLV
-    // ====================
-
-    if(
-        videoUrl.endsWith('.flv')
-        &&
-        flvjs.isSupported()
-        &&
-        !isIOS()
-    ){
-
-        flvPlayer =
-            flvjs.createPlayer({
-
-                type:'flv',
-
-                url:videoUrl,
-
-                isLive:true
-
-            });
-
-        flvPlayer.attachMediaElement(
-            video
-        );
-
-        flvPlayer.load();
-
-        flvPlayer.play();
-    }
-
-    // ====================
-    // HLS
-    // ====================
-
-    else if(
-        videoUrl.endsWith('.m3u8')
-        &&
-        Hls.isSupported()
-    ){
-
-        hlsPlayer =
-            new Hls();
-
-        hlsPlayer.loadSource(
-            videoUrl
-        );
-
-        hlsPlayer.attachMedia(
-            video
-        );
-
-        video.play()
-        .catch(()=>{});
-    }
-
-    // ====================
-    // MP4
-    // ====================
-
-    else{
-
-        video.src =
-            videoUrl;
-
-        video.play()
-        .catch(()=>{});
-    }
-}
-
-/* AUTO RECOVER */
-
-setInterval(() => {
-
-    if(
-        video.readyState <= 2
-    ){
-
-        startPlayer();
-    }
-
-}, 20000);
-
-/* START */
-
-startPlayer();
 
 </script>
 
