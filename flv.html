@@ -1,547 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="
-        width=device-width,
-        initial-scale=1.0,
-        maximum-scale=1.0,
-        user-scalable=no
-    "
->
-
-<title>Huya Stable PC Player</title>
-
-<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
-
-<style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-html,
-body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#000;
-    font-family:Arial,sans-serif;
-}
-
-#app{
-    width:100%;
-    height:100%;
-    position:relative;
-    background:#000;
-}
-
-video{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    background:#000;
-}
-
-/* STATUS */
-
-#status{
-
-    position:absolute;
-
-    top:10px;
-    left:10px;
-
-    z-index:99999;
-
-    padding:8px 12px;
-
-    border-radius:8px;
-
-    background:rgba(0,0,0,.7);
-
-    color:#fff;
-
-    font-size:12px;
-
-    backdrop-filter:blur(4px);
-}
-
-/* LOADING */
-
-#loading{
-
-    position:absolute;
-
-    top:50%;
-    left:50%;
-
-    transform:translate(-50%,-50%);
-
-    z-index:9999;
-
-    color:#fff;
-
-    font-size:14px;
-
-    text-align:center;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Huya Stable PC Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
+    <style>
+        *{ margin:0; padding:0; box-sizing:border-box; }
+        html, body{ width:100%; height:100%; overflow:hidden; background:#000; font-family:Arial,sans-serif; }
+        #app{ width:100%; height:100%; position:relative; background:#000; }
+        video{ width:100%; height:100%; object-fit:contain; background:#000; }
+        #status{ position:absolute; top:10px; left:10px; z-index:99999; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,.7); color:#fff; font-size:12px; backdrop-filter:blur(4px); }
+        #loading{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; color:#fff; font-size:14px; text-align:center; }
+    </style>
 </head>
-
 <body>
 
 <div id="app">
-
-    <div id="status">
-        INITIALIZING...
-    </div>
-
-    <div id="loading">
-        Loading Stream...
-    </div>
-
-    <video
-        id="video"
-        controls
-        autoplay
-        muted
-        playsinline
-        webkit-playsinline>
-    </video>
-
+    <div id="status">INITIALIZING...</div>
+    <div id="loading">Loading Stream...</div>
+    <video id="video" controls autoplay playsinline webkit-playsinline></video>
 </div>
 
 <script>
+    const video = document.getElementById('video');
+    const statusBox = document.getElementById('status');
+    const loadingBox = document.getElementById('loading');
 
-// ========================================
-// ELEMENT
-// ========================================
+    function getQuery(name){ return new URLSearchParams(location.search).get(name); }
+    const streamURL = getQuery('url');
 
-const video =
-    document.getElementById(
-        'video'
-    );
+    let player = null;
+    let reconnecting = false;
 
-const statusBox =
-    document.getElementById(
-        'status'
-    );
+    function setStatus(text){ console.log(text); statusBox.innerHTML = text; }
+    function showLoading(show){ loadingBox.style.display = show ? 'block' : 'none'; }
 
-const loadingBox =
-    document.getElementById(
-        'loading'
-    );
-
-// ========================================
-// QUERY
-// ========================================
-
-function getQuery(name){
-
-    return new URLSearchParams(
-        location.search
-    ).get(name);
-}
-
-const streamURL =
-    getQuery('url');
-
-// ========================================
-// PLAYER
-// ========================================
-
-let player = null;
-
-let reconnecting = false;
-
-// ========================================
-// UI
-// ========================================
-
-function setStatus(text){
-
-    console.log(text);
-
-    statusBox.innerHTML = text;
-}
-
-function showLoading(show){
-
-    loadingBox.style.display =
-        show
-        ? 'block'
-        : 'none';
-}
-
-// ========================================
-// DESTROY
-// ========================================
-
-function destroyPlayer(){
-
-    try{
-
-        if(player){
-
-            player.pause();
-
-            player.unload();
-
-            player.detachMediaElement();
-
-            player.destroy();
-
-            player = null;
-        }
-
-    }catch(err){
-
-        console.log(
-            'DESTROY ERROR:',
-            err
-        );
-    }
-}
-
-// ========================================
-// START
-// ========================================
-
-async function startPlayer(){
-
-    if(!streamURL){
-
-        setStatus(
-            'NO STREAM URL'
-        );
-
-        return;
+    function destroyPlayer(){
+        try {
+            if(player){
+                player.pause();
+                player.unload();
+                player.detachMediaElement();
+                player.destroy();
+                player = null;
+            }
+        } catch(err){ console.log('DESTROY ERROR:', err); }
     }
 
-    if(
-        !mpegts.getFeatureList()
-            .mseLivePlayback
-    ){
+    async function startPlayer(){
+        if(!streamURL){ setStatus('NO STREAM URL'); return; }
+        if(!mpegts.getFeatureList().mseLivePlayback){ setStatus('MSE LIVE NOT SUPPORTED'); return; }
 
-        setStatus(
-            'MSE LIVE NOT SUPPORTED'
-        );
+        destroyPlayer();
+        setStatus('CONNECTING...');
+        showLoading(true);
 
-        return;
-    }
-
-    destroyPlayer();
-
-    setStatus(
-        'CONNECTING...'
-    );
-
-    showLoading(true);
-
-    console.log(
-        'STREAM:',
-        streamURL
-    );
-
-    // ====================================
-    // CREATE PLAYER
-    // ====================================
-
-    player =
-        mpegts.createPlayer({
-
-            type:'flv',
-
-            url:streamURL,
-
-            isLive:true,
-
-            cors:true,
-
-            hasAudio:false,
-
-            hasVideo:true
-
-        },{
-
-            enableWorker:false,
-
-            enableStashBuffer:false,
-
-            lazyLoad:false,
-
-            deferLoadAfterSourceOpen:false,
-
-            autoCleanupSourceBuffer:true,
-
-            autoCleanupMaxBackwardDuration:30,
-
-            autoCleanupMinBackwardDuration:10,
-
-            stashInitialSize:64,
-
-            liveSync:false
+        player = mpegts.createPlayer({
+            type: 'flv',
+            url: streamURL,
+            isLive: true,
+            cors: true,
+            hasAudio: true,  // <-- DIPERBAIKI: Harus true untuk mengaktifkan audio
+            hasVideo: true
+        }, {
+            enableWorker: false,
+            enableStashBuffer: false,
+            lazyLoad: false,
+            liveSync: false
         });
 
-    // ====================================
-    // ATTACH
-    // ====================================
+        player.attachMediaElement(video);
+        player.load();
 
-    player.attachMediaElement(
-        video
-    );
-
-    // ====================================
-    // EVENTS
-    // ====================================
-
-    player.on(
-        mpegts.Events.MEDIA_INFO,
-        info => {
-
-            console.log(
-                'MEDIA INFO:',
-                info
-            );
-
-            setStatus(
-                'MEDIA DETECTED'
-            );
-        }
-    );
-
-    player.on(
-        mpegts.Events.STATISTICS_INFO,
-        stats => {
-
-            console.log(
-                'STATS:',
-                stats
-            );
-        }
-    );
-
-    player.on(
-        mpegts.Events.ERROR,
-        (type, detail) => {
-
-            console.log(
-                'PLAYER ERROR:',
-                type,
-                detail
-            );
-
-            setStatus(
-                'ERROR: ' + type
-            );
-
-            reconnect();
-        }
-    );
-
-    // ====================================
-    // LOAD
-    // ====================================
-
-    player.load();
-
-    // ====================================
-    // PLAY
-    // ====================================
-
-    try{
-
-        await video.play();
-
-        setStatus(
-            'PLAYING'
-        );
-
-        showLoading(false);
-
-        setTimeout(() => {
-
-            video.muted = false;
-
-        },1000);
-
-    }catch(err){
-
-        console.log(
-            'AUTOPLAY ERROR:',
-            err
-        );
-
-        setStatus(
-            'CLICK TO PLAY'
-        );
-
-        showLoading(false);
-    }
-
-    // ====================================
-    // VIDEO EVENTS
-    // ====================================
-
-    video.addEventListener(
-        'playing',
-        () => {
-
-            setStatus(
-                'PLAYING'
-            );
-
+        try {
+            await video.play();
+            setStatus('PLAYING');
+            showLoading(false);
+        } catch(err){
+            setStatus('CLICK TO PLAY');
             showLoading(false);
         }
-    );
-
-    video.addEventListener(
-        'waiting',
-        () => {
-
-            setStatus(
-                'BUFFERING...'
-            );
-
-            showLoading(true);
-        }
-    );
-
-    video.addEventListener(
-        'stalled',
-        () => {
-
-            setStatus(
-                'STALLED'
-            );
-
-            reconnect();
-        }
-    );
-
-    video.addEventListener(
-        'error',
-        () => {
-
-            setStatus(
-                'VIDEO ERROR'
-            );
-
-            reconnect();
-        }
-    );
-}
-
-// ========================================
-// RECONNECT
-// ========================================
-
-function reconnect(){
-
-    if(reconnecting){
-
-        return;
     }
 
-    reconnecting = true;
-
-    showLoading(true);
-
-    destroyPlayer();
-
-    setStatus(
-        'RECONNECTING...'
-    );
-
-    setTimeout(() => {
-
-        reconnecting = false;
-
-        startPlayer();
-
-    },5000);
-}
-
-// ========================================
-// FORCE PLAY
-// ========================================
-
-async function forcePlay(){
-
-    try{
-
-        await video.play();
-
-        setStatus(
-            'PLAYING'
-        );
-
-    }catch(err){
-
-        console.log(err);
-    }
-}
-
-document.addEventListener(
-    'click',
-    forcePlay
-);
-
-document.addEventListener(
-    'touchstart',
-    forcePlay
-);
-
-// ========================================
-// TAB FIX
-// ========================================
-
-document.addEventListener(
-    'visibilitychange',
-    () => {
-
-        if(!document.hidden){
-
-            video.play()
-            .catch(()=>{});
+    function forcePlay(){
+        if(video.paused){
+            video.play().then(() => {
+                video.muted = false; // Memastikan audio aktif setelah interaksi
+                setStatus('PLAYING');
+            }).catch(e => console.log(e));
         }
     }
-);
 
-// ========================================
-// WATCHDOG
-// ========================================
+    document.addEventListener('click', forcePlay);
+    document.addEventListener('touchstart', forcePlay);
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) video.play().catch(()=>{}); });
 
-setInterval(() => {
-
-    if(
-        video.readyState <= 1
-    ){
-
-        console.log(
-            'WATCHDOG RECONNECT'
-        );
-
-        reconnect();
-    }
-
-},30000);
-
-// ========================================
-// START
-// ========================================
-
-startPlayer();
-
+    startPlayer();
 </script>
 
 </body>
