@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
-<meta charset="UTF-8"/>
+<meta charset="UTF-8" />
 
 <meta
     name="viewport"
@@ -15,7 +15,7 @@
     "
 />
 
-<title>Huya Stable FLV Player</title>
+<title>PC Stable FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -35,11 +35,36 @@ body{
     background:#000;
 }
 
+#container{
+    width:100%;
+    height:100%;
+    position:relative;
+    background:#000;
+}
+
 video{
     width:100%;
     height:100%;
     object-fit:contain;
     background:#000;
+}
+
+#status{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:9999;
+
+    padding:6px 10px;
+
+    font-size:12px;
+    font-family:Arial;
+
+    color:#fff;
+
+    background:rgba(0,0,0,.6);
+
+    border-radius:6px;
 }
 
 </style>
@@ -48,15 +73,23 @@ video{
 
 <body>
 
-<video
-    id="video"
-    controls
-    autoplay
-    muted
-    preload="auto"
-    playsinline
-    webkit-playsinline>
-</video>
+<div id="container">
+
+    <div id="status">
+        CONNECTING...
+    </div>
+
+    <video
+        id="video"
+        controls
+        autoplay
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto">
+    </video>
+
+</div>
 
 <script>
 
@@ -69,18 +102,20 @@ const video =
         'video'
     );
 
+const statusBox =
+    document.getElementById(
+        'status'
+    );
+
 // =========================
-// URL
+// URL PARAM
 // =========================
 
 function getQueryParam(param){
 
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    return params.get(param);
+    return new URLSearchParams(
+        window.location.search
+    ).get(param);
 }
 
 const sourceUrl =
@@ -95,7 +130,18 @@ let player = null;
 let reconnecting = false;
 
 // =========================
-// DESTROY
+// STATUS
+// =========================
+
+function setStatus(text){
+
+    console.log(text);
+
+    statusBox.innerText = text;
+}
+
+// =========================
+// DESTROY PLAYER
 // =========================
 
 function destroyPlayer(){
@@ -115,108 +161,28 @@ function destroyPlayer(){
             player = null;
         }
 
-    }catch(e){}
-}
-
-// =========================
-// GET REAL STREAM URL
-// =========================
-
-async function getFinalURL(url){
-
-    try{
-
-        const response =
-            await fetch(url,{
-
-                method:'GET',
-
-                redirect:'follow',
-
-                mode:'cors',
-
-                cache:'no-cache',
-
-                credentials:'omit',
-
-                headers:{
-
-                    'Accept':'*/*',
-
-                    'Referer':
-                    'https://live.metshop.top/',
-
-                    'Origin':
-                    'https://live.metshop.top'
-                }
-            });
-
-        console.log(
-            'FINAL URL:',
-            response.url
-        );
-
-        console.log(
-            'STATUS:',
-            response.status
-        );
-
-        console.log(
-            'CONTENT TYPE:',
-            response.headers.get(
-                'content-type'
-            )
-        );
-
-        const type =
-            response.headers.get(
-                'content-type'
-            ) || '';
-
-        if(
-            type.includes('text/html')
-        ){
-
-            console.log(
-                'NOT VIDEO STREAM'
-            );
-
-            return null;
-        }
-
-        return response.url;
-
     }catch(err){
 
-        console.log(
-            'FETCH ERROR:',
-            err
-        );
-
-        return null;
+        console.log(err);
     }
 }
 
 // =========================
-// PLAY
+// START PLAYER
 // =========================
 
 async function startPlayer(){
 
     if(!sourceUrl){
 
-        console.log(
-            'NO URL'
-        );
+        setStatus('NO URL');
 
         return;
     }
 
-    if(
-        !mpegts.isSupported()
-    ){
+    if(!mpegts.isSupported()){
 
-        console.log(
+        setStatus(
             'MPEGTS NOT SUPPORTED'
         );
 
@@ -225,27 +191,13 @@ async function startPlayer(){
 
     destroyPlayer();
 
-    // =========================
-    // FOLLOW REDIRECT
-    // =========================
-
-    const realUrl =
-        await getFinalURL(
-            sourceUrl
-        );
-
-    if(!realUrl){
-
-        console.log(
-            'FAILED GET REAL URL'
-        );
-
-        return;
-    }
+    setStatus(
+        'CONNECTING...'
+    );
 
     console.log(
         'PLAY URL:',
-        realUrl
+        sourceUrl
     );
 
     // =========================
@@ -257,51 +209,37 @@ async function startPlayer(){
 
             type:'flv',
 
-            isLive:true,
+            url:sourceUrl,
 
-            cors:true,
-
-            url:realUrl
+            isLive:true
 
         },{
 
-            enableWorker:false,
+            enableWorker:true,
 
             lazyLoad:false,
 
             liveSync:true,
 
-            // delay buffer 3-5 detik
-            liveSyncMaxLatency:5,
+            liveSyncMaxLatency:3,
 
             liveBufferLatencyChasing:true,
 
-            // buffer lebih besar
-            stashInitialSize:384,
-
-            fixAudioTimestampGap:true,
+            stashInitialSize:128,
 
             autoCleanupSourceBuffer:true,
 
-            autoCleanupMaxBackwardDuration:20,
+            autoCleanupMaxBackwardDuration:30,
 
-            autoCleanupMinBackwardDuration:10,
+            autoCleanupMinBackwardDuration:15,
 
-            withCredentials:false,
+            fixAudioTimestampGap:true
 
-            seekType:'param',
-
-            headers:{
-
-                'Accept':'*/*',
-
-                'Origin':
-                'https://live.metshop.top',
-
-                'Referer':
-                'https://live.metshop.top/'
-            }
         });
+
+    // =========================
+    // ATTACH
+    // =========================
 
     player.attachMediaElement(
         video
@@ -310,46 +248,37 @@ async function startPlayer(){
     player.load();
 
     // =========================
-    // AUTOPLAY
+    // PLAY
     // =========================
 
-    const playVideo = () => {
+    try{
 
-        video.play()
-        .then(() => {
+        await video.play();
 
-            setTimeout(() => {
+        setStatus(
+            'PLAYING'
+        );
 
-                video.muted = false;
+        setTimeout(() => {
 
-            }, 1000);
+            video.muted = false;
 
-        })
-        .catch(err => {
+        },1000);
 
-            console.log(
-                'PLAY ERROR:',
-                err
-            );
-        });
-    };
+    }catch(err){
 
-    playVideo();
+        setStatus(
+            'CLICK TO PLAY'
+        );
 
-    document.addEventListener(
-        'click',
-        playVideo,
-        { once:true }
-    );
-
-    document.addEventListener(
-        'touchstart',
-        playVideo,
-        { once:true }
-    );
+        console.log(
+            'AUTOPLAY ERROR:',
+            err
+        );
+    }
 
     // =========================
-    // EVENTS
+    // PLAYER EVENTS
     // =========================
 
     player.on(
@@ -360,6 +289,68 @@ async function startPlayer(){
                 'PLAYER ERROR:',
                 type,
                 detail
+            );
+
+            setStatus(
+                'RECONNECTING...'
+            );
+
+            reconnect();
+        }
+    );
+
+    player.on(
+        mpegts.Events.LOADING_COMPLETE,
+        () => {
+
+            setStatus(
+                'STREAM ENDED'
+            );
+        }
+    );
+
+    // =========================
+    // VIDEO EVENTS
+    // =========================
+
+    video.addEventListener(
+        'playing',
+        () => {
+
+            setStatus(
+                'PLAYING'
+            );
+        }
+    );
+
+    video.addEventListener(
+        'waiting',
+        () => {
+
+            setStatus(
+                'BUFFERING...'
+            );
+        }
+    );
+
+    video.addEventListener(
+        'stalled',
+        () => {
+
+            setStatus(
+                'STALLED'
+            );
+
+            reconnect();
+        }
+    );
+
+    video.addEventListener(
+        'error',
+        () => {
+
+            setStatus(
+                'VIDEO ERROR'
             );
 
             reconnect();
@@ -373,9 +364,7 @@ async function startPlayer(){
 
 function reconnect(){
 
-    if(
-        reconnecting
-    ){
+    if(reconnecting){
 
         return;
     }
@@ -390,47 +379,48 @@ function reconnect(){
 
         startPlayer();
 
-    }, 8000);
+    },5000);
 }
 
 // =========================
-// VIDEO EVENTS
+// USER INTERACTION
 // =========================
 
-video.addEventListener(
-    'stalled',
-    reconnect
-);
+async function forcePlay(){
 
-video.addEventListener(
-    'error',
-    reconnect
-);
+    try{
 
-video.addEventListener(
-    'waiting',
-    () => {
+        await video.play();
 
-        console.log(
-            'BUFFERING...'
+        setStatus(
+            'PLAYING'
         );
 
-        video.play()
-        .catch(() => {});
+    }catch(err){
+
+        console.log(err);
     }
+}
+
+document.addEventListener(
+    'click',
+    forcePlay
+);
+
+document.addEventListener(
+    'touchstart',
+    forcePlay
 );
 
 // =========================
-// KEEP PLAYING
+// VISIBILITY FIX
 // =========================
 
 document.addEventListener(
     'visibilitychange',
     () => {
 
-        if(
-            !document.hidden
-        ){
+        if(!document.hidden){
 
             video.play()
             .catch(() => {});
@@ -455,7 +445,7 @@ setInterval(() => {
         reconnect();
     }
 
-}, 60000);
+},30000);
 
 // =========================
 // START
