@@ -15,7 +15,7 @@
     "
 />
 
-<title>MPEGTS Direct Player</title>
+<title>Stable Huya FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -53,9 +53,9 @@ video{
     controls
     autoplay
     muted
-    preload="auto"
     playsinline
-    webkit-playsinline>
+    webkit-playsinline
+    preload="auto">
 </video>
 
 <script>
@@ -135,13 +135,79 @@ function reconnect(){
 
     destroyPlayer();
 
+    // jangan reconnect terlalu cepat
+    // supaya tidak dianggap bot
+
     setTimeout(() => {
 
         reconnecting = false;
 
         startPlayer();
 
-    }, 5000);
+    }, 8000);
+}
+
+// =========================
+// GET REAL URL
+// =========================
+
+async function getRealUrl(url){
+
+    try{
+
+        const response =
+            await fetch(url, {
+
+                method:'GET',
+
+                mode:'cors',
+
+                redirect:'follow',
+
+                cache:'no-cache',
+
+                credentials:'omit',
+
+                headers:{
+
+                    'Accept':'*/*',
+
+                    'Origin':
+                    location.origin,
+
+                    'Referer':
+                    location.href
+                }
+            });
+
+        console.log(
+            'HTTP STATUS:',
+            response.status
+        );
+
+        console.log(
+            'FINAL URL:',
+            response.url
+        );
+
+        console.log(
+            'CONTENT TYPE:',
+            response.headers.get(
+                'content-type'
+            )
+        );
+
+        return response.url;
+
+    }catch(err){
+
+        console.log(
+            'FETCH ERROR:',
+            err
+        );
+
+        return url;
+    }
 }
 
 // =========================
@@ -173,64 +239,21 @@ async function startPlayer(){
     destroyPlayer();
 
     // =========================
-    // FETCH TEST
+    // FOLLOW 302
     // =========================
 
-    try{
-
-        const response =
-            await fetch(
-                currentUrl,
-                {
-
-                    method:'GET',
-
-                    mode:'cors',
-
-                    redirect:'follow',
-
-                    credentials:'omit',
-
-                    headers:{
-
-                        'Accept':'*/*',
-
-                        'Origin':
-                        location.origin,
-
-                        'Referer':
-                        location.href
-                    }
-                }
-            );
-
-        console.log(
-            'HTTP STATUS:',
-            response.status
+    const realUrl =
+        await getRealUrl(
+            currentUrl
         );
 
-        console.log(
-            'FINAL URL:',
-            response.url
-        );
-
-        console.log(
-            'CONTENT TYPE:',
-            response.headers.get(
-                'content-type'
-            )
-        );
-
-    }catch(err){
-
-        console.log(
-            'FETCH ERROR:',
-            err
-        );
-    }
+    console.log(
+        'PLAY URL:',
+        realUrl
+    );
 
     // =========================
-    // PLAYER
+    // CREATE PLAYER
     // =========================
 
     player =
@@ -238,7 +261,7 @@ async function startPlayer(){
 
             type:'flv',
 
-            url:currentUrl,
+            url:realUrl,
 
             isLive:true,
 
@@ -252,31 +275,32 @@ async function startPlayer(){
 
             liveSync:false,
 
-            liveBufferLatencyChasing:false,
-
-            stashInitialSize:128,
+            liveBufferLatencyChasing:true,
 
             fixAudioTimestampGap:true,
 
             autoCleanupSourceBuffer:true,
 
-            autoCleanupMaxBackwardDuration:30,
+            autoCleanupMaxBackwardDuration:20,
 
-            autoCleanupMinBackwardDuration:15,
+            autoCleanupMinBackwardDuration:10,
+
+            stashInitialSize:128,
 
             withCredentials:false,
 
-            seekType:'range',
+            // Huya lebih stabil tanpa range
+            seekType:'param',
 
             headers:{
 
                 'Accept':'*/*',
 
                 'Origin':
-                location.origin,
+                'https://live.metshop.top',
 
                 'Referer':
-                location.href
+                'https://live.metshop.top/'
             }
         });
 
@@ -290,10 +314,12 @@ async function startPlayer(){
     // AUTOPLAY
     // =========================
 
-    const tryPlay = () => {
+    const playVideo = () => {
 
         video.play()
         .then(() => {
+
+            // unmute setelah play
 
             setTimeout(() => {
 
@@ -311,17 +337,17 @@ async function startPlayer(){
         });
     };
 
-    tryPlay();
+    playVideo();
 
     document.addEventListener(
-        'touchstart',
-        tryPlay,
+        'click',
+        playVideo,
         { once:true }
     );
 
     document.addEventListener(
-        'click',
-        tryPlay,
+        'touchstart',
+        playVideo,
         { once:true }
     );
 
@@ -375,8 +401,13 @@ document.addEventListener(
     'visibilitychange',
     () => {
 
-        video.play()
-        .catch(() => {});
+        if(
+            !document.hidden
+        ){
+
+            video.play()
+            .catch(() => {});
+        }
     }
 );
 
@@ -390,10 +421,14 @@ setInterval(() => {
         video.readyState <= 1
     ){
 
+        console.log(
+            'WATCHDOG RECONNECT'
+        );
+
         reconnect();
     }
 
-}, 45000);
+}, 60000);
 
 // =========================
 // START
