@@ -1,820 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Video.js FLV Player</title>
 
-<meta charset="UTF-8"/>
+<link href="https://cdn.bootcdn.net/ajax/libs/video.js/7.8.1/video-js.min.css" rel="stylesheet">
 
-<meta
-    name="viewport"
-    content="
-        width=device-width,
-        initial-scale=1.0,
-        maximum-scale=1.0,
-        user-scalable=no,
-        viewport-fit=cover
-    "
-/>
-
-<title>Ultra Minimal FLV Player</title>
-
-<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/video.js/7.8.1/video.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/videojs-flash/2.2.1/videojs-flash.min.js"></script>
 
 <style>
-
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
 
-html,
 body{
-    width:100%;
-    height:100%;
-    background:#000;
-    overflow:hidden;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-}
-
-.player{
-    position:relative;
-
-    width:100%;
-    height:100%;
-
-    background:black;
-}
-
-video{
-    width:100%;
-    height:100%;
-
-    object-fit:contain;
-
-    background:black;
-}
-
-/* =========================
-MINIMAL CONTROLS
-========================= */
-
-.controls{
-
-    position:absolute;
-
-    left:10px;
-    bottom:10px;
-
-    z-index:50;
-}
-
-.panel{
-
-    background:rgba(0,0,0,.16);
-
-    backdrop-filter:blur(6px);
-
-    border-radius:999px;
-
-    padding:5px 8px;
-
-    border:1px solid rgba(255,255,255,.03);
-
-    display:flex;
-
-    align-items:center;
-
-    gap:8px;
-}
-
-button{
-
-    width:28px;
-    height:28px;
-
-    border:none;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,.08);
-
+    background:#0b0b0b;
     color:white;
-
-    font-size:13px;
-
-    cursor:pointer;
-
-    transition:.2s;
-}
-
-button:hover{
-
-    background:rgba(255,255,255,.14);
-}
-
-#volumeSlider{
-
-    width:70px;
-
-    height:2px;
-
-    accent-color:white;
-
-    cursor:pointer;
-}
-
-.stats{
-
-    font-size:9px;
-
-    color:rgba(255,255,255,.65);
-
-    min-width:45px;
-}
-
-/* =========================
-FULLSCREEN
-========================= */
-
-.fullscreen{
-
-    position:absolute;
-
-    right:10px;
-    bottom:10px;
-
-    width:40px;
-    height:40px;
-
-    border:none;
-
-    border-radius:50%;
-
-    background:rgba(0,0,0,.18);
-
-    backdrop-filter:blur(8px);
-
-    color:white;
-
-    font-size:14px;
-
-    cursor:pointer;
-
-    z-index:60;
-}
-
-/* =========================
-LOADER
-========================= */
-
-.loader{
-
-    position:absolute;
-
-    inset:0;
-
+    font-family:Arial,sans-serif;
+    width:100vw;
+    height:100vh;
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
-    background:rgba(0,0,0,.30);
-
-    z-index:40;
 }
 
-.spinner{
-
-    width:42px;
-    height:42px;
-
-    border-radius:50%;
-
-    border:3px solid rgba(255,255,255,.12);
-
-    border-top-color:white;
-
-    animation:spin .8s linear infinite;
+.player-box{
+    width:90%;
+    max-width:900px;
+    background:#121212;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,.5);
 }
 
-@keyframes spin{
+.header{
+    padding:18px 22px;
+    background:#181818;
+    border-bottom:1px solid rgba(255,255,255,.06);
+}
 
-    to{
-        transform:rotate(360deg);
+.header h1{
+    font-size:22px;
+    margin-bottom:6px;
+}
+
+.header p{
+    font-size:13px;
+    opacity:.7;
+}
+
+.video-wrap{
+    padding:20px;
+}
+
+.video-js{
+    width:100%;
+    height:500px;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.footer{
+    padding:14px 20px;
+    font-size:12px;
+    opacity:.6;
+    border-top:1px solid rgba(255,255,255,.06);
+}
+
+@media(max-width:768px){
+    .video-js{
+        height:240px;
     }
 }
-
-.hidden{
-    display:none !important;
-}
-
-/* =========================
-EMPTY
-========================= */
-
-.empty{
-
-    position:absolute;
-
-    inset:0;
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    align-items:center;
-
-    color:white;
-
-    text-align:center;
-
-    z-index:30;
-}
-
-.empty h1{
-
-    font-size:18px;
-
-    margin-bottom:8px;
-}
-
-.empty p{
-
-    color:#888;
-
-    font-size:12px;
-}
-
 </style>
-
 </head>
 
 <body>
 
-<div class="player">
+<div class="player-box">
 
-    <video
-        id="video"
-        autoplay
-        preload="auto"
-        controls
-        playsinline
-        webkit-playsinline
-        x5-video-player-type="h5"
-        x5-video-player-fullscreen="true"
-        x5-video-orientation="landscape">
-    </video>
+    <div class="header">
+        <h1>FLV Stream Player</h1>
+        <p>Video.js + Flash fallback player</p>
+    </div>
 
-    <!-- EMPTY -->
+    <div class="video-wrap">
 
-    <div
-        class="empty"
-        id="emptyBox">
+        <video
+            id="flvPlayer"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+            autoplay
+            data-setup='{}'>
 
-        <h1>
-            No Stream URL
-        </h1>
+            <source id="videoSource" src="" type="video/x-flv">
 
-        <p>
-            ?url=https://example.com/live.flv
-        </p>
+        </video>
 
     </div>
 
-    <!-- LOADER -->
-
-    <div
-        class="loader hidden"
-        id="loader">
-
-        <div class="spinner"></div>
-
-    </div>
-
-    <!-- FULLSCREEN -->
-
-    <button
-        class="fullscreen"
-        id="fullscreenBtn">
-
-        ⛶
-
-    </button>
-
-    <!-- CONTROLS -->
-
-    <div class="controls">
-
-        <div class="panel">
-
-            <button id="reloadBtn">
-
-                ↻
-
-            </button>
-
-            <input
-                type="range"
-                id="volumeSlider"
-                min="0"
-                max="1"
-                step="0.01"
-                value="1"
-            >
-
-            <div
-                class="stats"
-                id="stats">
-
-                LIVE
-
-            </div>
-
-        </div>
-
+    <div class="footer">
+        Tambahkan parameter URL:
+        <br>
+        <code>?url=https://domain.com/live.flv</code>
     </div>
 
 </div>
 
 <script>
 
-// =========================
-// FORCE MOBILE ENVIRONMENT
-// =========================
-
-Object.defineProperty(
-    navigator,
-    'userAgent',
-    {
-        get: () =>
-        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'platform',
-    {
-        get: () => 'Android'
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'maxTouchPoints',
-    {
-        get: () => 5
-    }
-);
-
-// =========================
-// ELEMENT
-// =========================
-
-const video =
-    document.getElementById(
-        'video'
-    );
-
-const loader =
-    document.getElementById(
-        'loader'
-    );
-
-const statsBox =
-    document.getElementById(
-        'stats'
-    );
-
-const reloadBtn =
-    document.getElementById(
-        'reloadBtn'
-    );
-
-const fullscreenBtn =
-    document.getElementById(
-        'fullscreenBtn'
-    );
-
-const volumeSlider =
-    document.getElementById(
-        'volumeSlider'
-    );
-
-const emptyBox =
-    document.getElementById(
-        'emptyBox'
-    );
-
-// =========================
-// PLAYER STATE
-// =========================
-
-let player = null;
-
-let reconnectCount = 0;
-
-let reconnectTimer = null;
-
-// =========================
-// GET URL
-// =========================
-
-function getRawUrl(){
-
-    const href =
-        window.location.href;
-
-    const index =
-        href.indexOf('?url=');
-
-    if(index === -1){
-
-        return null;
-    }
-
-    return href.substring(
-        index + 5
-    );
+function getStreamURL(){
+    const params = new URLSearchParams(window.location.search);
+    return params.get('url');
 }
 
-const rawUrl =
-    getRawUrl();
+const streamURL = getStreamURL();
 
-let currentUrl = null;
-
-if(rawUrl){
-
-    currentUrl =
-        decodeURIComponent(
-            rawUrl
-        );
+if(streamURL){
+    document.getElementById('videoSource').src = streamURL;
 }
 
-// =========================
-// LOADER
-// =========================
+const player = videojs('flvPlayer', {
 
-function showLoader(){
+    techOrder:['flash','html5'],
 
-    loader.classList.remove(
-        'hidden'
-    );
-}
+    controls:true,
 
-function hideLoader(){
+    autoplay:true,
 
-    loader.classList.add(
-        'hidden'
-    );
-}
+    preload:'auto',
 
-// =========================
-// DESTROY PLAYER
-// =========================
+    fluid:true,
 
-function destroyPlayer(){
-
-    try{
-
-        if(player){
-
-            player.pause();
-
-            player.unload();
-
-            player.detachMediaElement();
-
-            player.destroy();
-
-            player = null;
-        }
-
-    }catch(e){}
-}
-
-// =========================
-// RECONNECT
-// =========================
-
-function reconnect(){
-
-    if(!currentUrl){
-
-        return;
+    flash:{
+        swf:'https://cdn.bootcdn.net/ajax/libs/videojs-swf/5.4.2/video-js.swf'
     }
 
-    destroyPlayer();
+});
 
-    reconnectCount++;
+player.ready(function(){
 
-    statsBox.innerHTML =
-        'RETRY';
+    if(streamURL){
 
-    const delay =
-        Math.min(
-            12000,
-            2000 * (
-                reconnectCount + 1
-            )
-        );
-
-    clearTimeout(
-        reconnectTimer
-    );
-
-    reconnectTimer =
-        setTimeout(
-            startPlayer,
-            delay
-        );
-}
-
-// =========================
-// START PLAYER
-// =========================
-
-function startPlayer(){
-
-    if(!currentUrl){
-
-        emptyBox.style.display =
-            'flex';
-
-        return;
-    }
-
-    emptyBox.style.display =
-        'none';
-
-    destroyPlayer();
-
-    showLoader();
-
-    if(
-        typeof mpegts ===
-        'undefined'
-    ){
-
-        return;
-    }
-
-    player =
-        mpegts.createPlayer({
-
-            type:'flv',
-
-            isLive:true,
-
-            url:currentUrl
-
-        },{
-
-            enableWorker:true,
-
-            lazyLoad:false,
-
-            liveSync:false,
-
-            liveBufferLatencyChasing:false,
-
-            stashInitialSize:768,
-
-            fixAudioTimestampGap:true,
-
-            autoCleanupSourceBuffer:true,
-
-            autoCleanupMaxBackwardDuration:90,
-
-            autoCleanupMinBackwardDuration:30
+        player.src({
+            src:streamURL,
+            type:'video/x-flv'
         });
 
-    player.attachMediaElement(
-        video
-    );
-
-    player.load();
-
-    // =========================
-    // AUDIO
-    // =========================
-
-    video.muted = false;
-
-    video.volume =
-        volumeSlider.value;
-
-    // =========================
-    // AUTOPLAY
-    // =========================
-
-    const tryPlay = () => {
-
-        video.play()
-        .catch(() => {});
-    };
-
-    tryPlay();
-
-    document.addEventListener(
-        'touchstart',
-        tryPlay,
-        { once:true }
-    );
-
-    document.addEventListener(
-        'click',
-        tryPlay,
-        { once:true }
-    );
-
-    // =========================
-    // PLAYER EVENTS
-    // =========================
-
-    player.on(
-        mpegts.Events.ERROR,
-        reconnect
-    );
-
-    player.on(
-        mpegts.Events
-            .STATISTICS_INFO,
-
-        () => {
-
-            statsBox.innerHTML =
-                'LIVE';
-        }
-    );
-}
-
-// =========================
-// VIDEO EVENTS
-// =========================
-
-video.addEventListener(
-    'playing',
-    () => {
-
-        hideLoader();
-
-        reconnectCount = 0;
-
-        statsBox.innerHTML =
-            'LIVE';
+        player.play();
     }
-);
-
-video.addEventListener(
-    'waiting',
-    () => {
-
-        showLoader();
-
-        statsBox.innerHTML =
-            'BUFFER';
-
-        setTimeout(() => {
-
-            video.play()
-            .catch(() => {});
-
-        }, 700);
-    }
-);
-
-video.addEventListener(
-    'stalled',
-    reconnect
-);
-
-video.addEventListener(
-    'error',
-    reconnect
-);
-
-// =========================
-// RELOAD
-// =========================
-
-reloadBtn.addEventListener(
-    'click',
-    () => {
-
-        reconnectCount = 0;
-
-        startPlayer();
-    }
-);
-
-// =========================
-// VOLUME
-// =========================
-
-volumeSlider.addEventListener(
-    'input',
-    () => {
-
-        video.volume =
-            volumeSlider.value;
-
-        video.muted =
-            volumeSlider.value == 0;
-    }
-);
-
-// =========================
-// FULLSCREEN LANDSCAPE
-// =========================
-
-fullscreenBtn.addEventListener(
-    'click',
-    async () => {
-
-        const playerWrap =
-            document.querySelector(
-                '.player'
-            );
-
-        if(
-            !document
-                .fullscreenElement
-        ){
-
-            await playerWrap
-                .requestFullscreen();
-
-            if(
-                screen.orientation &&
-                screen.orientation.lock
-            ){
-
-                screen.orientation
-                    .lock(
-                        'landscape'
-                    )
-                    .catch(() => {});
-            }
-
-        }else{
-
-            document
-                .exitFullscreen();
-
-            if(
-                screen.orientation &&
-                screen.orientation.unlock
-            ){
-
-                screen.orientation
-                    .unlock();
-            }
-        }
-    }
-);
-
-// =========================
-// KEEP PLAYING
-// =========================
-
-document.addEventListener(
-    'visibilitychange',
-    () => {
-
-        video.play()
-        .catch(() => {});
-    }
-);
-
-// =========================
-// WATCHDOG
-// =========================
-
-setInterval(() => {
-
-    if(
-        video.readyState <= 2
-    ){
-
-        reconnect();
-    }
-
-}, 20000);
-
-// =========================
-// AUTO START
-// =========================
-
-startPlayer();
+});
 
 </script>
 
