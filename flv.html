@@ -2,159 +2,207 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Video.js FLV Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://cdn.bootcdn.net/ajax/libs/video.js/7.8.1/video-js.min.css" rel="stylesheet">
+<title>Clean Player</title>
 
-<script src="https://cdn.bootcdn.net/ajax/libs/video.js/7.8.1/video.min.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/videojs-flash/2.2.1/videojs-flash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flv.js@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
 
+html,
 body{
-    background:#0b0b0b;
-    color:white;
-    font-family:Arial,sans-serif;
-    width:100vw;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.player-box{
-    width:90%;
-    max-width:900px;
-    background:#121212;
-    border-radius:18px;
-    overflow:hidden;
-    box-shadow:0 0 40px rgba(0,0,0,.5);
-}
-
-.header{
-    padding:18px 22px;
-    background:#181818;
-    border-bottom:1px solid rgba(255,255,255,.06);
-}
-
-.header h1{
-    font-size:22px;
-    margin-bottom:6px;
-}
-
-.header p{
-    font-size:13px;
-    opacity:.7;
-}
-
-.video-wrap{
-    padding:20px;
-}
-
-.video-js{
     width:100%;
-    height:500px;
-    border-radius:12px;
+    height:100%;
     overflow:hidden;
+    background:#000;
 }
 
-.footer{
-    padding:14px 20px;
-    font-size:12px;
-    opacity:.6;
-    border-top:1px solid rgba(255,255,255,.06);
+.player{
+    width:100%;
+    height:100%;
+    background:#000;
 }
 
-@media(max-width:768px){
-    .video-js{
-        height:240px;
-    }
+video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#000;
 }
+
 </style>
 </head>
 
 <body>
 
-<div class="player-box">
+<div class="player">
 
-    <div class="header">
-        <h1>FLV Stream Player</h1>
-        <p>Video.js + Flash fallback player</p>
-    </div>
-
-    <div class="video-wrap">
-
-        <video
-            id="flvPlayer"
-            class="video-js vjs-default-skin"
-            controls
-            preload="auto"
-            autoplay
-            data-setup='{}'>
-
-            <source id="videoSource" src="" type="video/x-flv">
-
-        </video>
-
-    </div>
-
-    <div class="footer">
-        Tambahkan parameter URL:
-        <br>
-        <code>?url=https://domain.com/live.flv</code>
-    </div>
+    <video
+        id="videoPlayer"
+        autoplay
+        controls
+        playsinline
+        webkit-playsinline>
+    </video>
 
 </div>
 
 <script>
 
-function getStreamURL(){
-    const params = new URLSearchParams(window.location.search);
-    return params.get('url');
+function getQueryParam(param){
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    return params.get(param);
 }
 
-const streamURL = getStreamURL();
+function isIOS(){
 
-if(streamURL){
-    document.getElementById('videoSource').src = streamURL;
+    return /iPad|iPhone|iPod/.test(
+        navigator.userAgent
+    ) && !window.MSStream;
 }
 
-const player = videojs('flvPlayer', {
+const video =
+    document.getElementById(
+        'videoPlayer'
+    );
 
-    techOrder:['flash','html5'],
+let flvPlayer = null;
 
-    controls:true,
+let hlsPlayer = null;
 
-    autoplay:true,
+const videoUrl =
+    getQueryParam('url');
 
-    preload:'auto',
+function destroyPlayers(){
 
-    fluid:true,
+    try{
 
-    flash:{
-        swf:'https://cdn.bootcdn.net/ajax/libs/videojs-swf/5.4.2/video-js.swf'
+        if(flvPlayer){
+
+            flvPlayer.destroy();
+
+            flvPlayer = null;
+        }
+
+        if(hlsPlayer){
+
+            hlsPlayer.destroy();
+
+            hlsPlayer = null;
+        }
+
+    }catch(e){}
+}
+
+function startPlayer(){
+
+    if(!videoUrl){
+
+        return;
     }
 
-});
+    destroyPlayers();
 
-player.ready(function(){
+    // ====================
+    // FLV
+    // ====================
 
-    if(streamURL){
+    if(
+        videoUrl.endsWith('.flv')
+        &&
+        flvjs.isSupported()
+        &&
+        !isIOS()
+    ){
 
-        player.src({
-            src:streamURL,
-            type:'video/x-flv'
-        });
+        flvPlayer =
+            flvjs.createPlayer({
 
-        player.play();
+                type:'flv',
+
+                url:videoUrl,
+
+                isLive:true
+
+            });
+
+        flvPlayer.attachMediaElement(
+            video
+        );
+
+        flvPlayer.load();
+
+        flvPlayer.play();
     }
-});
+
+    // ====================
+    // HLS
+    // ====================
+
+    else if(
+        videoUrl.endsWith('.m3u8')
+        &&
+        Hls.isSupported()
+    ){
+
+        hlsPlayer =
+            new Hls();
+
+        hlsPlayer.loadSource(
+            videoUrl
+        );
+
+        hlsPlayer.attachMedia(
+            video
+        );
+
+        video.play()
+        .catch(()=>{});
+    }
+
+    // ====================
+    // MP4
+    // ====================
+
+    else{
+
+        video.src =
+            videoUrl;
+
+        video.play()
+        .catch(()=>{});
+    }
+}
+
+/* AUTO RECOVER */
+
+setInterval(() => {
+
+    if(
+        video.readyState <= 2
+    ){
+
+        startPlayer();
+    }
+
+}, 20000);
+
+/* START */
+
+startPlayer();
 
 </script>
 
