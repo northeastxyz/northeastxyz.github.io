@@ -15,7 +15,7 @@
     "
 />
 
-<title>Ultra Clean FLV Player</title>
+<title>Direct Chrome Style FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -50,54 +50,15 @@ video{
 
 <video
     id="video"
-    autoplay
     controls
-    preload="auto"
+    autoplay
+    muted
     playsinline
     webkit-playsinline
-    x5-video-player-type="h5"
-    x5-video-player-fullscreen="true"
-    x5-video-orientation="landscape">
+    preload="auto">
 </video>
 
 <script>
-
-// =========================
-// SPOOF IPHONE
-// =========================
-
-Object.defineProperty(
-    navigator,
-    'userAgent',
-    {
-        get: () =>
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'platform',
-    {
-        get: () => 'iPhone'
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'vendor',
-    {
-        get: () => 'Apple Computer, Inc.'
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'maxTouchPoints',
-    {
-        get: () => 5
-    }
-);
 
 // =========================
 // ELEMENT
@@ -109,50 +70,32 @@ const video =
     );
 
 // =========================
-// PLAYER STATE
+// GET URL
+// =========================
+
+function getQueryParam(param){
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    return params.get(param);
+}
+
+const currentUrl =
+    getQueryParam('url');
+
+// =========================
+// PLAYER
 // =========================
 
 let player = null;
 
-let reconnectTimer = null;
+let reconnecting = false;
 
 // =========================
-// GET URL
-// =========================
-
-function getRawUrl(){
-
-    const href =
-        window.location.href;
-
-    const index =
-        href.indexOf('?url=');
-
-    if(index === -1){
-
-        return null;
-    }
-
-    return href.substring(
-        index + 5
-    );
-}
-
-const rawUrl =
-    getRawUrl();
-
-let currentUrl = null;
-
-if(rawUrl){
-
-    currentUrl =
-        decodeURIComponent(
-            rawUrl
-        );
-}
-
-// =========================
-// DESTROY PLAYER
+// DESTROY
 // =========================
 
 function destroyPlayer(){
@@ -181,20 +124,24 @@ function destroyPlayer(){
 
 function reconnect(){
 
-    if(!currentUrl){
+    if(
+        reconnecting
+    ){
 
         return;
     }
 
-    clearTimeout(
-        reconnectTimer
-    );
+    reconnecting = true;
 
-    reconnectTimer =
-        setTimeout(
-            startPlayer,
-            4000
-        );
+    destroyPlayer();
+
+    setTimeout(() => {
+
+        reconnecting = false;
+
+        startPlayer();
+
+    }, 5000);
 }
 
 // =========================
@@ -205,31 +152,38 @@ function startPlayer(){
 
     if(!currentUrl){
 
+        console.log(
+            'NO URL'
+        );
+
+        return;
+    }
+
+    if(
+        !mpegts.isSupported()
+    ){
+
+        console.log(
+            'MPEGTS NOT SUPPORTED'
+        );
+
         return;
     }
 
     destroyPlayer();
-
-    if(
-        typeof mpegts ===
-        'undefined'
-    ){
-
-        return;
-    }
 
     player =
         mpegts.createPlayer({
 
             type:'flv',
 
-            isLive:true,
+            url:currentUrl,
 
-            url:currentUrl
+            isLive:true
 
         },{
 
-            enableWorker:true,
+            enableWorker:false,
 
             lazyLoad:false,
 
@@ -237,46 +191,28 @@ function startPlayer(){
 
             liveBufferLatencyChasing:false,
 
-            stashInitialSize:384,
-
             fixAudioTimestampGap:true,
 
             autoCleanupSourceBuffer:true,
 
-            autoCleanupMaxBackwardDuration:60,
+            autoCleanupMaxBackwardDuration:30,
 
-            autoCleanupMinBackwardDuration:30,
+            autoCleanupMinBackwardDuration:15,
 
-            withCredentials:true,
+            stashInitialSize:128,
+
+            withCredentials:false,
 
             headers:{
 
-                'Accept':
-                '*/*',
-
-                'Accept-Language':
-                'en-US,en;q=0.9',
-
-                'Cache-Control':
-                'no-cache',
-
-                'Pragma':
-                'no-cache',
-
                 'Origin':
-                'https://live.metshop.top',
+                location.origin,
 
                 'Referer':
-                'https://live.metshop.top/',
+                location.href,
 
-                'Sec-Fetch-Dest':
-                'video',
-
-                'Sec-Fetch-Mode':
-                'cors',
-
-                'Sec-Fetch-Site':
-                'same-origin'
+                'Accept':
+                '*/*'
             }
         });
 
@@ -287,26 +223,42 @@ function startPlayer(){
     player.load();
 
     // =========================
-    // AUTOPLAY FIX
+    // AUTOPLAY
     // =========================
 
-    const tryPlay = () => {
+    const playVideo = () => {
 
         video.play()
-        .catch(() => {});
+        .then(() => {
+
+            // unmute setelah play
+            setTimeout(() => {
+
+                video.muted = false;
+
+            }, 1000);
+
+        })
+        .catch(err => {
+
+            console.log(
+                'PLAY ERROR',
+                err
+            );
+        });
     };
 
-    tryPlay();
+    playVideo();
 
     document.addEventListener(
-        'touchstart',
-        tryPlay,
+        'click',
+        playVideo,
         { once:true }
     );
 
     document.addEventListener(
-        'click',
-        tryPlay,
+        'touchstart',
+        playVideo,
         { once:true }
     );
 
@@ -316,7 +268,15 @@ function startPlayer(){
 
     player.on(
         mpegts.Events.ERROR,
-        reconnect
+        (err) => {
+
+            console.log(
+                'PLAYER ERROR',
+                err
+            );
+
+            reconnect();
+        }
     );
 }
 
@@ -338,12 +298,8 @@ video.addEventListener(
     'waiting',
     () => {
 
-        setTimeout(() => {
-
-            video.play()
-            .catch(() => {});
-
-        }, 1000);
+        video.play()
+        .catch(() => {});
     }
 );
 
@@ -373,10 +329,10 @@ setInterval(() => {
         reconnect();
     }
 
-}, 60000);
+}, 45000);
 
 // =========================
-// AUTO START
+// START
 // =========================
 
 startPlayer();
