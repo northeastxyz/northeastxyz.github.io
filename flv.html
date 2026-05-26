@@ -126,7 +126,6 @@ async function getFinalURL(url){
 
     try{
 
-        // gunakan HEAD dulu
         const response =
             await fetch(url,{
 
@@ -168,10 +167,6 @@ async function getFinalURL(url){
                 'content-type'
             )
         );
-
-        // penting:
-        // kalau redirect final ternyata html
-        // jangan dipakai
 
         const type =
             response.headers.get(
@@ -274,11 +269,15 @@ async function startPlayer(){
 
             lazyLoad:false,
 
-            liveSync:false,
+            liveSync:true,
+
+            // delay buffer 3-5 detik
+            liveSyncMaxLatency:5,
 
             liveBufferLatencyChasing:true,
 
-            stashInitialSize:128,
+            // buffer lebih besar
+            stashInitialSize:384,
 
             fixAudioTimestampGap:true,
 
@@ -290,7 +289,6 @@ async function startPlayer(){
 
             withCredentials:false,
 
-            // huya lebih cocok tanpa range
             seekType:'param',
 
             headers:{
@@ -413,6 +411,10 @@ video.addEventListener(
     'waiting',
     () => {
 
+        console.log(
+            'BUFFERING...'
+        );
+
         video.play()
         .catch(() => {});
     }
@@ -445,6 +447,10 @@ setInterval(() => {
     if(
         video.readyState <= 1
     ){
+
+        console.log(
+            'WATCHDOG RECONNECT'
+        );
 
         reconnect();
     }
