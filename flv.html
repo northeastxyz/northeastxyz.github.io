@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 
 <meta
     name="viewport"
@@ -10,12 +10,11 @@
         width=device-width,
         initial-scale=1.0,
         maximum-scale=1.0,
-        user-scalable=no,
-        viewport-fit=cover
+        user-scalable=no
     "
-/>
+>
 
-<title>PC Stable FLV Player</title>
+<title>Huya Stable PC Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -33,9 +32,10 @@ body{
     height:100%;
     overflow:hidden;
     background:#000;
+    font-family:Arial,sans-serif;
 }
 
-#container{
+#app{
     width:100%;
     height:100%;
     position:relative;
@@ -49,22 +49,48 @@ video{
     background:#000;
 }
 
+/* STATUS */
+
 #status{
+
     position:absolute;
+
     top:10px;
     left:10px;
-    z-index:9999;
 
-    padding:6px 10px;
+    z-index:99999;
 
-    font-size:12px;
-    font-family:Arial;
+    padding:8px 12px;
+
+    border-radius:8px;
+
+    background:rgba(0,0,0,.7);
 
     color:#fff;
 
-    background:rgba(0,0,0,.6);
+    font-size:12px;
 
-    border-radius:6px;
+    backdrop-filter:blur(4px);
+}
+
+/* LOADING */
+
+#loading{
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    z-index:9999;
+
+    color:#fff;
+
+    font-size:14px;
+
+    text-align:center;
 }
 
 </style>
@@ -73,10 +99,14 @@ video{
 
 <body>
 
-<div id="container">
+<div id="app">
 
     <div id="status">
-        CONNECTING...
+        INITIALIZING...
+    </div>
+
+    <div id="loading">
+        Loading Stream...
     </div>
 
     <video
@@ -85,17 +115,16 @@ video{
         autoplay
         muted
         playsinline
-        webkit-playsinline
-        preload="auto">
+        webkit-playsinline>
     </video>
 
 </div>
 
 <script>
 
-// =========================
+// ========================================
 // ELEMENT
-// =========================
+// ========================================
 
 const video =
     document.getElementById(
@@ -107,42 +136,55 @@ const statusBox =
         'status'
     );
 
-// =========================
-// URL PARAM
-// =========================
+const loadingBox =
+    document.getElementById(
+        'loading'
+    );
 
-function getQueryParam(param){
+// ========================================
+// QUERY
+// ========================================
+
+function getQuery(name){
 
     return new URLSearchParams(
-        window.location.search
-    ).get(param);
+        location.search
+    ).get(name);
 }
 
-const sourceUrl =
-    getQueryParam('url');
+const streamURL =
+    getQuery('url');
 
-// =========================
+// ========================================
 // PLAYER
-// =========================
+// ========================================
 
 let player = null;
 
 let reconnecting = false;
 
-// =========================
-// STATUS
-// =========================
+// ========================================
+// UI
+// ========================================
 
 function setStatus(text){
 
     console.log(text);
 
-    statusBox.innerText = text;
+    statusBox.innerHTML = text;
 }
 
-// =========================
-// DESTROY PLAYER
-// =========================
+function showLoading(show){
+
+    loadingBox.style.display =
+        show
+        ? 'block'
+        : 'none';
+}
+
+// ========================================
+// DESTROY
+// ========================================
 
 function destroyPlayer(){
 
@@ -163,27 +205,35 @@ function destroyPlayer(){
 
     }catch(err){
 
-        console.log(err);
+        console.log(
+            'DESTROY ERROR:',
+            err
+        );
     }
 }
 
-// =========================
-// START PLAYER
-// =========================
+// ========================================
+// START
+// ========================================
 
 async function startPlayer(){
 
-    if(!sourceUrl){
+    if(!streamURL){
 
-        setStatus('NO URL');
+        setStatus(
+            'NO STREAM URL'
+        );
 
         return;
     }
 
-    if(!mpegts.isSupported()){
+    if(
+        !mpegts.getFeatureList()
+            .mseLivePlayback
+    ){
 
         setStatus(
-            'MPEGTS NOT SUPPORTED'
+            'MSE LIVE NOT SUPPORTED'
         );
 
         return;
@@ -195,91 +245,90 @@ async function startPlayer(){
         'CONNECTING...'
     );
 
+    showLoading(true);
+
     console.log(
-        'PLAY URL:',
-        sourceUrl
+        'STREAM:',
+        streamURL
     );
 
-    // =========================
+    // ====================================
     // CREATE PLAYER
-    // =========================
+    // ====================================
 
     player =
         mpegts.createPlayer({
 
             type:'flv',
 
-            url:sourceUrl,
+            url:streamURL,
 
-            isLive:true
+            isLive:true,
+
+            cors:true,
+
+            hasAudio:false,
+
+            hasVideo:true
 
         },{
 
-            enableWorker:true,
+            enableWorker:false,
+
+            enableStashBuffer:false,
 
             lazyLoad:false,
 
-            liveSync:true,
-
-            liveSyncMaxLatency:3,
-
-            liveBufferLatencyChasing:true,
-
-            stashInitialSize:128,
+            deferLoadAfterSourceOpen:false,
 
             autoCleanupSourceBuffer:true,
 
             autoCleanupMaxBackwardDuration:30,
 
-            autoCleanupMinBackwardDuration:15,
+            autoCleanupMinBackwardDuration:10,
 
-            fixAudioTimestampGap:true
+            stashInitialSize:64,
 
+            liveSync:false
         });
 
-    // =========================
+    // ====================================
     // ATTACH
-    // =========================
+    // ====================================
 
     player.attachMediaElement(
         video
     );
 
-    player.load();
+    // ====================================
+    // EVENTS
+    // ====================================
 
-    // =========================
-    // PLAY
-    // =========================
+    player.on(
+        mpegts.Events.MEDIA_INFO,
+        info => {
 
-    try{
+            console.log(
+                'MEDIA INFO:',
+                info
+            );
 
-        await video.play();
+            setStatus(
+                'MEDIA DETECTED'
+            );
+        }
+    );
 
-        setStatus(
-            'PLAYING'
-        );
+    player.on(
+        mpegts.Events.STATISTICS_INFO,
+        stats => {
 
-        setTimeout(() => {
-
-            video.muted = false;
-
-        },1000);
-
-    }catch(err){
-
-        setStatus(
-            'CLICK TO PLAY'
-        );
-
-        console.log(
-            'AUTOPLAY ERROR:',
-            err
-        );
-    }
-
-    // =========================
-    // PLAYER EVENTS
-    // =========================
+            console.log(
+                'STATS:',
+                stats
+            );
+        }
+    );
 
     player.on(
         mpegts.Events.ERROR,
@@ -292,26 +341,56 @@ async function startPlayer(){
             );
 
             setStatus(
-                'RECONNECTING...'
+                'ERROR: ' + type
             );
 
             reconnect();
         }
     );
 
-    player.on(
-        mpegts.Events.LOADING_COMPLETE,
-        () => {
+    // ====================================
+    // LOAD
+    // ====================================
 
-            setStatus(
-                'STREAM ENDED'
-            );
-        }
-    );
+    player.load();
 
-    // =========================
+    // ====================================
+    // PLAY
+    // ====================================
+
+    try{
+
+        await video.play();
+
+        setStatus(
+            'PLAYING'
+        );
+
+        showLoading(false);
+
+        setTimeout(() => {
+
+            video.muted = false;
+
+        },1000);
+
+    }catch(err){
+
+        console.log(
+            'AUTOPLAY ERROR:',
+            err
+        );
+
+        setStatus(
+            'CLICK TO PLAY'
+        );
+
+        showLoading(false);
+    }
+
+    // ====================================
     // VIDEO EVENTS
-    // =========================
+    // ====================================
 
     video.addEventListener(
         'playing',
@@ -320,6 +399,8 @@ async function startPlayer(){
             setStatus(
                 'PLAYING'
             );
+
+            showLoading(false);
         }
     );
 
@@ -330,6 +411,8 @@ async function startPlayer(){
             setStatus(
                 'BUFFERING...'
             );
+
+            showLoading(true);
         }
     );
 
@@ -358,9 +441,9 @@ async function startPlayer(){
     );
 }
 
-// =========================
+// ========================================
 // RECONNECT
-// =========================
+// ========================================
 
 function reconnect(){
 
@@ -371,7 +454,13 @@ function reconnect(){
 
     reconnecting = true;
 
+    showLoading(true);
+
     destroyPlayer();
+
+    setStatus(
+        'RECONNECTING...'
+    );
 
     setTimeout(() => {
 
@@ -382,9 +471,9 @@ function reconnect(){
     },5000);
 }
 
-// =========================
-// USER INTERACTION
-// =========================
+// ========================================
+// FORCE PLAY
+// ========================================
 
 async function forcePlay(){
 
@@ -412,9 +501,9 @@ document.addEventListener(
     forcePlay
 );
 
-// =========================
-// VISIBILITY FIX
-// =========================
+// ========================================
+// TAB FIX
+// ========================================
 
 document.addEventListener(
     'visibilitychange',
@@ -423,14 +512,14 @@ document.addEventListener(
         if(!document.hidden){
 
             video.play()
-            .catch(() => {});
+            .catch(()=>{});
         }
     }
 );
 
-// =========================
+// ========================================
 // WATCHDOG
-// =========================
+// ========================================
 
 setInterval(() => {
 
@@ -447,9 +536,9 @@ setInterval(() => {
 
 },30000);
 
-// =========================
+// ========================================
 // START
-// =========================
+// ========================================
 
 startPlayer();
 
