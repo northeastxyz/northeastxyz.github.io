@@ -15,9 +15,9 @@
     "
 />
 
-<title>Direct Chrome Style FLV Player</title>
+<title>Jessibuca FLV Player</title>
 
-<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/jessibuca@3.0.8/dist/jessibuca.min.js"></script>
 
 <style>
 
@@ -35,10 +35,9 @@ body{
     background:#000;
 }
 
-video{
+#player{
     width:100%;
     height:100%;
-    object-fit:contain;
     background:#000;
 }
 
@@ -48,30 +47,9 @@ video{
 
 <body>
 
-<video
-    id="video"
-    controls
-    autoplay
-    muted
-    playsinline
-    webkit-playsinline
-    preload="auto">
-</video>
+<div id="player"></div>
 
 <script>
-
-// =========================
-// ELEMENT
-// =========================
-
-const video =
-    document.getElementById(
-        'video'
-    );
-
-// =========================
-// GET URL
-// =========================
 
 function getQueryParam(param){
 
@@ -83,257 +61,94 @@ function getQueryParam(param){
     return params.get(param);
 }
 
-const currentUrl =
+const streamUrl =
     getQueryParam('url');
-
-// =========================
-// PLAYER
-// =========================
 
 let player = null;
 
-let reconnecting = false;
+function startPlayer(){
 
-// =========================
-// DESTROY
-// =========================
+    if(!streamUrl){
 
-function destroyPlayer(){
+        console.log(
+            'NO STREAM URL'
+        );
 
-    try{
+        return;
+    }
 
-        if(player){
+    if(player){
 
-            player.pause();
-
-            player.unload();
-
-            player.detachMediaElement();
+        try{
 
             player.destroy();
 
-            player = null;
-        }
-
-    }catch(e){}
-}
-
-// =========================
-// RECONNECT
-// =========================
-
-function reconnect(){
-
-    if(
-        reconnecting
-    ){
-
-        return;
+        }catch(e){}
     }
-
-    reconnecting = true;
-
-    destroyPlayer();
-
-    setTimeout(() => {
-
-        reconnecting = false;
-
-        startPlayer();
-
-    }, 5000);
-}
-
-// =========================
-// START PLAYER
-// =========================
-
-function startPlayer(){
-
-    if(!currentUrl){
-
-        console.log(
-            'NO URL'
-        );
-
-        return;
-    }
-
-    if(
-        !mpegts.isSupported()
-    ){
-
-        console.log(
-            'MPEGTS NOT SUPPORTED'
-        );
-
-        return;
-    }
-
-    destroyPlayer();
 
     player =
-        mpegts.createPlayer({
+        new Jessibuca({
 
-            type:'flv',
+            container:
+                document.getElementById(
+                    'player'
+                ),
 
-            url:currentUrl,
+            videoBuffer:0.2,
 
-            isLive:true
+            isResize:true,
 
-        },{
+            text:'',
 
-            enableWorker:false,
+            loadingText:'',
 
-            lazyLoad:false,
+            useMSE:true,
 
-            liveSync:false,
+            useWCS:false,
 
-            liveBufferLatencyChasing:false,
+            hasAudio:true,
 
-            fixAudioTimestampGap:true,
+            debug:false,
 
-            autoCleanupSourceBuffer:true,
+            showBandwidth:false,
 
-            autoCleanupMaxBackwardDuration:30,
+            operateBtns:{
+                fullscreen:false,
+                screenshot:false,
+                play:false,
+                audio:false,
+                record:false
+            },
 
-            autoCleanupMinBackwardDuration:15,
+            forceNoOffscreen:true,
 
-            stashInitialSize:128,
+            heartTimeout:10,
 
-            withCredentials:false,
+            timeout:10,
 
-            headers:{
+            loadingTimeout:10,
 
-                'Origin':
-                location.origin,
+            keepScreenOn:true,
 
-                'Referer':
-                location.href,
+            controlAutoHide:true,
 
-                'Accept':
-                '*/*'
-            }
+            isNotMute:false
         });
 
-    player.attachMediaElement(
-        video
-    );
+    player.play(streamUrl);
 
-    player.load();
+    setInterval(() => {
 
-    // =========================
-    // AUTOPLAY
-    // =========================
+        if(
+            document.hidden === false
+        ){
 
-    const playVideo = () => {
+            player.play(streamUrl);
 
-        video.play()
-        .then(() => {
-
-            // unmute setelah play
-            setTimeout(() => {
-
-                video.muted = false;
-
-            }, 1000);
-
-        })
-        .catch(err => {
-
-            console.log(
-                'PLAY ERROR',
-                err
-            );
-        });
-    };
-
-    playVideo();
-
-    document.addEventListener(
-        'click',
-        playVideo,
-        { once:true }
-    );
-
-    document.addEventListener(
-        'touchstart',
-        playVideo,
-        { once:true }
-    );
-
-    // =========================
-    // PLAYER EVENTS
-    // =========================
-
-    player.on(
-        mpegts.Events.ERROR,
-        (err) => {
-
-            console.log(
-                'PLAYER ERROR',
-                err
-            );
-
-            reconnect();
         }
-    );
+
+    }, 30000);
 }
-
-// =========================
-// VIDEO EVENTS
-// =========================
-
-video.addEventListener(
-    'stalled',
-    reconnect
-);
-
-video.addEventListener(
-    'error',
-    reconnect
-);
-
-video.addEventListener(
-    'waiting',
-    () => {
-
-        video.play()
-        .catch(() => {});
-    }
-);
-
-// =========================
-// KEEP PLAYING
-// =========================
-
-document.addEventListener(
-    'visibilitychange',
-    () => {
-
-        video.play()
-        .catch(() => {});
-    }
-);
-
-// =========================
-// WATCHDOG
-// =========================
-
-setInterval(() => {
-
-    if(
-        video.readyState <= 1
-    ){
-
-        reconnect();
-    }
-
-}, 45000);
-
-// =========================
-// START
-// =========================
 
 startPlayer();
 
