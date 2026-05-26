@@ -1,25 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
 
-<title>Native Video Test</title>
+<meta charset="UTF-8"/>
+
+<meta
+    name="viewport"
+    content="
+        width=device-width,
+        initial-scale=1.0,
+        maximum-scale=1.0,
+        user-scalable=no,
+        viewport-fit=cover
+    "
+/>
+
+<title>Ultra Clean FLV Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
 <style>
 
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
 html,
 body{
-    margin:0;
     width:100%;
     height:100%;
+    overflow:hidden;
     background:#000;
 }
 
 video{
     width:100%;
     height:100%;
+    object-fit:contain;
     background:#000;
 }
 
@@ -31,56 +50,404 @@ video{
 
 <video
     id="video"
-    controls
     autoplay
+    controls
+    preload="auto"
     playsinline
-    webkit-playsinline>
+    webkit-playsinline
+    x5-video-player-type="h5"
+    x5-video-player-fullscreen="true"
+    x5-video-orientation="landscape">
 </video>
 
 <script>
+
+// =========================
+// FORCE MOBILE ENVIRONMENT
+// =========================
+
+Object.defineProperty(
+    navigator,
+    'userAgent',
+    {
+        get: () =>
+        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+    }
+);
+
+Object.defineProperty(
+    navigator,
+    'platform',
+    {
+        get: () => 'Android'
+    }
+);
+
+Object.defineProperty(
+    navigator,
+    'maxTouchPoints',
+    {
+        get: () => 5
+    }
+);
+
+// =========================
+// ELEMENT
+// =========================
 
 const video =
     document.getElementById(
         'video'
     );
 
-const url =
-    new URLSearchParams(
-        location.search
-    ).get('url');
+// =========================
+// PLAYER
+// =========================
 
-console.log(
-    'VIDEO URL:',
-    url
+let player = null;
+
+let reconnectTimer = null;
+
+// =========================
+// GET URL
+// =========================
+
+function getRawUrl(){
+
+    const href =
+        window.location.href;
+
+    const index =
+        href.indexOf('?url=');
+
+    if(index === -1){
+
+        return null;
+    }
+
+    return href.substring(
+        index + 5
+    );
+}
+
+const rawUrl =
+    getRawUrl();
+
+let currentUrl = null;
+
+if(rawUrl){
+
+    currentUrl =
+        decodeURIComponent(
+            rawUrl
+        );
+}
+
+// =========================
+// DESTROY PLAYER
+// =========================
+
+function destroyPlayer(){
+
+    try{
+
+        if(player){
+
+            player.pause();
+
+            player.unload();
+
+            player.detachMediaElement();
+
+            player.destroy();
+
+            player = null;
+        }
+
+    }catch(e){}
+}
+
+// =========================
+// RECONNECT
+// =========================
+
+function reconnect(){
+
+    if(!currentUrl){
+
+        return;
+    }
+
+    clearTimeout(
+        reconnectTimer
+    );
+
+    reconnectTimer =
+        setTimeout(
+            startPlayer,
+            2000
+        );
+}
+
+// =========================
+// START PLAYER
+// =========================
+
+function startPlayer(){
+
+    if(!currentUrl){
+
+        return;
+    }
+
+    destroyPlayer();
+
+    if(
+        typeof mpegts ===
+        'undefined'
+    ){
+
+        return;
+    }
+
+    if(
+        !mpegts.getFeatureList()
+            .mseLivePlayback
+    ){
+
+        console.error(
+            'MSE Live Playback not supported'
+        );
+
+        return;
+    }
+
+    player =
+        mpegts.createPlayer({
+
+            type:'flv',
+
+            isLive:true,
+
+            url:currentUrl
+
+        },{
+
+            enableWorker:true,
+
+            lazyLoad:false,
+
+            liveSync:false,
+
+            liveBufferLatencyChasing:false,
+
+            stashInitialSize:768,
+
+            fixAudioTimestampGap:true,
+
+            autoCleanupSourceBuffer:true,
+
+            autoCleanupMaxBackwardDuration:90,
+
+            autoCleanupMinBackwardDuration:30
+        });
+
+    player.attachMediaElement(
+        video
+    );
+
+    player.load();
+
+    // =========================
+    // AUTOPLAY FIX
+    // =========================
+
+    const tryPlay = () => {
+
+        video.play()
+        .catch(err => {
+
+            console.log(
+                'PLAY ERROR:',
+                err
+            );
+        });
+    };
+
+    tryPlay();
+
+    document.addEventListener(
+        'touchstart',
+        tryPlay,
+        { once:true }
+    );
+
+    document.addEventListener(
+        'click',
+        tryPlay,
+        { once:true }
+    );
+
+    // =========================
+    // PLAYER EVENTS
+    // =========================
+
+    player.on(
+        mpegts.Events.ERROR,
+        (type, detail) => {
+
+            console.error(
+                'PLAYER ERROR:',
+                type,
+                detail
+            );
+
+            reconnect();
+        }
+    );
+
+    player.on(
+        mpegts.Events.STATISTICS_INFO,
+        (stats) => {
+
+            console.log(
+                'STATS:',
+                stats
+            );
+        }
+    );
+}
+
+// =========================
+// VIDEO EVENTS
+// =========================
+
+video.addEventListener(
+    'playing',
+    () => {
+
+        console.log(
+            'VIDEO PLAYING'
+        );
+    }
 );
 
-video.src = url;
+video.addEventListener(
+    'waiting',
+    () => {
 
-video.load();
+        console.log(
+            'VIDEO BUFFERING'
+        );
 
-video.play()
+        setTimeout(() => {
+
+            video.play()
+            .catch(() => {});
+
+        }, 500);
+    }
+);
+
+video.addEventListener(
+    'stalled',
+    () => {
+
+        console.log(
+            'VIDEO STALLED'
+        );
+
+        reconnect();
+    }
+);
+
+video.addEventListener(
+    'error',
+    () => {
+
+        console.log(
+            'VIDEO ERROR:',
+            video.error
+        );
+
+        reconnect();
+    }
+);
+
+// =========================
+// KEEP PLAYING
+// =========================
+
+document.addEventListener(
+    'visibilitychange',
+    () => {
+
+        video.play()
+        .catch(() => {});
+    }
+);
+
+// =========================
+// WATCHDOG
+// =========================
+
+setInterval(() => {
+
+    if(
+        video.readyState <= 2
+    ){
+
+        console.log(
+            'WATCHDOG RECONNECT'
+        );
+
+        reconnect();
+    }
+
+}, 20000);
+
+// =========================
+// DEBUG NETWORK
+// =========================
+
+fetch(currentUrl, {
+    method:'GET'
+})
+.then(async res => {
+
+    console.log(
+        'HTTP STATUS:',
+        res.status
+    );
+
+    console.log(
+        'CONTENT TYPE:',
+        res.headers.get(
+            'content-type'
+        )
+    );
+
+    console.log(
+        'CORS:',
+        res.headers.get(
+            'access-control-allow-origin'
+        )
+    );
+
+})
 .catch(err => {
 
     console.error(
-        'PLAY ERROR:',
+        'FETCH ERROR:',
         err
-    );
-
-    alert(
-        err.message
     );
 });
 
-video.onerror = () => {
+// =========================
+// AUTO START
+// =========================
 
-    console.log(
-        video.error
-    );
-
-    alert(
-        'VIDEO ERROR'
-    );
-};
+startPlayer();
 
 </script>
 
