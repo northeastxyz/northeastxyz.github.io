@@ -5,28 +5,21 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Native HLS Player</title>
+<title>Native Video Test</title>
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 html,
 body{
+    margin:0;
     width:100%;
     height:100%;
-    overflow:hidden;
     background:#000;
 }
 
 video{
     width:100%;
     height:100%;
-    object-fit:contain;
     background:#000;
 }
 
@@ -46,36 +39,48 @@ video{
 
 <script>
 
-function getQueryParam(param){
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    return params.get(param);
-}
-
 const video =
     document.getElementById(
         'video'
     );
 
-/*
-    Example:
-    ?url=https://domain.com/live.m3u8
-*/
+const url =
+    new URLSearchParams(
+        location.search
+    ).get('url');
 
-const videoUrl =
-    getQueryParam('url');
+console.log(
+    'VIDEO URL:',
+    url
+);
 
-if(videoUrl){
+video.src = url;
 
-    video.src = videoUrl;
+video.load();
 
-    video.play()
-    .catch(()=>{});
-}
+video.play()
+.catch(err => {
+
+    console.error(
+        'PLAY ERROR:',
+        err
+    );
+
+    alert(
+        err.message
+    );
+});
+
+video.onerror = () => {
+
+    console.log(
+        video.error
+    );
+
+    alert(
+        'VIDEO ERROR'
+    );
+};
 
 </script>
 
