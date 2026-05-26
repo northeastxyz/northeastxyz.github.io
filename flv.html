@@ -15,7 +15,7 @@
     "
 />
 
-<title>Stable Huya FLV Player</title>
+<title>Huya Stable FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -53,9 +53,9 @@ video{
     controls
     autoplay
     muted
+    preload="auto"
     playsinline
-    webkit-playsinline
-    preload="auto">
+    webkit-playsinline>
 </video>
 
 <script>
@@ -70,7 +70,7 @@ const video =
     );
 
 // =========================
-// GET URL
+// URL
 // =========================
 
 function getQueryParam(param){
@@ -83,7 +83,7 @@ function getQueryParam(param){
     return params.get(param);
 }
 
-const currentUrl =
+const sourceUrl =
     getQueryParam('url');
 
 // =========================
@@ -119,50 +119,22 @@ function destroyPlayer(){
 }
 
 // =========================
-// RECONNECT
+// GET REAL STREAM URL
 // =========================
 
-function reconnect(){
-
-    if(
-        reconnecting
-    ){
-
-        return;
-    }
-
-    reconnecting = true;
-
-    destroyPlayer();
-
-    // jangan reconnect terlalu cepat
-    // supaya tidak dianggap bot
-
-    setTimeout(() => {
-
-        reconnecting = false;
-
-        startPlayer();
-
-    }, 8000);
-}
-
-// =========================
-// GET REAL URL
-// =========================
-
-async function getRealUrl(url){
+async function getFinalURL(url){
 
     try{
 
+        // gunakan HEAD dulu
         const response =
-            await fetch(url, {
+            await fetch(url,{
 
                 method:'GET',
 
-                mode:'cors',
-
                 redirect:'follow',
+
+                mode:'cors',
 
                 cache:'no-cache',
 
@@ -172,22 +144,22 @@ async function getRealUrl(url){
 
                     'Accept':'*/*',
 
-                    'Origin':
-                    location.origin,
-
                     'Referer':
-                    location.href
+                    'https://live.metshop.top/',
+
+                    'Origin':
+                    'https://live.metshop.top'
                 }
             });
 
         console.log(
-            'HTTP STATUS:',
-            response.status
+            'FINAL URL:',
+            response.url
         );
 
         console.log(
-            'FINAL URL:',
-            response.url
+            'STATUS:',
+            response.status
         );
 
         console.log(
@@ -196,6 +168,26 @@ async function getRealUrl(url){
                 'content-type'
             )
         );
+
+        // penting:
+        // kalau redirect final ternyata html
+        // jangan dipakai
+
+        const type =
+            response.headers.get(
+                'content-type'
+            ) || '';
+
+        if(
+            type.includes('text/html')
+        ){
+
+            console.log(
+                'NOT VIDEO STREAM'
+            );
+
+            return null;
+        }
 
         return response.url;
 
@@ -206,17 +198,17 @@ async function getRealUrl(url){
             err
         );
 
-        return url;
+        return null;
     }
 }
 
 // =========================
-// START PLAYER
+// PLAY
 // =========================
 
 async function startPlayer(){
 
-    if(!currentUrl){
+    if(!sourceUrl){
 
         console.log(
             'NO URL'
@@ -239,13 +231,22 @@ async function startPlayer(){
     destroyPlayer();
 
     // =========================
-    // FOLLOW 302
+    // FOLLOW REDIRECT
     // =========================
 
     const realUrl =
-        await getRealUrl(
-            currentUrl
+        await getFinalURL(
+            sourceUrl
         );
+
+    if(!realUrl){
+
+        console.log(
+            'FAILED GET REAL URL'
+        );
+
+        return;
+    }
 
     console.log(
         'PLAY URL:',
@@ -261,11 +262,11 @@ async function startPlayer(){
 
             type:'flv',
 
-            url:realUrl,
-
             isLive:true,
 
-            cors:true
+            cors:true,
+
+            url:realUrl
 
         },{
 
@@ -277,6 +278,8 @@ async function startPlayer(){
 
             liveBufferLatencyChasing:true,
 
+            stashInitialSize:128,
+
             fixAudioTimestampGap:true,
 
             autoCleanupSourceBuffer:true,
@@ -285,11 +288,9 @@ async function startPlayer(){
 
             autoCleanupMinBackwardDuration:10,
 
-            stashInitialSize:128,
-
             withCredentials:false,
 
-            // Huya lebih stabil tanpa range
+            // huya lebih cocok tanpa range
             seekType:'param',
 
             headers:{
@@ -318,8 +319,6 @@ async function startPlayer(){
 
         video.play()
         .then(() => {
-
-            // unmute setelah play
 
             setTimeout(() => {
 
@@ -352,7 +351,7 @@ async function startPlayer(){
     );
 
     // =========================
-    // PLAYER EVENTS
+    // EVENTS
     // =========================
 
     player.on(
@@ -368,6 +367,32 @@ async function startPlayer(){
             reconnect();
         }
     );
+}
+
+// =========================
+// RECONNECT
+// =========================
+
+function reconnect(){
+
+    if(
+        reconnecting
+    ){
+
+        return;
+    }
+
+    reconnecting = true;
+
+    destroyPlayer();
+
+    setTimeout(() => {
+
+        reconnecting = false;
+
+        startPlayer();
+
+    }, 8000);
 }
 
 // =========================
@@ -420,10 +445,6 @@ setInterval(() => {
     if(
         video.readyState <= 1
     ){
-
-        console.log(
-            'WATCHDOG RECONNECT'
-        );
 
         reconnect();
     }
