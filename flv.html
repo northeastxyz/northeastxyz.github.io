@@ -2,114 +2,201 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
-<title>Player</title>
+<title>Huya Stable Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
 <style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
 html,
 body{
-    margin:0;
     width:100%;
     height:100%;
-    background:#000;
     overflow:hidden;
+    background:#000;
+    font-family:system-ui,sans-serif;
+}
+
+#app{
+    width:100%;
+    height:100%;
+    position:relative;
+    background:#000;
 }
 
 video{
     width:100%;
     height:100%;
-    background:#000;
     object-fit:contain;
+    background:#000;
 }
 
 #status{
-    position:fixed;
+    position:absolute;
+    top:10px;
     left:10px;
-    bottom:60px;
+    z-index:9999;
 
-    z-index:99999;
+    padding:6px 10px;
 
-    background:rgba(0,0,0,.7);
+    border-radius:999px;
+
+    background:rgba(0,0,0,.6);
+
+    color:#fff;
+    font-size:12px;
+}
+
+#loading{
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%);
 
     color:#fff;
 
-    font-family:Arial;
-
-    font-size:12px;
-
-    padding:10px;
-
-    border-radius:8px;
-
-    min-width:220px;
+    z-index:9999;
 }
 
-</style>
+#stats{
+    display:none;
 
+    position:absolute;
+
+    left:12px;
+    bottom:60px;
+
+    z-index:999999;
+
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(6px);
+
+    color:#fff;
+
+    font-size:12px;
+    font-weight:500;
+
+    padding:4px 10px;
+
+    border-radius:999px;
+
+    pointer-events:none;
+    user-select:none;
+}
+
+#fullscreenBtn{
+    position:absolute;
+
+    right:15px;
+    bottom:15px;
+
+    width:42px;
+    height:42px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:rgba(0,0,0,.55);
+
+    color:#fff;
+
+    font-size:18px;
+
+    cursor:pointer;
+
+    z-index:999999;
+}
+
+#fullscreenBtn:active{
+    transform:scale(.95);
+}
+
+#app:fullscreen,
+#app:-webkit-full-screen{
+    width:100vw;
+    height:100vh;
+}
+
+#app:fullscreen video,
+#app:-webkit-full-screen video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+video::-webkit-media-controls-fullscreen-button{
+    display:none !important;
+}
+</style>
 </head>
 
 <body>
 
-<div id="status">
+<div id="app">
 
-    STATUS : INIT<br>
-    SPEED : 0 KB/s<br>
-    BYTES : 0
+    <div id="status">
+        INITIALIZING...
+    </div>
+
+    <div id="loading">
+        Loading Stream...
+    </div>
+
+    <div id="stats">
+        --fps • --MB/s • --p
+    </div>
+
+    <button id="fullscreenBtn">
+        ⛶
+    </button>
+
+    <video
+        id="video"
+        controls
+        autoplay
+        playsinline
+        webkit-playsinline>
+    </video>
 
 </div>
 
-<video
-    id="video"
-    controls
-    autoplay
-    muted
-    playsinline>
-</video>
-
 <script>
 
-const video =
-    document.getElementById(
-        'video'
-    );
+const app = document.getElementById('app');
+const video = document.getElementById('video');
 
-const statusBox =
-    document.getElementById(
-        'status'
-    );
+const statusBox = document.getElementById('status');
+const loadingBox = document.getElementById('loading');
+const statsBox = document.getElementById('stats');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
 
 function getQuery(name){
-
-    return new URLSearchParams(
-        location.search
-    ).get(name);
+    return new URLSearchParams(location.search).get(name);
 }
 
-const streamUrl =
-    getQuery('url');
+const streamURL = getQuery('url');
 
 let player = null;
+let currentSpeed = 0;
+let lastDecodedFrames = 0;
 
-let reconnecting = false;
+function setStatus(text){
+    statusBox.textContent = text;
+}
 
-let lastBytes = 0;
-
-function updateStatus(
-    status,
-    speed,
-    bytes
-){
-
-    statusBox.innerHTML =
-        `
-        STATUS : ${status}<br>
-        SPEED : ${speed}<br>
-        BYTES : ${bytes}
-        `;
+function showLoading(show){
+    loadingBox.style.display =
+        show ? 'block' : 'none';
 }
 
 function destroyPlayer(){
@@ -119,233 +206,221 @@ function destroyPlayer(){
         if(player){
 
             player.pause();
-
             player.unload();
-
             player.detachMediaElement();
-
             player.destroy();
 
             player = null;
         }
 
-    }catch(e){}
-}
+    }catch(err){
 
-function reconnect(){
+        console.log(err);
 
-    if(reconnecting){
-
-        return;
     }
-
-    reconnecting = true;
-
-    updateStatus(
-        'RECONNECTING',
-        '0',
-        '0'
-    );
-
-    destroyPlayer();
-
-    setTimeout(()=>{
-
-        reconnecting = false;
-
-        startPlayer();
-
-    },5000);
 }
 
 async function startPlayer(){
 
-    if(!streamUrl){
+    if(!streamURL){
 
-        updateStatus(
-            'NO URL',
-            '0',
-            '0'
-        );
-
+        setStatus('NO STREAM URL');
         return;
     }
 
-    if(!mpegts.isSupported()){
+    if(!mpegts.getFeatureList().mseLivePlayback){
 
-        updateStatus(
-            'MPEGTS NOT SUPPORTED',
-            '0',
-            '0'
-        );
-
+        setStatus('MSE NOT SUPPORTED');
         return;
     }
 
     destroyPlayer();
 
-    updateStatus(
-        'CONNECTING',
-        '0',
-        '0'
-    );
+    setStatus('CONNECTING...');
+    showLoading(true);
 
-    player =
-        mpegts.createPlayer({
+    player = mpegts.createPlayer({
 
-            type:'flv',
+        type:'flv',
+        url:streamURL,
 
-            url:streamUrl,
+        isLive:true,
 
-            isLive:true,
+        cors:true,
 
-            cors:true
+        hasAudio:true,
+        hasVideo:true
 
-        },{
+    },{
+        enableWorker:false,
+        enableStashBuffer:false,
+        lazyLoad:false,
+        liveSync:false
+    });
 
-            enableWorker:true,
-
-            lazyLoad:false,
-
-            enableStashBuffer:false,
-
-            stashInitialSize:64,
-
-            autoCleanupSourceBuffer:true,
-
-            autoCleanupMaxBackwardDuration:30,
-
-            autoCleanupMinBackwardDuration:10
-
-        });
-
-    player.attachMediaElement(
-        video
-    );
+    player.attachMediaElement(video);
 
     player.load();
+
+    player.on(
+        mpegts.Events.STATISTICS_INFO,
+        stat => {
+
+            if(stat.speed){
+
+                currentSpeed = stat.speed;
+            }
+
+        }
+    );
 
     try{
 
         await video.play();
 
-    }catch(e){
+        setStatus('PLAYING');
+        showLoading(false);
 
-        console.log(
-            'PLAY BLOCKED',
-            e
-        );
+    }catch(err){
+
+        setStatus('CLICK TO PLAY');
+        showLoading(false);
+
     }
-
-    player.on(
-        mpegts.Events.MEDIA_INFO,
-        info=>{
-
-            console.log(
-                'MEDIA INFO',
-                info
-            );
-
-            updateStatus(
-                'MEDIA DETECTED',
-                '0',
-                '0'
-            );
-        }
-    );
-
-    player.on(
-        mpegts.Events.STATISTICS_INFO,
-        stats=>{
-
-            console.log(
-                stats
-            );
-
-            const bytes =
-                stats.speed || 0;
-
-            const kb =
-                (
-                    bytes /
-                    1024
-                ).toFixed(2);
-
-            updateStatus(
-
-                'PLAYING',
-
-                kb + ' KB/s',
-
-                bytes
-
-            );
-
-            lastBytes = bytes;
-        }
-    );
-
-    player.on(
-        mpegts.Events.ERROR,
-        (type,detail)=>{
-
-            console.log(
-                type,
-                detail
-            );
-
-            updateStatus(
-                'ERROR',
-                '0',
-                '0'
-            );
-
-            reconnect();
-        }
-    );
 }
 
-video.addEventListener(
-    'stalled',
-    reconnect
-);
+function forcePlay(){
 
-video.addEventListener(
-    'error',
-    reconnect
-);
+    if(video.paused){
 
-video.addEventListener(
-    'waiting',
+        video.play()
+        .then(()=>{
+
+            video.muted = false;
+
+            setStatus('PLAYING');
+
+        })
+        .catch(()=>{});
+    }
+}
+
+document.addEventListener('click', forcePlay);
+document.addEventListener('touchstart', forcePlay);
+
+document.addEventListener(
+    'visibilitychange',
     ()=>{
 
-        updateStatus(
-            'BUFFERING',
-            '0',
-            lastBytes
-        );
+        if(!document.hidden){
+
+            video.play().catch(()=>{});
+
+        }
+
     }
+);
+
+async function toggleFullscreen(){
+
+    try{
+
+        if(!document.fullscreenElement){
+
+            await app.requestFullscreen();
+
+            if(screen.orientation?.lock){
+
+                try{
+                    await screen.orientation.lock('landscape');
+                }catch(e){}
+            }
+
+        }else{
+
+            if(screen.orientation?.unlock){
+
+                try{
+                    screen.orientation.unlock();
+                }catch(e){}
+            }
+
+            await document.exitFullscreen();
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+}
+
+fullscreenBtn.addEventListener(
+    'click',
+    toggleFullscreen
+);
+
+video.addEventListener(
+    'dblclick',
+    toggleFullscreen
+);
+
+function updateFullscreenState(){
+
+    const isFullscreen =
+        document.fullscreenElement === app;
+
+    statsBox.style.display =
+        isFullscreen ? 'block' : 'none';
+
+    fullscreenBtn.textContent =
+        isFullscreen ? '✕' : '⛶';
+}
+
+document.addEventListener(
+    'fullscreenchange',
+    updateFullscreenState
 );
 
 setInterval(()=>{
 
-    if(
-        video.readyState <= 1
-    ){
+    let fps = 0;
 
-        reconnect();
+    if(video.getVideoPlaybackQuality){
+
+        const quality =
+            video.getVideoPlaybackQuality();
+
+        const totalFrames =
+            quality.totalVideoFrames || 0;
+
+        fps =
+            totalFrames - lastDecodedFrames;
+
+        lastDecodedFrames =
+            totalFrames;
     }
 
-},30000);
+    let speedText = '--';
 
-document.addEventListener(
-    'click',
-    ()=>{
+    if(currentSpeed){
 
-        video.play()
-        .catch(()=>{});
+        const mb =
+            currentSpeed / 1024 / 1024;
+
+        speedText =
+            mb.toFixed(1) + 'MB/s';
     }
-);
+
+    const resolution =
+        video.videoHeight
+        ? video.videoHeight + 'p'
+        : '--p';
+
+    statsBox.textContent =
+        `${fps}fps • ${speedText} • ${resolution}`;
+
+},1000);
 
 startPlayer();
 
