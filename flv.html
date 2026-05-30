@@ -1,102 +1,369 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Huya Stable PC Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
-    <style>
-        *{ margin:0; padding:0; box-sizing:border-box; }
-        html, body{ width:100%; height:100%; overflow:hidden; background:#000; font-family:Arial,sans-serif; }
-        #app{ width:100%; height:100%; position:relative; background:#000; }
-        video{ width:100%; height:100%; object-fit:contain; background:#000; }
-        #status{ position:absolute; top:10px; left:10px; z-index:99999; padding:8px 12px; border-radius:8px; background:rgba(0,0,0,.7); color:#fff; font-size:12px; backdrop-filter:blur(4px); }
-        #loading{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; color:#fff; font-size:14px; text-align:center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Huya Stable PC Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+    font-family:Arial,sans-serif;
+}
+
+#app{
+    width:100%;
+    height:100%;
+    position:relative;
+    background:#000;
+}
+
+video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#000;
+}
+
+#status{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:99999;
+    padding:8px 12px;
+    border-radius:8px;
+    background:rgba(0,0,0,.7);
+    color:#fff;
+    font-size:12px;
+    backdrop-filter:blur(4px);
+}
+
+#loading{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    z-index:9999;
+    color:#fff;
+    font-size:14px;
+    text-align:center;
+}
+
+#stats{
+    display:none;
+    position:absolute;
+    top:50px;
+    left:10px;
+    z-index:99999;
+    padding:8px 12px;
+    border-radius:8px;
+    background:rgba(0,0,0,.75);
+    color:#00ff88;
+    font-size:12px;
+    font-family:monospace;
+    line-height:1.5;
+    backdrop-filter:blur(4px);
+    pointer-events:none;
+}
+</style>
 </head>
+
 <body>
 
 <div id="app">
+
     <div id="status">INITIALIZING...</div>
-    <div id="loading">Loading Stream...</div>
-    <video id="video" controls autoplay playsinline webkit-playsinline></video>
+
+    <div id="loading">
+        Loading Stream...
+    </div>
+
+    <div id="stats">
+        FPS: --<br>
+        Speed: --<br>
+        Resolution: --<br>
+        Dropped: --<br>
+        Buffer: --
+    </div>
+
+    <video
+        id="video"
+        controls
+        autoplay
+        playsinline
+        webkit-playsinline>
+    </video>
+
 </div>
 
 <script>
-    const video = document.getElementById('video');
-    const statusBox = document.getElementById('status');
-    const loadingBox = document.getElementById('loading');
 
-    function getQuery(name){ return new URLSearchParams(location.search).get(name); }
-    const streamURL = getQuery('url');
+const video = document.getElementById('video');
+const app = document.getElementById('app');
+const statusBox = document.getElementById('status');
+const loadingBox = document.getElementById('loading');
+const statsBox = document.getElementById('stats');
 
-    let player = null;
-    let reconnecting = false;
+function getQuery(name){
+    return new URLSearchParams(location.search).get(name);
+}
 
-    function setStatus(text){ console.log(text); statusBox.innerHTML = text; }
-    function showLoading(show){ loadingBox.style.display = show ? 'block' : 'none'; }
+const streamURL = getQuery('url');
 
-    function destroyPlayer(){
-        try {
-            if(player){
-                player.pause();
-                player.unload();
-                player.detachMediaElement();
-                player.destroy();
-                player = null;
+let player = null;
+
+function setStatus(text){
+    console.log(text);
+    statusBox.innerHTML = text;
+}
+
+function showLoading(show){
+    loadingBox.style.display = show ? 'block' : 'none';
+}
+
+function destroyPlayer(){
+
+    try{
+
+        if(player){
+
+            player.pause();
+            player.unload();
+            player.detachMediaElement();
+            player.destroy();
+
+            player = null;
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+}
+
+let currentSpeed = 0;
+let lastDecodedFrames = 0;
+
+async function startPlayer(){
+
+    if(!streamURL){
+
+        setStatus('NO STREAM URL');
+        return;
+
+    }
+
+    if(!mpegts.getFeatureList().mseLivePlayback){
+
+        setStatus('MSE LIVE NOT SUPPORTED');
+        return;
+
+    }
+
+    destroyPlayer();
+
+    setStatus('CONNECTING...');
+    showLoading(true);
+
+    player = mpegts.createPlayer({
+
+        type:'flv',
+        url:streamURL,
+        isLive:true,
+        cors:true,
+        hasAudio:true,
+        hasVideo:true
+
+    },{
+        enableWorker:false,
+        enableStashBuffer:false,
+        lazyLoad:false,
+        liveSync:false
+    });
+
+    player.attachMediaElement(video);
+
+    player.load();
+
+    player.on(
+        mpegts.Events.STATISTICS_INFO,
+        function(stat){
+
+            if(stat.speed){
+
+                currentSpeed = stat.speed;
+
             }
-        } catch(err){ console.log('DESTROY ERROR:', err); }
+
+        }
+    );
+
+    try{
+
+        await video.play();
+
+        setStatus('PLAYING');
+        showLoading(false);
+
+    }catch(err){
+
+        setStatus('CLICK TO PLAY');
+        showLoading(false);
+
     }
+}
 
-    async function startPlayer(){
-        if(!streamURL){ setStatus('NO STREAM URL'); return; }
-        if(!mpegts.getFeatureList().mseLivePlayback){ setStatus('MSE LIVE NOT SUPPORTED'); return; }
+function forcePlay(){
 
-        destroyPlayer();
-        setStatus('CONNECTING...');
-        showLoading(true);
+    if(video.paused){
 
-        player = mpegts.createPlayer({
-            type: 'flv',
-            url: streamURL,
-            isLive: true,
-            cors: true,
-            hasAudio: true,  // <-- DIPERBAIKI: Harus true untuk mengaktifkan audio
-            hasVideo: true
-        }, {
-            enableWorker: false,
-            enableStashBuffer: false,
-            lazyLoad: false,
-            liveSync: false
-        });
+        video.play()
+        .then(()=>{
 
-        player.attachMediaElement(video);
-        player.load();
+            video.muted = false;
 
-        try {
-            await video.play();
             setStatus('PLAYING');
-            showLoading(false);
-        } catch(err){
-            setStatus('CLICK TO PLAY');
-            showLoading(false);
+
+        })
+        .catch(()=>{});
+
+    }
+}
+
+document.addEventListener(
+    'click',
+    forcePlay
+);
+
+document.addEventListener(
+    'touchstart',
+    forcePlay
+);
+
+document.addEventListener(
+    'visibilitychange',
+    ()=>{
+
+        if(!document.hidden){
+
+            video.play().catch(()=>{});
+
+        }
+
+    }
+);
+
+function updateFullscreenState(){
+
+    const fs =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement;
+
+    statsBox.style.display =
+        fs ? 'block' : 'none';
+}
+
+document.addEventListener(
+    'fullscreenchange',
+    updateFullscreenState
+);
+
+document.addEventListener(
+    'webkitfullscreenchange',
+    updateFullscreenState
+);
+
+setInterval(()=>{
+
+    let fps = 0;
+    let dropped = 0;
+
+    if(video.getVideoPlaybackQuality){
+
+        const quality =
+            video.getVideoPlaybackQuality();
+
+        const totalFrames =
+            quality.totalVideoFrames || 0;
+
+        fps =
+            totalFrames - lastDecodedFrames;
+
+        lastDecodedFrames =
+            totalFrames;
+
+        dropped =
+            quality.droppedVideoFrames || 0;
+    }
+
+    const width =
+        video.videoWidth || 0;
+
+    const height =
+        video.videoHeight || 0;
+
+    let buffer = 0;
+
+    try{
+
+        if(video.buffered.length){
+
+            buffer =
+                video.buffered.end(
+                    video.buffered.length - 1
+                ) - video.currentTime;
+        }
+
+    }catch(e){}
+
+    let speedText = '--';
+
+    if(currentSpeed){
+
+        const kb =
+            currentSpeed / 1024;
+
+        if(kb >= 1024){
+
+            speedText =
+                (kb / 1024).toFixed(2)
+                + ' MB/s';
+
+        }else{
+
+            speedText =
+                kb.toFixed(1)
+                + ' KB/s';
         }
     }
 
-    function forcePlay(){
-        if(video.paused){
-            video.play().then(() => {
-                video.muted = false; // Memastikan audio aktif setelah interaksi
-                setStatus('PLAYING');
-            }).catch(e => console.log(e));
-        }
-    }
+    statsBox.innerHTML = `
+FPS: ${fps}<br>
+Speed: ${speedText}<br>
+Resolution: ${width}x${height}<br>
+Dropped: ${dropped}<br>
+Buffer: ${buffer.toFixed(2)}s
+`;
 
-    document.addEventListener('click', forcePlay);
-    document.addEventListener('touchstart', forcePlay);
-    document.addEventListener('visibilitychange', () => { if(!document.hidden) video.play().catch(()=>{}); });
+},1000);
 
-    startPlayer();
+startPlayer();
+
 </script>
 
 </body>
