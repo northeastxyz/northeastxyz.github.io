@@ -24,11 +24,22 @@ body{
     font-family:system-ui,sans-serif;
 }
 
+/* Menggunakan Flexbox baris untuk memisahkan kolom Stats dan Video */
 #app{
     width:100%;
     height:100%;
+    display: flex;
+    flex-direction: row;
     position:relative;
     background:#000;
+}
+
+/* Container khusus video agar flexbox bekerja rapi */
+.video-container {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    background: #000;
 }
 
 video{
@@ -67,30 +78,28 @@ video{
     z-index:9999;
 }
 
+/* Default Mode: Ditaruh di pojok kiri luar video (sebagai kolom kiri) */
 #stats{
-    display:none;
+    display: block; /* Selalu tampil secara default */
+    width: auto;
+    min-width: 130px;
+    height: 100%;
+    
+    background: #111; /* Background panel kiri */
+    border-right: 1px solid #222;
+    color: #fff;
 
-    position:absolute;
+    font-size: 12px;
+    font-weight: 500;
+    
+    /* Mengatur teks stats berderet ke bawah di panel kiri */
+    padding: 20px 15px;
+    white-space: pre-line; 
+    line-height: 2;
 
-    left:12px;
-    bottom:60px;
-
-    z-index:999999;
-
-    background:rgba(0,0,0,.45);
-    backdrop-filter:blur(6px);
-
-    color:#fff;
-
-    font-size:12px;
-    font-weight:500;
-
-    padding:4px 10px;
-
-    border-radius:999px;
-
-    pointer-events:none;
-    user-select:none;
+    pointer-events: none;
+    user-select: none;
+    z-index: 999999;
 }
 
 #fullscreenBtn{
@@ -127,6 +136,23 @@ video{
     height:100vh;
 }
 
+/* Ketika Fullscreen: Paksa stats mengapung di dalam video */
+#app:fullscreen #stats,
+#app:-webkit-full-screen #stats {
+    position: absolute;
+    left: 12px;
+    bottom: 60px;
+    height: auto;
+    width: auto;
+    min-width: 0;
+    background: rgba(0,0,0,.45);
+    backdrop-filter: blur(6px);
+    border-right: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
 #app:fullscreen video,
 #app:-webkit-full-screen video{
     width:100%;
@@ -144,29 +170,33 @@ video::-webkit-media-controls-fullscreen-button{
 
 <div id="app">
 
-    <div id="status">
-        INITIALIZING...
-    </div>
-
-    <div id="loading">
-        Loading Stream...
-    </div>
-
     <div id="stats">
-        --fps • --MB/s • --p
+        --fps
+        --MB/s
+        --p
     </div>
 
-    <button id="fullscreenBtn">
-        ⛶
-    </button>
+    <div class="video-container">
+        <div id="status">
+            INITIALIZING...
+        </div>
 
-    <video
-        id="video"
-        controls
-        autoplay
-        playsinline
-        webkit-playsinline>
-    </video>
+        <div id="loading">
+            Loading Stream...
+        </div>
+
+        <button id="fullscreenBtn">
+            ⛶
+        </button>
+
+        <video
+            id="video"
+            controls
+            autoplay
+            playsinline
+            webkit-playsinline>
+        </video>
+    </div>
 
 </div>
 
@@ -365,16 +395,9 @@ video.addEventListener(
     toggleFullscreen
 );
 
-function updateFullscreenState(){
-
-    const isFullscreen =
-        document.fullscreenElement === app;
-
-    statsBox.style.display =
-        isFullscreen ? 'block' : 'none';
-
-    fullscreenBtn.textContent =
-        isFullscreen ? '✕' : '⛶';
+function updateFullscreenState() {
+    const isFullscreen = document.fullscreenElement === app;
+    fullscreenBtn.textContent = isFullscreen ? '✕' : '⛶';
 }
 
 document.addEventListener(
@@ -417,8 +440,13 @@ setInterval(()=>{
         ? video.videoHeight + 'p'
         : '--p';
 
-    statsBox.textContent =
-        `${fps}fps • ${speedText} • ${resolution}`;
+    // Logika pemisah teks berdasarkan status fullscreen
+    const isFullscreen = document.fullscreenElement === app;
+    if (isFullscreen) {
+        statsBox.textContent = `${fps}fps • ${speedText} • ${resolution}`;
+    } else {
+        statsBox.textContent = `FPS: ${fps}\nSpeed: ${speedText}\nRes: ${resolution}`;
+    }
 
 },1000);
 
