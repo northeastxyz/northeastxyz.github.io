@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<title>Huya Stable PC Player</title>
+<title>FLV Player</title>
 
 <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest"></script>
 
@@ -22,7 +21,7 @@ body{
     height:100%;
     overflow:hidden;
     background:#000;
-    font-family:Arial,sans-serif;
+    font-family:system-ui,sans-serif;
 }
 
 #app{
@@ -44,12 +43,15 @@ video{
     top:10px;
     left:10px;
     z-index:99999;
-    padding:8px 12px;
-    border-radius:8px;
-    background:rgba(0,0,0,.7);
+
+    padding:6px 10px;
+
+    border-radius:999px;
+
+    background:rgba(0,0,0,.6);
     color:#fff;
+
     font-size:12px;
-    backdrop-filter:blur(4px);
 }
 
 #loading{
@@ -57,27 +59,36 @@ video{
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
-    z-index:9999;
+
     color:#fff;
     font-size:14px;
-    text-align:center;
+
+    z-index:9999;
 }
 
 #stats{
     display:none;
+
     position:absolute;
-    top:50px;
-    left:10px;
+    top:12px;
+    left:12px;
+
     z-index:99999;
-    padding:8px 12px;
-    border-radius:8px;
-    background:rgba(0,0,0,.75);
-    color:#00ff88;
+
+    padding:4px 10px;
+
+    border-radius:999px;
+
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(6px);
+
+    color:#fff;
+
     font-size:12px;
-    font-family:monospace;
-    line-height:1.5;
-    backdrop-filter:blur(4px);
+    font-weight:500;
+
     pointer-events:none;
+    user-select:none;
 }
 </style>
 </head>
@@ -86,18 +97,16 @@ video{
 
 <div id="app">
 
-    <div id="status">INITIALIZING...</div>
+    <div id="status">
+        INITIALIZING...
+    </div>
 
     <div id="loading">
         Loading Stream...
     </div>
 
     <div id="stats">
-        FPS: --<br>
-        Speed: --<br>
-        Resolution: --<br>
-        Dropped: --<br>
-        Buffer: --
+        --fps • --MB/s • --p
     </div>
 
     <video
@@ -113,7 +122,6 @@ video{
 <script>
 
 const video = document.getElementById('video');
-const app = document.getElementById('app');
 const statusBox = document.getElementById('status');
 const loadingBox = document.getElementById('loading');
 const statsBox = document.getElementById('stats');
@@ -125,10 +133,11 @@ function getQuery(name){
 const streamURL = getQuery('url');
 
 let player = null;
+let currentSpeed = 0;
+let lastDecodedFrames = 0;
 
 function setStatus(text){
-    console.log(text);
-    statusBox.innerHTML = text;
+    statusBox.textContent = text;
 }
 
 function showLoading(show){
@@ -149,15 +158,10 @@ function destroyPlayer(){
             player = null;
         }
 
-    }catch(err){
-
-        console.log(err);
-
+    }catch(e){
+        console.log(e);
     }
 }
-
-let currentSpeed = 0;
-let lastDecodedFrames = 0;
 
 async function startPlayer(){
 
@@ -165,14 +169,12 @@ async function startPlayer(){
 
         setStatus('NO STREAM URL');
         return;
-
     }
 
     if(!mpegts.getFeatureList().mseLivePlayback){
 
-        setStatus('MSE LIVE NOT SUPPORTED');
+        setStatus('MSE NOT SUPPORTED');
         return;
-
     }
 
     destroyPlayer();
@@ -197,19 +199,16 @@ async function startPlayer(){
     });
 
     player.attachMediaElement(video);
-
     player.load();
 
     player.on(
         mpegts.Events.STATISTICS_INFO,
-        function(stat){
+        stat => {
 
             if(stat.speed){
 
                 currentSpeed = stat.speed;
-
             }
-
         }
     );
 
@@ -224,7 +223,6 @@ async function startPlayer(){
 
         setStatus('CLICK TO PLAY');
         showLoading(false);
-
     }
 }
 
@@ -236,46 +234,32 @@ function forcePlay(){
         .then(()=>{
 
             video.muted = false;
-
             setStatus('PLAYING');
 
         })
         .catch(()=>{});
-
     }
 }
 
-document.addEventListener(
-    'click',
-    forcePlay
-);
+document.addEventListener('click', forcePlay);
+document.addEventListener('touchstart', forcePlay);
 
-document.addEventListener(
-    'touchstart',
-    forcePlay
-);
+document.addEventListener('visibilitychange', ()=>{
 
-document.addEventListener(
-    'visibilitychange',
-    ()=>{
+    if(!document.hidden){
 
-        if(!document.hidden){
-
-            video.play().catch(()=>{});
-
-        }
-
+        video.play().catch(()=>{});
     }
-);
+});
 
 function updateFullscreenState(){
 
-    const fs =
+    const isFullscreen =
         document.fullscreenElement ||
         document.webkitFullscreenElement;
 
     statsBox.style.display =
-        fs ? 'block' : 'none';
+        isFullscreen ? 'block' : 'none';
 }
 
 document.addEventListener(
@@ -291,7 +275,6 @@ document.addEventListener(
 setInterval(()=>{
 
     let fps = 0;
-    let dropped = 0;
 
     if(video.getVideoPlaybackQuality){
 
@@ -306,59 +289,26 @@ setInterval(()=>{
 
         lastDecodedFrames =
             totalFrames;
-
-        dropped =
-            quality.droppedVideoFrames || 0;
     }
-
-    const width =
-        video.videoWidth || 0;
-
-    const height =
-        video.videoHeight || 0;
-
-    let buffer = 0;
-
-    try{
-
-        if(video.buffered.length){
-
-            buffer =
-                video.buffered.end(
-                    video.buffered.length - 1
-                ) - video.currentTime;
-        }
-
-    }catch(e){}
 
     let speedText = '--';
 
     if(currentSpeed){
 
-        const kb =
-            currentSpeed / 1024;
+        const mb =
+            currentSpeed / 1024 / 1024;
 
-        if(kb >= 1024){
-
-            speedText =
-                (kb / 1024).toFixed(2)
-                + ' MB/s';
-
-        }else{
-
-            speedText =
-                kb.toFixed(1)
-                + ' KB/s';
-        }
+        speedText =
+            mb.toFixed(1) + 'MB/s';
     }
 
-    statsBox.innerHTML = `
-FPS: ${fps}<br>
-Speed: ${speedText}<br>
-Resolution: ${width}x${height}<br>
-Dropped: ${dropped}<br>
-Buffer: ${buffer.toFixed(2)}s
-`;
+    const resolution =
+        video.videoHeight
+        ? video.videoHeight + 'p'
+        : '--p';
+
+    statsBox.textContent =
+        `${fps}fps • ${speedText} • ${resolution}`;
 
 },1000);
 
