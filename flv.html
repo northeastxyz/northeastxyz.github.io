@@ -67,12 +67,11 @@ video{
     z-index:9999;
 }
 
-/* Tampilan stats dibuat setipis dan seminimalis mungkin di pojok kiri bawah */
 #stats{
     position:absolute;
 
     left:10px;
-    bottom:15px; /* Menyesuaikan agar sejajar rapi di area kosong bawah */
+    bottom:15px;
 
     z-index:999999;
 
@@ -81,7 +80,6 @@ video{
 
     color:rgba(255,255,255,.85);
 
-    /* Ukuran super tipis & minimalis */
     font-size:11px;
     font-weight:400;
     padding:2px 8px;
@@ -151,7 +149,6 @@ video::-webkit-media-controls-fullscreen-button{
         Loading Stream...
     </div>
 
-    <!-- Elemen Stats tetap satu baris horizontal, super tipis -->
     <div id="stats">
         --FPS • --Mbps • --p
     </div>
@@ -283,7 +280,8 @@ async function startPlayer(){
 
     }catch(err){
 
-        setStatus('CLICK TO PLAY');
+        // Menghilangkan tulisan "CLICK TO PLAY" saat kena block autoplay browser
+        setStatus('');
         showLoading(false);
 
     }
