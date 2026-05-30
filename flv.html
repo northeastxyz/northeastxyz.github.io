@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
 <title>Huya Stable Player</title>
 
@@ -41,11 +40,13 @@ video{
 }
 
 #status{
+
     position:absolute;
+
     top:10px;
     left:10px;
 
-    z-index:9999;
+    z-index:1000;
 
     padding:6px 10px;
 
@@ -58,6 +59,7 @@ video{
 }
 
 #loading{
+
     position:absolute;
 
     top:50%;
@@ -65,10 +67,9 @@ video{
 
     transform:translate(-50%,-50%);
 
-    z-index:9999;
-
     color:#fff;
-    font-size:14px;
+
+    z-index:1000;
 }
 
 #stats{
@@ -82,6 +83,10 @@ video{
 
     z-index:999999;
 
+    padding:4px 10px;
+
+    border-radius:999px;
+
     background:rgba(0,0,0,.45);
 
     backdrop-filter:blur(6px);
@@ -90,10 +95,6 @@ video{
 
     font-size:12px;
     font-weight:500;
-
-    padding:4px 10px;
-
-    border-radius:999px;
 
     pointer-events:none;
 }
@@ -112,7 +113,7 @@ video{
 
     border-radius:50%;
 
-    background:rgba(0,0,0,.6);
+    background:rgba(0,0,0,.55);
 
     color:#fff;
 
@@ -123,11 +124,26 @@ video{
     z-index:999999;
 }
 
-#fullscreenBtn:hover{
-    background:rgba(0,0,0,.8);
+#fullscreenBtn:active{
+    transform:scale(.95);
 }
 
-/* sembunyikan tombol fullscreen bawaan chrome */
+#app:fullscreen{
+    width:100vw;
+    height:100vh;
+}
+
+#app:-webkit-full-screen{
+    width:100vw;
+    height:100vh;
+}
+
+#app:fullscreen video,
+#app:-webkit-full-screen video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
 
 video::-webkit-media-controls-fullscreen-button{
     display:none !important;
@@ -158,8 +174,8 @@ video::-webkit-media-controls-fullscreen-button{
 
     <video
         id="video"
-        controls
         autoplay
+        controls
         playsinline
         webkit-playsinline>
     </video>
@@ -170,18 +186,23 @@ video::-webkit-media-controls-fullscreen-button{
 
 const app = document.getElementById('app');
 const video = document.getElementById('video');
+
 const statusBox = document.getElementById('status');
 const loadingBox = document.getElementById('loading');
 const statsBox = document.getElementById('stats');
-const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+const fullscreenBtn =
+document.getElementById('fullscreenBtn');
 
 function getQuery(name){
-    return new URLSearchParams(location.search).get(name);
+    return new URLSearchParams(location.search)
+    .get(name);
 }
 
 const streamURL = getQuery('url');
 
 let player = null;
+
 let currentSpeed = 0;
 let lastDecodedFrames = 0;
 
@@ -190,7 +211,8 @@ function setStatus(text){
 }
 
 function showLoading(show){
-    loadingBox.style.display = show ? 'block' : 'none';
+    loadingBox.style.display =
+    show ? 'block' : 'none';
 }
 
 function destroyPlayer(){
@@ -201,15 +223,17 @@ function destroyPlayer(){
 
             player.pause();
             player.unload();
+
             player.detachMediaElement();
+
             player.destroy();
 
             player = null;
         }
 
-    }catch(err){
+    }catch(e){
 
-        console.log(err);
+        console.log(e);
 
     }
 }
@@ -222,7 +246,8 @@ async function startPlayer(){
         return;
     }
 
-    if(!mpegts.getFeatureList().mseLivePlayback){
+    if(!mpegts.getFeatureList()
+    .mseLivePlayback){
 
         setStatus('MSE NOT SUPPORTED');
         return;
@@ -236,6 +261,7 @@ async function startPlayer(){
     player = mpegts.createPlayer({
 
         type:'flv',
+
         url:streamURL,
 
         isLive:true,
@@ -262,8 +288,10 @@ async function startPlayer(){
 
             if(stat.speed){
 
-                currentSpeed = stat.speed;
+                currentSpeed =
+                stat.speed;
             }
+
         }
     );
 
@@ -272,11 +300,13 @@ async function startPlayer(){
         await video.play();
 
         setStatus('PLAYING');
+
         showLoading(false);
 
     }catch(err){
 
         setStatus('CLICK TO PLAY');
+
         showLoading(false);
 
     }
@@ -314,38 +344,64 @@ document.addEventListener(
 
         if(!document.hidden){
 
-            video.play().catch(()=>{});
+            video.play()
+            .catch(()=>{});
 
         }
 
     }
 );
 
-/* custom fullscreen */
+async function toggleFullscreen(){
+
+    try{
+
+        if(!document.fullscreenElement){
+
+            await app.requestFullscreen();
+
+            if(screen.orientation &&
+               screen.orientation.lock){
+
+                try{
+
+                    await screen.orientation
+                    .lock('landscape');
+
+                }catch(e){}
+            }
+
+        }else{
+
+            if(screen.orientation &&
+               screen.orientation.unlock){
+
+                try{
+
+                    screen.orientation
+                    .unlock();
+
+                }catch(e){}
+            }
+
+            await document.exitFullscreen();
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+}
 
 fullscreenBtn.addEventListener(
     'click',
-    async ()=>{
+    toggleFullscreen
+);
 
-        try{
-
-            if(!document.fullscreenElement){
-
-                await app.requestFullscreen();
-
-            }else{
-
-                await document.exitFullscreen();
-
-            }
-
-        }catch(err){
-
-            console.log(err);
-
-        }
-
-    }
+video.addEventListener(
+    'dblclick',
+    toggleFullscreen
 );
 
 function updateFullscreenState(){
@@ -355,14 +411,15 @@ function updateFullscreenState(){
 
     statsBox.style.display =
         isFullscreen ? 'block' : 'none';
+
+    fullscreenBtn.textContent =
+        isFullscreen ? '✕' : '⛶';
 }
 
 document.addEventListener(
     'fullscreenchange',
     updateFullscreenState
 );
-
-/* fps + speed */
 
 setInterval(()=>{
 
@@ -377,7 +434,8 @@ setInterval(()=>{
             quality.totalVideoFrames || 0;
 
         fps =
-            totalFrames - lastDecodedFrames;
+            totalFrames -
+            lastDecodedFrames;
 
         lastDecodedFrames =
             totalFrames;
@@ -388,10 +446,13 @@ setInterval(()=>{
     if(currentSpeed){
 
         const mb =
-            currentSpeed / 1024 / 1024;
+            currentSpeed /
+            1024 /
+            1024;
 
         speedText =
-            mb.toFixed(1) + 'MB/s';
+            mb.toFixed(1)
+            + 'MB/s';
     }
 
     const resolution =
