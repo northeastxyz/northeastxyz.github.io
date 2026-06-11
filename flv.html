@@ -236,6 +236,7 @@ async function startPlayer(){
     setStatus('CONNECTING...');
     showLoading(true);
 
+    // Konfigurasi mpegts dengan Custom Headers tambahan
     player = mpegts.createPlayer({
 
         type:'flv',
@@ -252,7 +253,14 @@ async function startPlayer(){
         enableWorker:false,
         enableStashBuffer:false,
         lazyLoad:false,
-        liveSync:false
+        liveSync:false,
+        
+        // Tambahkan kustomisasi header di area konfigurasi opsional ini
+        customHeaders: {
+            'Authorization': 'Bearer Isi_Token_Atau_Key_Di_Sini',
+            'X-From-Custom-Player': 'True'
+            // Catatan: Browser secara otomatis memblokir User-Agent / Referer palsu dari sini.
+        }
     });
 
     player.attachMediaElement(video);
