@@ -197,36 +197,27 @@ function showLoading(show){
 }
 
 function destroyPlayer(){
-
     try{
-
         if(player){
-
             player.pause();
             player.unload();
             player.detachMediaElement();
             player.destroy();
-
             player = null;
         }
-
     }catch(err){
-
         console.log(err);
-
     }
 }
 
 async function startPlayer(){
 
     if(!streamURL){
-
         setStatus('NO STREAM URL');
         return;
     }
 
     if(!mpegts.getFeatureList().mseLivePlayback){
-
         setStatus('MSE NOT SUPPORTED');
         return;
     }
@@ -236,76 +227,69 @@ async function startPlayer(){
     setStatus('CONNECTING...');
     showLoading(true);
 
-    // Konfigurasi mpegts dengan Custom Headers tambahan
-    player = mpegts.createPlayer({
-
-        type:'flv',
-        url:streamURL,
-
-        isLive:true,
-
-        cors:true,
-
-        hasAudio:true,
-        hasVideo:true
-
-    },{
-        enableWorker:false,
-        enableStashBuffer:false,
-        lazyLoad:false,
-        liveSync:false,
+    try {
+        // Fetch ke huya.php untuk mengambil link flv murni dari data JSON
+        const res = await fetch(streamURL);
+        if (!res.ok) throw new Error('Server merespons dengan error ' + res.status);
         
-        // Tambahkan kustomisasi header di area konfigurasi opsional ini
-        customHeaders: {
-            'Authorization': 'Bearer Isi_Token_Atau_Key_Di_Sini',
-            'X-From-Custom-Player': 'True'
-            // Catatan: Browser secara otomatis memblokir User-Agent / Referer palsu dari sini.
+        const data = await res.json();
+        
+        if (data.error) {
+            setStatus(data.error.toUpperCase());
+            showLoading(false);
+            return;
         }
-    });
 
-    player.attachMediaElement(video);
+        if (!data.url) {
+            setStatus('STREAM URL EMPTY');
+            showLoading(false);
+            return;
+        }
 
-    player.load();
+        // Inisialisasi mpegts player menggunakan link flv yang didapat dari JSON
+        player = mpegts.createPlayer({
+            type: 'flv',
+            url: data.url,
+            isLive: true,
+            cors: true,
+            hasAudio: true,
+            hasVideo: true
+        },{
+            enableWorker: false,
+            enableStashBuffer: false,
+            lazyLoad: false,
+            liveSync: false
+        });
 
-    player.on(
-        mpegts.Events.STATISTICS_INFO,
-        stat => {
+        player.attachMediaElement(video);
+        player.load();
 
-            if(stat.speed){
-
-                currentSpeed = stat.speed;
+        player.on(
+            mpegts.Events.STATISTICS_INFO,
+            stat => {
+                if(stat.speed){
+                    currentSpeed = stat.speed;
+                }
             }
-
-        }
-    );
-
-    try{
+        );
 
         await video.play();
-
         setStatus('PLAYING');
         showLoading(false);
 
-    }catch(err){
-
-        // Menghilangkan tulisan "CLICK TO PLAY" saat kena block autoplay browser
-        setStatus('');
+    } catch(err) {
+        console.error(err);
+        setStatus('CORS / FETCH ERROR');
         showLoading(false);
-
     }
 }
 
 function forcePlay(){
-
     if(video.paused){
-
         video.play()
         .then(()=>{
-
             video.muted = false;
-
             setStatus('PLAYING');
-
         })
         .catch(()=>{});
     }
@@ -317,112 +301,61 @@ document.addEventListener('touchstart', forcePlay);
 document.addEventListener(
     'visibilitychange',
     ()=>{
-
         if(!document.hidden){
-
             video.play().catch(()=>{});
-
         }
-
     }
 );
 
 async function toggleFullscreen(){
-
     try{
-
         if(!document.fullscreenElement){
-
             await app.requestFullscreen();
-
             if(screen.orientation?.lock){
-
                 try{
                     await screen.orientation.lock('landscape');
                 }catch(e){}
             }
-
         }else{
-
             if(screen.orientation?.unlock){
-
                 try{
                     screen.orientation.unlock();
                 }catch(e){}
             }
-
             await document.exitFullscreen();
         }
-
     }catch(err){
-
         console.log(err);
-
     }
 }
 
-fullscreenBtn.addEventListener(
-    'click',
-    toggleFullscreen
-);
-
-video.addEventListener(
-    'dblclick',
-    toggleFullscreen
-);
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+video.addEventListener('dblclick', toggleFullscreen);
 
 function updateFullscreenState(){
-
-    const isFullscreen =
-        document.fullscreenElement === app;
-
-    fullscreenBtn.textContent =
-        isFullscreen ? '✕' : '⛶';
+    const isFullscreen = document.fullscreenElement === app;
+    fullscreenBtn.textContent = isFullscreen ? '✕' : '⛶';
 }
 
-document.addEventListener(
-    'fullscreenchange',
-    updateFullscreenState
-);
+document.addEventListener('fullscreenchange', updateFullscreenState);
 
 setInterval(()=>{
-
     let fps = 0;
-
     if(video.getVideoPlaybackQuality){
-
-        const quality =
-            video.getVideoPlaybackQuality();
-
-        const totalFrames =
-            quality.totalVideoFrames || 0;
-
-        fps =
-            totalFrames - lastDecodedFrames;
-
-        lastDecodedFrames =
-            totalFrames;
+        const quality = video.getVideoPlaybackQuality();
+        const totalFrames = quality.totalVideoFrames || 0;
+        fps = totalFrames - lastDecodedFrames;
+        lastDecodedFrames = totalFrames;
     }
 
     let speedText = '--';
-
     if(currentSpeed){
-
-        const mb =
-            currentSpeed / 1024 / 1024;
-
-        speedText =
-            mb.toFixed(1) + 'Mbps';
+        const mb = currentSpeed / 1024 / 1024;
+        speedText = mb.toFixed(1) + 'Mbps';
     }
 
-    const resolution =
-        video.videoHeight
-        ? video.videoHeight + 'p'
-        : '--p';
-
-    statsBox.textContent =
-        `${fps}FPS • ${speedText} • ${resolution}`;
-
+    const resolution = video.videoHeight ? video.videoHeight + 'p' : '--p';
+    statsBox.textContent = `${fps}FPS • ${speedText} • ${resolution}`;
 },1000);
 
 startPlayer();
