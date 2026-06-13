@@ -2,68 +2,57 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    
-    <meta name="monetag" content="b79007a23af4dfb3887acd433ac61810">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menuju Link Tujuan...</title>
     
-    <script src="https://quge5.com/88/tag.min.js" data-zone="249263" async data-cfasync="false"></script>
+    <!-- Skrip Vignette Monetag -->
+    <script>(function(s){s.dataset.zone='11141931',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f4f9; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn { display: none; background: #28a745; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; font-size: 18px; box-shadow: 0 4px 15px rgba(40,167,69,0.3); transition: 0.2s; }
-        .btn:hover { background: #218838; transform: translateY(-2px); }
-        .timer { font-size: 22px; font-weight: bold; color: #dc3545; margin: 20px 0; }
-        .ads-space { margin: 20px 0; min-height: 100px; background: #f8f9fa; border: 2px dashed #ddd; line-height: 100px; color: #999; border-radius: 6px; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #dc3545; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 40px 20px; background: #f0f2f5; color: #333; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .btn { display: none; background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); transition: 0.3s; }
+        .btn:hover { background: #218838; transform: translateY(-3px); }
+        .timer { font-size: 20px; font-weight: bold; color: #d9534f; margin: 15px 0; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d9534f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Safelink Link Keamanan</h2>
-    <p>Silakan tunggu sebentar, halaman tujuan Anda sedang disiapkan...</p>
+    <h3>Menyiapkan Tautan...</h3>
+    <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
     
-    <div class="ads-space">
-        [Iklan Banner Atas]
-    </div>
-
     <div id="loading-zone">
         <div class="loader"></div>
-        <div class="timer" id="countdown">Menghitung mundur: 5 detik</div>
+        <div class="timer" id="countdown">Menunggu: 5 detik</div>
     </div>
     
     <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
-
-    <div class="ads-space">
-        [Iklan Banner Bawah]
-    </div>
 </div>
 
 <script>
-    // Script untuk mengambil parameter ?url=
     const urlParams = new URLSearchParams(window.location.search);
     const targetUrl = urlParams.get('url');
 
     if (!targetUrl) {
-        document.getElementById('loading-zone').innerHTML = "<span style='color:red; font-weight:bold;'>Error: Link tujuan tidak valid atau kosong!</span>";
+        document.getElementById('loading-zone').innerHTML = "<p style='color:red;'>Error: Link tidak ditemukan.</p>";
     } else {
-        let timeLeft = 5; // Durasi hitung mundur (5 detik)
+        let timeLeft = 5;
         const timerElement = document.getElementById('countdown');
         const btnElement = document.getElementById('redirect-btn');
         const loadingZone = document.getElementById('loading-zone');
 
         const downloadTimer = setInterval(function(){
             timeLeft--;
-            timerElement.innerText = "Menghitung mundur: " + timeLeft + " detik";
+            timerElement.innerText = "Menunggu: " + timeLeft + " detik";
             
             if(timeLeft <= 0){
                 clearInterval(downloadTimer);
-                loadingZone.style.display = "none"; // Sembunyikan timer & loading
-                btnElement.href = decodeURIComponent(targetUrl); // Dekode URL tujuan
-                btnElement.style.display = "inline-block"; // Munculkan tombol hijau
+                loadingZone.style.display = "none";
+                btnElement.href = decodeURIComponent(targetUrl);
+                btnElement.style.display = "inline-block";
             }
         }, 1000);
     }
