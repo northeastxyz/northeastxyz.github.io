@@ -16,6 +16,9 @@
         .timer { font-size: 20px; font-weight: bold; color: #d9534f; margin: 15px 0; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #d9534f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Pembungkus agar posisi banner 300x250 dari AdSterra berada tepat di tengah */
+        .adsterra-container { margin: 25px auto 0 auto; display: flex; justify-content: center; }
     </style>
 </head>
 <body>
@@ -30,6 +33,20 @@
     </div>
     
     <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
+</div>
+
+<!-- Tempat Banner Statis 300x250 AdSterra -->
+<div class="adsterra-container">
+    <script>
+        atOptions = {
+            'key' : 'edbd8723bd12e9ca889bef0ef9d4d90d',
+            'format' : 'iframe',
+            'height' : 250,
+            'width' : 300,
+            'params' : {}
+        };
+    </script>
+    <script src="https://www.highperformanceformat.com/edbd8723bd12e9ca889bef0ef9d4d90d/invoke.js"></script>
 </div>
 
 <script>
