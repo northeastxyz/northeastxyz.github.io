@@ -30,7 +30,8 @@
     
     <div id="loading-zone">
         <div class="loader"></div>
-        <div class="timer" id="countdown">Menunggu: 5 detik</div>
+        <!-- Perubahan 1: Teks default awal diubah ke 3 detik -->
+        <div class="timer" id="countdown">Menunggu: 3 detik</div>
     </div>
     
     <!-- Tautan Utama -->
@@ -65,7 +66,8 @@
     if (!targetUrl) {
         document.getElementById('loading-zone').innerHTML = "<p style='color:red;'>Error: Link tidak ditemukan.</p>";
     } else {
-        let timeLeft = 5;
+        // Perubahan 2: Variabel hitung mundur diturunkan menjadi 3
+        let timeLeft = 3;
         const timerElement = document.getElementById('countdown');
         const btnElement = document.getElementById('redirect-btn');
         const loadingZone = document.getElementById('loading-zone');
