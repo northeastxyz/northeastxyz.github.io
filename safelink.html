@@ -60,14 +60,6 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
-        
-        /* Pembungkus Banner HilltopAds (Atas) */
-        .hilltop-container { 
-            margin: 0 auto 20px auto; 
-            display: flex; 
-            justify-content: center; 
-            min-height: 60px; 
-        }
 
         /* Pembungkus Banner AdSterra 300x250 (Tengah) */
         .adsterra-container { 
@@ -90,6 +82,16 @@
             margin-bottom: 10px; 
             text-align: center; 
         }
+
+        /* Pembungkus Banner HilltopAds (Paling Bawah) */
+        .hilltop-container { 
+            margin: 20px auto 0 auto; 
+            border-top: 1px dashed #ccc;
+            padding-top: 15px;
+            display: flex; 
+            justify-content: center; 
+            min-height: 60px; 
+        }
     </style>
 </head>
 <body>
@@ -98,20 +100,6 @@
     <h3>Menyiapkan Tautan...</h3>
     <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
     
-    <div class="hilltop-container">
-        <script>
-        (function(fbhuqq){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.scripts[d.scripts.length - 1];
-        s.settings = fbhuqq || {};
-        s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-        l.parentNode.insertBefore(s, l);
-        })({})
-        </script>
-    </div>
     <div id="loading-zone">
         <div class="loader"></div>
         <div class="timer" id="countdown">Menunggu: 3 detik</div>
@@ -137,18 +125,31 @@
         <script async="async" data-cfasync="false" src="https://pl29766994.effectivecpmnetwork.com/076ff83650bd22814c1f41e4a0d2049a/invoke.js"></script>
         <div id="container-076ff83650bd22814c1f41e4a0d2049a"></div>
     </div>
-</div>
+
+    <div class="hilltop-container">
+        <script>
+        (function(fbhuqq){
+        var d = document,
+            s = d.createElement('script'),
+            l = d.scripts[d.scripts.length - 1];
+        s.settings = fbhuqq || {};
+        s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
+        s.async = true;
+        s.referrerPolicy = 'no-referrer-when-downgrade';
+        l.parentNode.insertBefore(s, l);
+        })({})
+        </script>
+    </div>
+    </div>
 
 <script>
-    // Membaca parameter "?url=" dari alamat browser
     const urlParams = new URLSearchParams(window.location.search);
     const targetUrl = urlParams.get('url');
 
     if (!targetUrl) {
-        // Jika parameter kosong/tidak ditemukan
         document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak ditemukan.</p>";
     } else {
-        let timeLeft = 3; // Durasi hitung mundur (3 detik)
+        let timeLeft = 3; 
         const timerElement = document.getElementById('countdown');
         const btnElement = document.getElementById('redirect-btn');
         const loadingZone = document.getElementById('loading-zone');
@@ -160,10 +161,8 @@
             if(timeLeft <= 0){
                 clearInterval(downloadTimer);
                 
-                // Sembunyikan efek loading dan timer
                 loadingZone.style.display = "none";
                 
-                // Pasang tautan asli dan munculkan tombol lanjut
                 btnElement.href = decodeURIComponent(targetUrl);
                 btnElement.style.display = "inline-block";
             }
