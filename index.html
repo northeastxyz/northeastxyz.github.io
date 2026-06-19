@@ -80,6 +80,7 @@
             text-align: center; 
         }
 
+        /* Tempat Pengunci Iklan HilltopAds Terbawah */
         #hilltop-target { 
             margin: 20px auto 0 auto; 
             border-top: 1px dashed #ccc;
@@ -141,6 +142,7 @@
 </div>
 
 <script>
+    // Memaksa Iklan HilltopAds Masuk Ke Kotak Target Paling Bawah setelah dimuat
     window.addEventListener('DOMContentLoaded', () => {
         const source = document.getElementById('hilltop-source');
         const target = document.getElementById('hilltop-target');
@@ -150,22 +152,11 @@
         }
     });
 
-    // Menggunakan parameter ?to= untuk membaca teks Base64
     const urlParams = new URLSearchParams(window.location.search);
-    const encodedUrl = urlParams.get('to'); 
-    let targetUrl = null;
-
-    if (encodedUrl) {
-        try {
-            // Decode Base64 kembali menjadi string URL murni yang utuh
-            targetUrl = atob(encodedUrl);
-        } catch (e) {
-            targetUrl = null;
-        }
-    }
+    const targetUrl = urlParams.get('url');
 
     if (!targetUrl) {
-        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
+        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak ditemukan.</p>";
     } else {
         let timeLeft = 3; 
         const timerElement = document.getElementById('countdown');
@@ -179,10 +170,7 @@
             if(timeLeft <= 0){
                 clearInterval(downloadTimer);
                 loadingZone.style.display = "none";
-                
-                // Masukkan URL asli yang terproteksi aman
-                btnElement.href = targetUrl;
-                btnElement.setAttribute('rel', 'noreferrer noopener');
+                btnElement.href = decodeURIComponent(targetUrl);
                 btnElement.style.display = "inline-block";
             }
         }, 1000);
