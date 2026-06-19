@@ -152,8 +152,14 @@
         }
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetUrl = urlParams.get('url');
+    // PERBAIKAN UTAMA: Mengambil seluruh string setelah "?url=" secara mentah
+    const queryString = window.location.search;
+    let targetUrl = null;
+
+    if (queryString.startsWith('?url=')) {
+        // Mengambil semua teks dari karakter ke-5 sampai akhir agar parameter &txSecret dll tidak hilang
+        targetUrl = queryString.substring(5);
+    }
 
     if (!targetUrl) {
         document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak ditemukan.</p>";
@@ -170,7 +176,9 @@
             if(timeLeft <= 0){
                 clearInterval(downloadTimer);
                 loadingZone.style.display = "none";
-                btnElement.href = decodeURIComponent(targetUrl);
+                
+                // Decode otomatis hanya jika link ter-encode format %3A%2F%2F (://)
+                btnElement.href = targetUrl.includes('%3A%2F%2F') ? decodeURIComponent(targetUrl) : targetUrl;
                 btnElement.style.display = "inline-block";
             }
         }, 1000);
