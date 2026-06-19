@@ -80,7 +80,6 @@
             text-align: center; 
         }
 
-        /* Tempat Pengunci Iklan HilltopAds Terbawah */
         #hilltop-target { 
             margin: 20px auto 0 auto; 
             border-top: 1px dashed #ccc;
@@ -142,7 +141,6 @@
 </div>
 
 <script>
-    // Memaksa Iklan HilltopAds Masuk Ke Kotak Target Paling Bawah setelah dimuat
     window.addEventListener('DOMContentLoaded', () => {
         const source = document.getElementById('hilltop-source');
         const target = document.getElementById('hilltop-target');
@@ -152,17 +150,22 @@
         }
     });
 
-    // 1. Ambil seluruh string query dari address bar secara mentah
-    const queryString = window.location.search;
+    // Menggunakan parameter ?to= untuk membaca teks Base64
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedUrl = urlParams.get('to'); 
     let targetUrl = null;
 
-    if (queryString.startsWith('?url=')) {
-        // Mencaplok seluruh teks setelah ?url= agar parameter berekstensi m3u8 tidak cacat
-        targetUrl = queryString.substring(5);
+    if (encodedUrl) {
+        try {
+            // Decode Base64 kembali menjadi string URL murni yang utuh
+            targetUrl = atob(encodedUrl);
+        } catch (e) {
+            targetUrl = null;
+        }
     }
 
     if (!targetUrl) {
-        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak ditemukan.</p>";
+        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
     } else {
         let timeLeft = 3; 
         const timerElement = document.getElementById('countdown');
@@ -177,18 +180,9 @@
                 clearInterval(downloadTimer);
                 loadingZone.style.display = "none";
                 
-                // 2. Decode otomatis ke format teks normal jika link-nya ter-encode (%3A%2F%2F)
-                let finalUrl = targetUrl.includes('%3A%2F%2F') ? decodeURIComponent(targetUrl) : targetUrl;
-                
-                // 3. Perbaikan Ampersand: Bersihkan karakter &amp; kembali menjadi & murni
-                finalUrl = finalUrl.replace(/&amp;/g, '&');
-
-                // Pasang tautan hasil pembersihan ke tombol tujuan
-                btnElement.href = finalUrl;
-                
-                // 4. Bypass Referrer: Menyembunyikan github.io dari server pelacak video agar tidak kena blokir 403
+                // Masukkan URL asli yang terproteksi aman
+                btnElement.href = targetUrl;
                 btnElement.setAttribute('rel', 'noreferrer noopener');
-                
                 btnElement.style.display = "inline-block";
             }
         }, 1000);
