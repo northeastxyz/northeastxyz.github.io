@@ -57,7 +57,7 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
-        /* Kontainer Iklan Monetag */
+        /* Kontainer Iklan */
         #monetag-target { 
             margin: 20px auto 0 auto; 
             border-top: 1px dashed #ccc;
@@ -81,26 +81,12 @@
         
         <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
 
-        <!-- Target Pemuatan Banner Monetag -->
-        <div id="monetag-target"></div>
-    </div>
-
-    <!-- Kontainer Sumber Script Monetag (Disembunyikan) -->
-    <div style="display:none;" id="monetag-source">
-        <script src="https://quge5.com/88/tag.min.js" data-zone="249263" async data-cfasync="false"></script>
+        <div id="monetag-target">
+            <script src="https://quge5.com/88/tag.min.js" data-zone="249263" async data-cfasync="false"></script>
+        </div>
     </div>
 
     <script>
-        // Memasukkan iklan Monetag ke target setelah halaman siap
-        window.addEventListener('DOMContentLoaded', () => {
-            const source = document.getElementById('monetag-source');
-            const target = document.getElementById('monetag-target');
-            if(source && target) {
-                target.appendChild(source);
-                source.style.display = 'block';
-            }
-        });
-
         // Mengambil dan decode URL target (?to=BASE64)
         const urlParams = new URLSearchParams(window.location.search);
         const encodedUrl = urlParams.get('to'); 
@@ -117,7 +103,7 @@
         if (!targetUrl) {
             document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
         } else {
-            let timeLeft = 3; // Mengunci durasi hitung mundur di 3 detik
+            let timeLeft = 3; 
             const timerElement = document.getElementById('countdown');
             const btnElement = document.getElementById('redirect-btn');
             const loadingZone = document.getElementById('loading-zone');
