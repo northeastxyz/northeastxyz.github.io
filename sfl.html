@@ -99,7 +99,7 @@
     </div>
 
     <script>
-        // Inisialisasi Script HilltopAds saat DOM siap
+        // Memasukkan iklan ke target setelah halaman siap
         window.addEventListener('DOMContentLoaded', () => {
             const source = document.getElementById('hilltop-source');
             const target = document.getElementById('hilltop-target');
@@ -109,6 +109,7 @@
             }
         });
 
+        // Mengambil dan decode URL target (?to=BASE64)
         const urlParams = new URLSearchParams(window.location.search);
         const encodedUrl = urlParams.get('to'); 
         let targetUrl = null;
@@ -124,7 +125,7 @@
         if (!targetUrl) {
             document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
         } else {
-            let timeLeft = 3; 
+            let timeLeft = 3; // Mengunci durasi hitung mundur di 3 detik
             const timerElement = document.getElementById('countdown');
             const btnElement = document.getElementById('redirect-btn');
             const loadingZone = document.getElementById('loading-zone');
@@ -136,6 +137,8 @@
                 if(timeLeft <= 0){
                     clearInterval(downloadTimer);
                     loadingZone.style.display = "none";
+                    
+                    // Memasang link asli ke tombol
                     btnElement.href = targetUrl;
                     btnElement.setAttribute('rel', 'noreferrer noopener');
                     btnElement.style.display = "inline-block";
