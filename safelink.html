@@ -51,7 +51,8 @@
             border: 4px solid #f3f3f3; 
             border-top: 4px solid #d9534f; 
             border-radius: 50%; 
-            width: 30px; height: 30px; 
+            width: 30px; 
+            height: 30px; 
             animation: spin 1s linear infinite; 
             margin: 10px auto; 
         }
@@ -59,13 +60,23 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
+        
+        /* Pembungkus Banner HilltopAds di bagian atas */
+        .hilltop-container { 
+            margin: 0 auto 20px auto; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 60px; 
+        }
 
+        /* Pembungkus agar posisi banner AdSterra berada tepat di tengah */
         .adsterra-container { 
             margin: 20px auto 0 auto; 
             display: flex; 
             justify-content: center; 
         }
 
+        /* Style tambahan untuk penyamar Native Banner agar rapi */
         .native-ad-wrapper { 
             margin-top: 25px; 
             border-top: 1px dashed #ccc; 
@@ -86,6 +97,21 @@
 <div class="container">
     <h3>Menyiapkan Tautan...</h3>
     <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
+    
+    <div class="hilltop-container">
+        <script>
+        (function(fbhuqq){
+        var d = document,
+            s = d.createElement('script'),
+            l = d.scripts[d.scripts.length - 1];
+        s.settings = fbhuqq || {};
+        s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
+        s.async = true;
+        s.referrerPolicy = 'no-referrer-when-downgrade';
+        l.parentNode.insertBefore(s, l);
+        })({})
+        </script>
+    </div>
     
     <div id="loading-zone">
         <div class="loader"></div>
@@ -115,14 +141,14 @@
 </div>
 
 <script>
-    // Menggunakan parameter ?to= untuk membaca teks Base64
+    // Membaca parameter ?to= (Bukan ?url= lagi)
     const urlParams = new URLSearchParams(window.location.search);
     const encodedUrl = urlParams.get('to'); 
     let targetUrl = null;
 
     if (encodedUrl) {
         try {
-            // Decode Base64 kembali menjadi string URL murni yang utuh
+            // Decode string Base64 kembali menjadi link asli
             targetUrl = atob(encodedUrl);
         } catch (e) {
             targetUrl = null;
@@ -130,9 +156,9 @@
     }
 
     if (!targetUrl) {
-        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
+        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid atau tidak ditemukan.</p>";
     } else {
-        let timeLeft = 3; 
+        let timeLeft = 3;
         const timerElement = document.getElementById('countdown');
         const btnElement = document.getElementById('redirect-btn');
         const loadingZone = document.getElementById('loading-zone');
@@ -145,7 +171,7 @@
                 clearInterval(downloadTimer);
                 loadingZone.style.display = "none";
                 
-                // Masukkan URL asli yang terproteksi aman
+                // Set link asli ke tombol
                 btnElement.href = targetUrl;
                 btnElement.setAttribute('rel', 'noreferrer noopener');
                 btnElement.style.display = "inline-block";
