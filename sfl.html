@@ -57,7 +57,8 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
-        #hilltop-target { 
+        /* Kontainer Iklan Monetag */
+        #monetag-target { 
             margin: 20px auto 0 auto; 
             border-top: 1px dashed #ccc;
             padding-top: 15px;
@@ -80,29 +81,31 @@
         
         <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
 
-        <div id="hilltop-target"></div>
+        <!-- Target Pemuatan Banner Monetag -->
+        <div id="monetag-target"></div>
     </div>
 
-    <div style="display:none;" id="hilltop-source">
+    <!-- Kontainer Sumber Script Monetag (Disembunyikan) -->
+    <div style="display:none;" id="monetag-source">
         <script>
-            (function(fbhuqq){
-                var d = document,
-                    s = d.createElement('script'),
-                    l = d.scripts[d.scripts.length - 1];
-                s.settings = fbhuqq || {};
-                s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
-                s.async = true;
-                s.referrerPolicy = 'no-referrer-when-downgrade';
-                l.parentNode.insertBefore(s, l);
-            })({})
+            (function(s,u,z,p){
+                s.src=u;
+                s.setAttribute('data-zone',z);
+                p.appendChild(s);
+            })(
+                document.createElement('script'),
+                'https://themosttrustednetwork.com/pfe/current/tag.min.js',
+                11173428, // Sila ganti dengan Zone ID murni milikmu setelah di-acc Monetag
+                document.body || document.documentElement
+            );
         </script>
     </div>
 
     <script>
-        // Memasukkan iklan ke target setelah halaman siap
+        // Memasukkan iklan Monetag ke target setelah halaman siap
         window.addEventListener('DOMContentLoaded', () => {
-            const source = document.getElementById('hilltop-source');
-            const target = document.getElementById('hilltop-target');
+            const source = document.getElementById('monetag-source');
+            const target = document.getElementById('monetag-target');
             if(source && target) {
                 target.appendChild(source);
                 source.style.display = 'block';
