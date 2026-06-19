@@ -3,126 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <meta name="31495d33e24227ee112df808b7733c91aea8233d" content="31495d33e24227ee112df808b7733c91aea8233d" />
-    
-    <title>Menuju Link Streaming</title>
-    
+    <title>Menuju Link Tujuan...</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding: 40px 20px; 
+            background: #f0f2f5; 
+            color: #333; 
         }
-        .container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            max-width: 450px;
-            width: 100%;
-            margin-bottom: 20px;
+        .container { 
+            max-width: 500px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
         }
-        h2 { font-size: 20px; margin-bottom: 10px; color: #1a1a1a; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; }
-        .timer-box { font-size: 24px; font-weight: bold; color: #ff4757; margin: 15px 0; }
-        .btn {
-            background-color: #2ed573;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
+        .btn { 
+            display: none; 
+            background: #28a745; 
+            color: white; 
+            padding: 15px 30px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 18px; 
+            box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
+            transition: 0.3s; 
+            margin-bottom: 20px; 
         }
-        .btn:disabled {
-            background-color: #ced6e0;
-            color: #a4b0be;
-            cursor: not-allowed;
-            box-shadow: none;
+        .btn:hover { 
+            background: #218838; 
+            transform: translateY(-3px); 
         }
-        .ads-space {
-            margin: 20px 0;
-            min-height: 100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .timer { 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: #d9534f; 
+            margin: 15px 0; 
+        }
+        .loader { 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #d9534f; 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            animation: spin 1s linear infinite; 
+            margin: 10px auto; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        #hilltop-target { 
+            margin: 20px auto 0 auto; 
+            border-top: 1px dashed #ccc;
+            padding-top: 15px;
+            display: flex; 
+            justify-content: center; 
+            min-height: 60px;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Link Streaming Sedang Disiapkan</h2>
-        <p>Silakan tunggu sebentar sampai tombol tujuan aktif di bawah ini.</p>
+        <h3>Menyiapkan Tautan...</h3>
+        <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
         
-        <div id="timer" class="timer-box">10</div>
-
-        <div class="ads-space">
-            <script>
-            (function(fbhuqq){
-            var d = document,
-                s = d.createElement('script'),
-                l = d.scripts[d.scripts.length - 1];
-            s.settings = fbhuqq || {};
-            s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
-            s.async = true;
-            s.referrerPolicy = 'no-referrer-when-downgrade';
-            l.parentNode.insertBefore(s, l);
-            })({})
-            </script>
+        <div id="loading-zone">
+            <div class="loader"></div>
+            <div class="timer" id="countdown">Menunggu: 3 detik</div>
         </div>
-        <button id="redirectBtn" class="btn" disabled>Mohon Tunggu...</button>
+        
+        <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
+
+        <div id="hilltop-target"></div>
     </div>
 
-    <p style="font-size: 11px; color: #999;">File verifikasi kepemilikan situs & Safelink Aktif.</p>
+    <div style="display:none;" id="hilltop-source">
+        <script>
+            (function(fbhuqq){
+                var d = document,
+                    s = d.createElement('script'),
+                    l = d.scripts[d.scripts.length - 1];
+                s.settings = fbhuqq || {};
+                s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
+                s.async = true;
+                s.referrerPolicy = 'no-referrer-when-downgrade';
+                l.parentNode.insertBefore(s, l);
+            })({})
+        </script>
+    </div>
 
     <script>
-        // Ambil link tujuan dari parameter '?url='
-        const urlParams = new URLSearchParams(window.location.search);
-        let targetUrl = urlParams.get('url');
+        // Inisialisasi Script HilltopAds saat DOM siap
+        window.addEventListener('DOMContentLoaded', () => {
+            const source = document.getElementById('hilltop-source');
+            const target = document.getElementById('hilltop-target');
+            if(source && target) {
+                target.appendChild(source);
+                source.style.display = 'block';
+            }
+        });
 
-        // Jika tidak ada url di parameter, beri fallback link utama kamu
-        if (!targetUrl) {
-            targetUrl = "https://northeastxyz.github.io/";
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedUrl = urlParams.get('to'); 
+        let targetUrl = null;
+
+        if (encodedUrl) {
+            try {
+                targetUrl = atob(encodedUrl);
+            } catch (e) {
+                targetUrl = null;
+            }
         }
 
-        let timeLeft = 10; // Durasi hitung mundur dalam detik
-        const timerElement = document.getElementById('timer');
-        const buttonElement = document.getElementById('redirectBtn');
+        if (!targetUrl) {
+            document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
+        } else {
+            let timeLeft = 3; 
+            const timerElement = document.getElementById('countdown');
+            const btnElement = document.getElementById('redirect-btn');
+            const loadingZone = document.getElementById('loading-zone');
 
-        const countdown = setInterval(() => {
-            timeLeft--;
-            timerElement.textContent = timeLeft;
-
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                timerElement.style.display = "none"; // Sembunyikan timer setelah habis
+            const downloadTimer = setInterval(function(){
+                timeLeft--;
+                timerElement.innerText = "Menunggu: " + timeLeft + " detik";
                 
-                // Aktifkan Tombol
-                buttonElement.removeAttribute('disabled');
-                buttonElement.textContent = "KLIK UNTUK MELANJUTKAN";
-                
-                // Eksekusi ketika tombol diklik penonton
-                buttonElement.onclick = function() {
-                    window.location.href = targetUrl;
-                };
-            }
-        }, 1000);
+                if(timeLeft <= 0){
+                    clearInterval(downloadTimer);
+                    loadingZone.style.display = "none";
+                    btnElement.href = targetUrl;
+                    btnElement.setAttribute('rel', 'noreferrer noopener');
+                    btnElement.style.display = "inline-block";
+                }
+            }, 1000);
+        }
     </script>
 
 </body>
