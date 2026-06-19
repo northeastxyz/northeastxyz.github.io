@@ -23,7 +23,17 @@
             padding: 25px; 
             border-radius: 12px; 
             box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+            display: flex;
+            flex-direction: column;
         }
+        
+        /* Area Tombol Atas */
+        .top-action-zone {
+            width: 100%;
+            margin-bottom: 20px;
+            order: 1; /* Memaksa area ini wajib tampil pertama */
+        }
+
         .btn { 
             display: none; 
             background: #28a745; 
@@ -35,7 +45,8 @@
             font-size: 18px; 
             box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
             transition: 0.3s; 
-            margin-bottom: 20px; 
+            margin: 10px auto;
+            width: 80%;
         }
         .btn:hover { 
             background: #218838; 
@@ -51,8 +62,7 @@
             border: 4px solid #f3f3f3; 
             border-top: 4px solid #d9534f; 
             border-radius: 50%; 
-            width: 30px; 
-            height: 30px; 
+            width: 30px; height: 30px; 
             animation: spin 1s linear infinite; 
             margin: 10px auto; 
         }
@@ -60,27 +70,24 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
-        
-        /* Pembungkus Banner HilltopAds di bagian atas */
-        .hilltop-container { 
+
+        /* Area Khusus Iklan (Dipaksa Turun ke Bawah) */
+        .bottom-ads-zone {
+            width: 100%;
+            margin-top: 15px;
+            border-top: 2px dashed #eee;
+            padding-top: 20px;
+            order: 2; /* Memaksa area ini wajib berada di bawah urutan 1 */
+        }
+
+        .adsterra-container { 
             margin: 0 auto 20px auto; 
             display: flex; 
             justify-content: center; 
-            min-height: 60px; 
         }
 
-        /* Pembungkus agar posisi banner AdSterra berada tepat di tengah */
-        .adsterra-container { 
-            margin: 20px auto 0 auto; 
-            display: flex; 
-            justify-content: center; 
-        }
-
-        /* Style tambahan untuk penyamar Native Banner agar rapi */
         .native-ad-wrapper { 
-            margin-top: 25px; 
-            border-top: 1px dashed #ccc; 
-            padding-top: 15px; 
+            margin-top: 20px; 
             text-align: left; 
         }
         .native-ad-title { 
@@ -90,75 +97,79 @@
             margin-bottom: 10px; 
             text-align: center; 
         }
+
+        .hilltop-container { 
+            margin: 20px auto 0 auto; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 60px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3>Menyiapkan Tautan...</h3>
-    <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
     
-    <div class="hilltop-container">
-        <script>
-        (function(fbhuqq){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.scripts[d.scripts.length - 1];
-        s.settings = fbhuqq || {};
-        s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-        l.parentNode.insertBefore(s, l);
-        })({})
-        </script>
-    </div>
-    
-    <div id="loading-zone">
-        <div class="loader"></div>
-        <div class="timer" id="countdown">Menunggu: 3 detik</div>
-    </div>
-    
-    <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
-
-    <div class="adsterra-container">
-        <script>
-            atOptions = {
-                'key' : 'edbd8723bd12e9ca889bef0ef9d4d90d',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-            };
-        </script>
-        <script src="https://www.highperformanceformat.com/edbd8723bd12e9ca889bef0ef9d4d90d/invoke.js"></script>
+    <div class="top-action-zone">
+        <h3>Menyiapkan Tautan...</h3>
+        <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
+        
+        <div id="loading-zone">
+            <div class="loader"></div>
+            <div class="timer" id="countdown">Menunggu: 3 detik</div>
+        </div>
+        
+        <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
     </div>
 
-    <div class="native-ad-wrapper">
-        <div class="native-ad-title">Rekomendasi Informasi Untuk Anda:</div>
-        <script async="async" data-cfasync="false" src="https://pl29766994.effectivecpmnetwork.com/076ff83650bd22814c1f41e4a0d2049a/invoke.js"></script>
-        <div id="container-076ff83650bd22814c1f41e4a0d2049a"></div>
+    <div class="bottom-ads-zone">
+        
+        <div class="adsterra-container">
+            <script>
+                atOptions = {
+                    'key' : 'edbd8723bd12e9ca889bef0ef9d4d90d',
+                    'format' : 'iframe',
+                    'height' : 250,
+                    'width' : 300,
+                    'params' : {}
+                };
+            </script>
+            <script src="https://www.highperformanceformat.com/edbd8723bd12e9ca889bef0ef9d4d90d/invoke.js"></script>
+        </div>
+
+        <div class="native-ad-wrapper">
+            <div class="native-ad-title">Rekomendasi Informasi Untuk Anda:</div>
+            <script async="async" data-cfasync="false" src="https://pl29766994.effectivecpmnetwork.com/076ff83650bd22814c1f41e4a0d2049a/invoke.js"></script>
+            <div id="container-076ff83650bd22814c1f41e4a0d2049a"></div>
+        </div>
+
+        <div class="hilltop-container">
+            <script>
+            (function(fbhuqq){
+            var d = document,
+                s = d.createElement('script'),
+                l = d.scripts[d.scripts.length - 1];
+            s.settings = fbhuqq || {};
+            s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
+            s.async = true;
+            s.referrerPolicy = 'no-referrer-when-downgrade';
+            l.parentNode.insertBefore(s, l);
+            })({})
+            </script>
+        </div>
+
     </div>
 </div>
 
 <script>
-    // Membaca parameter ?to= (Bukan ?url= lagi)
+    // SCRIPT REDIRECT LINK & TIMER
     const urlParams = new URLSearchParams(window.location.search);
-    const encodedUrl = urlParams.get('to'); 
-    let targetUrl = null;
-
-    if (encodedUrl) {
-        try {
-            // Decode string Base64 kembali menjadi link asli
-            targetUrl = atob(encodedUrl);
-        } catch (e) {
-            targetUrl = null;
-        }
-    }
+    const targetUrl = urlParams.get('url');
 
     if (!targetUrl) {
-        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid atau tidak ditemukan.</p>";
+        document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak ditemukan.</p>";
     } else {
-        let timeLeft = 3;
+        let timeLeft = 3; 
         const timerElement = document.getElementById('countdown');
         const btnElement = document.getElementById('redirect-btn');
         const loadingZone = document.getElementById('loading-zone');
@@ -170,10 +181,7 @@
             if(timeLeft <= 0){
                 clearInterval(downloadTimer);
                 loadingZone.style.display = "none";
-                
-                // Set link asli ke tombol
-                btnElement.href = targetUrl;
-                btnElement.setAttribute('rel', 'noreferrer noopener');
+                btnElement.href = decodeURIComponent(targetUrl);
                 btnElement.style.display = "inline-block";
             }
         }, 1000);
