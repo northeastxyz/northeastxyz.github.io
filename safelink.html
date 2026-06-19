@@ -31,7 +31,7 @@
         .top-action-zone {
             width: 100%;
             margin-bottom: 20px;
-            order: 1; /* Memaksa area ini wajib tampil pertama */
+            order: 1; /* Wajib di paling atas */
         }
 
         .btn { 
@@ -71,13 +71,13 @@
             100% { transform: rotate(360deg); } 
         }
 
-        /* Area Khusus Iklan (Dipaksa Turun ke Bawah) */
+        /* Area Iklan Bawah (Kunci Posisi) */
         .bottom-ads-zone {
             width: 100%;
             margin-top: 15px;
             border-top: 2px dashed #eee;
             padding-top: 20px;
-            order: 2; /* Memaksa area ini wajib berada di bawah urutan 1 */
+            order: 2; /* Wajib di bawah zona tombol */
         }
 
         .adsterra-container { 
@@ -162,9 +162,26 @@
 </div>
 
 <script>
-    // SCRIPT REDIRECT LINK & TIMER
+    // PERBAIKAN SISTEM PEMBACA PARAMETER '?to=' DAN GENERATE LINK
     const urlParams = new URLSearchParams(window.location.search);
-    const targetUrl = urlParams.get('url');
+    
+    // Mengambil parameter 'to', jika tidak ada baru mengambil parameter 'url'
+    let rawUrl = urlParams.get('to') || urlParams.get('url');
+    let targetUrl = "";
+
+    if (rawUrl) {
+        try {
+            // Cek jika link di-enkripsi menggunakan Base64 (ciri khas safelink github)
+            if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+                targetUrl = atob(decodeURIComponent(rawUrl));
+            } else {
+                targetUrl = decodeURIComponent(rawUrl);
+            }
+        } catch (e) {
+            // Jika gagal decode Base64, gunakan link mentah apa adanya
+            targetUrl = decodeURIComponent(rawUrl);
+        }
+    }
 
     if (!targetUrl) {
         document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak ditemukan.</p>";
@@ -181,7 +198,7 @@
             if(timeLeft <= 0){
                 clearInterval(downloadTimer);
                 loadingZone.style.display = "none";
-                btnElement.href = decodeURIComponent(targetUrl);
+                btnElement.href = targetUrl;
                 btnElement.style.display = "inline-block";
             }
         }, 1000);
