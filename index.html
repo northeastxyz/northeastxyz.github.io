@@ -80,9 +80,9 @@
             text-align: center; 
         }
 
-        /* Tempat Pengunci Iklan HilltopAds Terbawah */
-        #hilltop-target { 
-            margin: 20px auto 0 auto; 
+        /* Kontainer Khusus HilltopAds Terbawah */
+        .hilltop-container { 
+            margin: 25px auto 0 auto; 
             border-top: 1px dashed #ccc;
             padding-top: 15px;
             display: flex; 
@@ -123,35 +123,24 @@
         <div id="container-076ff83650bd22814c1f41e4a0d2049a"></div>
     </div>
 
-    <div id="hilltop-target"></div>
-</div>
-
-<div style="display:none;" id="hilltop-source">
-    <script>
-    (function(fbhuqq){
-    var d = document,
-        s = d.createElement('script'),
-        l = d.scripts[d.scripts.length - 1];
-    s.settings = fbhuqq || {};
-    s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
-    s.async = true;
-    s.referrerPolicy = 'no-referrer-when-downgrade';
-    l.parentNode.insertBefore(s, l);
-    })({})
-    </script>
+    <div class="hilltop-container">
+        <script>
+        (function(fbhuqq){
+        var d = document,
+            s = d.createElement('script'),
+            l = d.scripts[d.scripts.length - 1];
+        s.settings = fbhuqq || {};
+        s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
+        s.async = true;
+        s.referrerPolicy = 'no-referrer-when-downgrade';
+        l.parentNode.insertBefore(s, l);
+        })({})
+        </script>
+    </div>
 </div>
 
 <script>
-    // Memaksa Iklan HilltopAds Masuk Ke Kotak Target Paling Bawah setelah dimuat
-    window.addEventListener('DOMContentLoaded', () => {
-        const source = document.getElementById('hilltop-source');
-        const target = document.getElementById('hilltop-target');
-        if(source && target) {
-            target.appendChild(source);
-            source.style.display = 'block';
-        }
-    });
-
+    // SCRIPT REDIRECT LINK & TIMER
     const urlParams = new URLSearchParams(window.location.search);
     const targetUrl = urlParams.get('url');
 
