@@ -1,26 +1,129 @@
-<!-- Bagian atas halaman sfl.html kamu (Timer, Judul, dll) -->
-<div class="loading-container">
-    <p>Mohon tunggu, link streaming sedang disiapkan...</p>
-</div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="31495d33e24227ee112df808b7733c91aea8233d" content="31495d33e24227ee112df808b7733c91aea8233d" />
+    
+    <title>Menuju Link Streaming</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 450px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        h2 { font-size: 20px; margin-bottom: 10px; color: #1a1a1a; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        .timer-box { font-size: 24px; font-weight: bold; color: #ff4757; margin: 15px 0; }
+        .btn {
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
+        }
+        .btn:disabled {
+            background-color: #ced6e0;
+            color: #a4b0be;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .ads-space {
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
 
-<!-- ========================================== -->
-<!-- 1. TEMPEL KODE BANNER HILLTOPADS DI SINI -->
-<!-- ========================================== -->
-<script>
-(function(fbhuqq){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = fbhuqq || {};
-s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
-<!-- ========================================== -->
+    <div class="container">
+        <h2>Link Streaming Sedang Disiapkan</h2>
+        <p>Silakan tunggu sebentar sampai tombol tujuan aktif di bawah ini.</p>
+        
+        <div id="timer" class="timer-box">10</div>
 
-<!-- Tombol tujuan pengalihan (Redirect) milikmu -->
-<div class="button-container">
-    <a href="#" id="btn-lanjut"> Menuju Link Tujuan </a>
-</div>
+        <div class="ads-space">
+            <script>
+            (function(fbhuqq){
+            var d = document,
+                s = d.createElement('script'),
+                l = d.scripts[d.scripts.length - 1];
+            s.settings = fbhuqq || {};
+            s.src = "\/\/sophisticatedpin.com\/baX.VOs_d\/GNlz0eYnWAcM\/cehmU9GufZoUFlZkJP_TBckxgNtTDAXwfMJTZcftGNizuE\/1LMPDdAbyIMFQL";
+            s.async = true;
+            s.referrerPolicy = 'no-referrer-when-downgrade';
+            l.parentNode.insertBefore(s, l);
+            })({})
+            </script>
+        </div>
+        <button id="redirectBtn" class="btn" disabled>Mohon Tunggu...</button>
+    </div>
+
+    <p style="font-size: 11px; color: #999;">File verifikasi kepemilikan situs & Safelink Aktif.</p>
+
+    <script>
+        // Ambil link tujuan dari parameter '?url='
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetUrl = urlParams.get('url');
+
+        // Jika tidak ada url di parameter, beri fallback link utama kamu
+        if (!targetUrl) {
+            targetUrl = "https://northeastxyz.github.io/";
+        }
+
+        let timeLeft = 10; // Durasi hitung mundur dalam detik
+        const timerElement = document.getElementById('timer');
+        const buttonElement = document.getElementById('redirectBtn');
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerElement.style.display = "none"; // Sembunyikan timer setelah habis
+                
+                // Aktifkan Tombol
+                buttonElement.removeAttribute('disabled');
+                buttonElement.textContent = "KLIK UNTUK MELANJUTKAN";
+                
+                // Eksekusi ketika tombol diklik penonton
+                buttonElement.onclick = function() {
+                    window.location.href = targetUrl;
+                };
+            }
+        }, 1000);
+    </script>
+
+</body>
+</html>
