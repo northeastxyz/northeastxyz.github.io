@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern HTML5 FLV Player</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,7 +58,7 @@
             const flvUrl = getQueryParam('url');
 
             if (!flvUrl) {
-                errorMsg.innerText = "Error: Parameter URL tidak ditemukan!\nContoh format: flv.html?url=https://alamat-stream.com/live.flv";
+                errorMsg.innerText = "Error: Parameter URL tidak ditemukan!";
                 errorMsg.style.display = "block";
                 videoElement.style.display = "none";
                 return;
@@ -68,7 +68,7 @@
                 const player = mpegts.createPlayer({
                     type: 'flv',
                     url: flvUrl,
-                    isLive: true // Dioptimalkan langsung untuk live streaming Huya/Metshop kamu
+                    isLive: true
                 }, {
                     enableStashBuffer: false,
                     liveBufferLatencyChasing: true
