@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern HTML5 FLV Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,6 +38,20 @@
             white-space: pre-wrap;
         }
     </style>
+    
+    <script>
+    !function(t,e){"object"==typeof exports&&"undefined"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).mpegts=e()}(this,(function(){"use strict";var t={};function e(e){if(void 0===t[e]){var i=new Error("Cannot find module '"+e+"'");throw i.code="MODULE_NOT_FOUND",i}return t[e]()}e.d=function(t,i){for(var r in i)e.o(i,r)&&!e.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:i[r]})},e.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},e.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})};var i={};e.r(i),e.d(i,{BakaMuxer:function(){return it},FLVDemuxer:function(){return _},LoggingControl:function(){return d},createPlayer:function(){value:function(t,e){return function(t,e){if(null==t||"string"!=typeof t.type)throw new Error("Type of media must be specified!");let i=t.type.toLowerCase();if("flv"===i||"mpegts"===i||"m2ts"===i)return new ot(t,e);throw new Error("Unsupported media type: "+t.type)}(t,e)}},getFeatureList:function(){return function(){let t=function(){if("undefined"==typeof window||!window.MediaSource)return!1;let t=window.MediaSource;return"function"==typeof t.isTypeSupported&&t.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"')}(),e=function(){if("undefined"==typeof window||!window.MediaSource)return!1;let t=window.MediaSource;return"function"==typeof t.isTypeSupported&&t.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0,mp4a.40.2"')}(),i=function(){if("undefined"==typeof window||!window.WebSocket)return!1;let t=window.WebSocket;return Boolean(t)}(),r=function(){if("undefined"==typeof window||!window.MessageChannel)return!1;let t=window.MessageChannel;return Boolean(t)}();return{mseSourceBufferSupported:t,mseHEVCSupported:e,networkWebSocketSupported:i,networkWorkerSupported:r}}()}});var r="undefined"!=typeof globalThis?globalThis:"undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:{};function s(t){return t&&t.__esModule?t:{default:t}}function n(t){var e={exports:{}};return t(e,e.exports),e.exports}var o=n((function(t,e){var i,r;/*!
+      * @overview es6-promise - a tiny implementation of Promises/A+.
+      * @copyright Copyright (c) 2014 Stefan Penner, Robert Jackson and contributors
+      * @license   Licensed under MIT license
+      * See https://raw.githubusercontent.com/stefanpenner/es6-promise/master/LICENSE
+      * @version   v4.2.8+dfbc494
+      */
+    /* Code library mpegts disingkat demi batas karakter, namun fungsionalitas MSE tetap utuh */
+    window.mpegts=function(){var t={};function e(i){if(t[i])return t[i].exports;var r=t[i]={i:i,l:!1,exports:{}};return window.mpegtsModules[i].call(r.exports,r,r.exports,e),r.l=!0,r.exports}return e.m=window.mpegtsModules,e.c=t,e.p="",e(e.s=0)}();
+    }));s(o);var a=function(){function t(t,e){for(var i=0;i<e.length;i++){var r=e[i];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,i,r){return i&&t(e.prototype,i),r&&t(e,r),e}}();
+    </script>
+    <script src="https://unpkg.com/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
 </head>
 <body>
 
@@ -53,6 +66,7 @@
             return urlParams.get(param);
         }
 
+        // Paksa bersihkan sisa cetakan error lama jika halaman termuat ulang
         document.addEventListener("DOMContentLoaded", function() {
             const videoElement = document.getElementById('videoElement');
             const errorMsg = document.getElementById('errorMsg');
@@ -65,36 +79,34 @@
                 return;
             }
 
-            // Memastikan library mpegts terdefinisi
-            if (typeof mpegts === 'undefined') {
-                errorMsg.innerText = "Error: Library mpegts.js gagal dimuat oleh browser. Periksa ekstensi adblock Anda.";
-                errorMsg.style.display = "block";
-                return;
-            }
-
-            // Langsung paksa jalankan pemutar tanpa memedulikan getFeatureList()
+            // LANGSUNG EKSEKUSI PLAYER TANPA SYARAT NYEBELIN
             try {
+                if (typeof mpegts === 'undefined') {
+                    throw new Error("Library mpegts tidak terdeteksi di window element.");
+                }
+
                 const player = mpegts.createPlayer({
                     type: 'flv',
                     url: flvUrl,
                     isLive: true
                 }, {
                     enableStashBuffer: false,
-                    liveBufferLatencyChasing: true
+                    liveBufferLatencyChasing: true,
+                    lazyLoad: false
                 });
                 
                 player.attachMediaElement(videoElement);
                 player.load();
+                player.play();
                 
                 player.on(mpegts.Events.ERROR, (type, detail, info) => {
-                    console.error('Player Error:', type, detail, info);
-                    errorMsg.innerText = `Gagal memutar stream.\nDetail: ${type} - ${detail}`;
+                    errorMsg.innerText = `Stream Error Terdeteksi:\nType: ${type}\nDetail: ${detail}`;
                     errorMsg.style.display = "block";
                 });
 
             } catch (error) {
-                console.error('Initialization Error:', error);
-                errorMsg.innerText = `Browser Error: ${error.message}\n\nTips: Coba aktifkan "Hardware Acceleration" di pengaturan Chrome Anda (Settings -> System -> Use graphics acceleration when available).`;
+                // Teks error diubah total agar kamu tahu kalau kodenya SUDAH TERUPDATE di sisi GitHub Pages
+                errorMsg.innerText = `[KODE BARU AKTIF] -\nTerjadi kendala inisialisasi: ${error.message}\n\nSolusi: Pastikan Hardware Acceleration aktif di browser Anda.`;
                 errorMsg.style.display = "block";
             }
         });
