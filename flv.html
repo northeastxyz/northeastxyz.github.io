@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern HTML5 FLV Player</title>
-    <!-- Opsi 1: Menggunakan CDN unpkg yang valid dan stabil -->
-    <script src="https://unpkg.com/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,13 +42,11 @@
 <body>
 
     <div class="player-container">
-        <!-- controls: tombol navigasi, autoplay: putar otomatis, muted: disenyapkan agar bypass kebijakan autoplay browser -->
         <video id="videoElement" controls autoplay muted></video>
         <div id="errorMsg" class="error-msg"></div>
     </div>
 
     <script>
-        // Fungsi untuk mengambil parameter 'url' dari query string
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
@@ -58,8 +55,6 @@
         document.addEventListener("DOMContentLoaded", function() {
             const videoElement = document.getElementById('videoElement');
             const errorMsg = document.getElementById('errorMsg');
-            
-            // Mengambil link stream dari ?url=
             const flvUrl = getQueryParam('url');
 
             if (!flvUrl) {
@@ -69,23 +64,19 @@
                 return;
             }
 
-            // Memastikan browser mendukung MSE (Media Source Extensions)
             if (mpegts.getFeatureList().mseSourceBufferSupported) {
-                
-                // Konfigurasi player mpegts
                 const player = mpegts.createPlayer({
                     type: 'flv',
                     url: flvUrl,
-                    isLive: true // Diubah ke true karena url pada image_bc1f3e.png berupa Live Streaming
+                    isLive: true // Dioptimalkan langsung untuk live streaming Huya/Metshop kamu
                 }, {
-                    enableStashBuffer: false, // Meminimalkan delay/latensi untuk live stream
+                    enableStashBuffer: false,
                     liveBufferLatencyChasing: true
                 });
                 
                 player.attachMediaElement(videoElement);
                 player.load();
                 
-                // Menangani error pemutaran video secara internal
                 player.on(mpegts.Events.ERROR, (type, detail, info) => {
                     console.error('Player Error:', type, detail, info);
                     errorMsg.innerText = "Gagal memuat video. Pastikan link aktif dan mendukung CORS.";
