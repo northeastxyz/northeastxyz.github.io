@@ -1,212 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>FLV Player Test</title>
+    <title>Modern HTML5 FLV Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js"></script>
     <style>
-        * {
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1c1c1c;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
             margin: 0;
-            padding: 0;
         }
-
-        html,
-        body {
-            height: 100%;
+        .player-container {
+            width: 80%;
+            max-width: 800px;
+            background: #000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
         }
-
-        body {
+        video {
+            width: 100%;
+            display: block;
+        }
+        .error-msg {
+            color: #ff4a4a;
+            padding: 20px;
             text-align: center;
-            min-width: 880px;
-            font-size: 12px;
-        }
-
-        input {
-            height: 30px;
-            line-height: 30px;
-            border: 1px solid #ddd;
-            vertical-align: top;
-        }
-
-        button {
-            min-width: 120px;
-            padding: 0 6px;
-            height: 32px;
-            line-height: 32px;
-            text-align: center;
-            font-size: 14px;
-            color: #333;
-            border: 1px solid #ddd;
-            vertical-align: top;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .action p {
-            margin-bottom: 10px;
-        }
-
-        select {
-            border: 1px solid #ddd;
-            height: 30px;
-            vertical-align: top;
-        }
-
-        .selectItem {
-            margin: 5px 0;
-            float: left;
-            width: 50%;
-            text-align: left;
-        }
-
-        .selectItem label {
-            display: inline-block;
-            vertical-align: middle;
-            width: 200px;
-            padding-left: 10px;
-        }
-
-        .selectItem select {
-            margin-left: 5px;
-            width: 100px;
-            vertical-align: middle;
-        }
-
-        .selectItem input {
-            padding-left: 5px;
+            display: none;
         }
     </style>
-    <script src="./js/vue.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
 </head>
-
 <body>
-    <video id="videoElement" style="width: 96%; margin: 0 auto; height: 400px;" muted controls></video>
-    <div id="app">
-        <div style="margin: 10px auto;">
-            <select name="type" id="type" style="width: 10%;" v-model="mediaType">
-                <option value="m3u8">m3u8</option>
-                <option value="flv">flv</option>
-            </select>
-            <input type="text" style="width: 70%; padding-left: 5px;" v-model="mediaUrl" id="sourceUrl"
-                v-on:keyup.enter="initPlayer" v-on:keyup="fillType">
-            <button style="width: 15%" id="button" v-on:click="initPlayer">播放 (Play)</button>
-        </div>
 
-        <div style="width: 100%; height: 80%;">
-            <div class="left-part" style="float: left; width: 80%">
-                <div class="select-zone">
-                    <span class="selectItem">
-                        <label for="isLive">isLive: </label>
-                        <select name="isLive" id="isLive" v-model="params.isLive">
-                            <option :value="false">false</option>
-                            <option :value="true">true</option>
-                        </select>
-                    </span>
-                    <span class="selectItem">
-                        <label for="enableWorker">enableWorker</label>
-                        <select name="enableWorker" id="enableWorker" v-model="params.enableWorker">
-                            <option :value="false">false</option>
-                            <option :value="true">true</option>
-                        </select>
-                    </span>
-                    </div>
-            </div>
-            <div style="float: right; width: 20%" class="action">
-                <p>Opsi Kontrol</p>
-                <p><button v-on:click="playVideo">Play</button></p>
-                <p><button v-on:click="pauseVideo">Pause</button></p>
-            </div>
-        </div>
+    <div class="player-container">
+        <video id="videoElement" controls autoplay muted></video>
+        <div id="errorMsg" class="error-msg"></div>
     </div>
 
     <script>
-        // Inisialisasi Vue App
-        const app = new Vue({
-            el: '#app',
-            data: {
-                mediaType: 'flv',
-                mediaUrl: '',
-                flvPlayer: null,
-                params: {
-                    isLive: true, // Default true untuk streaming FLV biasanya
-                    enableWorker: true,
-                    enableStashBuffer: true,
-                    stashInitialSize: 384
-                }
-            },
-            mounted() {
-                // 1. Mengambil parameter ?url= dari address bar browser
-                const urlParams = new URLSearchParams(window.location.search);
-                const urlVideo = urlParams.get('url');
+        // 1. Fungsi untuk mengambil parameter 'url' dari query string URL
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
 
-                if (urlVideo) {
-                    this.mediaUrl = decodeURIComponent(urlVideo);
-                    
-                    // Otomatis deteksi tipe jika link berakhiran m3u8
-                    if (this.mediaUrl.includes('.m3u8')) {
-                        this.mediaType = 'm3u8';
-                    } else {
-                        this.mediaType = 'flv';
-                    }
+        document.addEventListener("DOMContentLoaded", function() {
+            const videoElement = document.getElementById('videoElement');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            // Ambil link FLV dari parameter ?url=
+            const flvUrl = getQueryParam('url');
 
-                    // Jalankan player setelah DOM siap
-                    this.$nextTick(() => {
-                        this.initPlayer();
-                    });
-                }
-            },
-            methods: {
-                fillType() {
-                    if (this.mediaUrl.includes('.m3u8')) this.mediaType = 'm3u8';
-                    if (this.mediaUrl.includes('.flv')) this.mediaType = 'flv';
-                },
-                initPlayer() {
-                    if (!this.mediaUrl) return alert('Masukkan URL Video!');
+            if (!flvUrl) {
+                errorMsg.innerText = "Error: Parameter URL tidak ditemukan. Contoh penggunaan: flv.html?url=http://contoh.com/video.flv";
+                errorMsg.style.display = "block";
+                videoElement.style.display = "none";
+                return;
+            }
 
-                    const videoElement = document.getElementById('videoElement');
+            // 2. Cek apakah mpegts.js didukung oleh browser
+            if (mpegts.getFeatureList().mseSourceBufferSupported) {
+                // Inisialisasi player
+                const player = mpegts.createPlayer({
+                    type: 'flv',
+                    url: flvUrl,
+                    isLive: false // Ubah jadi true jika ini adalah Live Streaming (HTTP-FLV)
+                });
+                
+                player.attachMediaElement(videoElement);
+                player.load();
+                
+                // Handle error player
+                player.on(mpegts.Events.ERROR, (type, detail, info) => {
+                    console.error('Player Error:', type, detail, info);
+                    errorMsg.innerText = `Gagal memutar video FLV. Terjadi kesalahan internal.`;
+                    errorMsg.style.display = "block";
+                });
 
-                    // Hancurkan player lama jika ada
-                    if (this.flvPlayer) {
-                        this.flvPlayer.unload();
-                        this.flvPlayer.detachMediaElement();
-                        this.flvPlayer.destroy();
-                        this.flvPlayer = null;
-                    }
-
-                    if (this.mediaType === 'flv') {
-                        if (flvjs.isSupported()) {
-                            this.flvPlayer = flvjs.createPlayer({
-                                type: 'flv',
-                                url: this.mediaUrl,
-                                isLive: this.params.isLive
-                            }, {
-                                enableWorker: this.params.enableWorker,
-                                enableStashBuffer: this.params.enableStashBuffer,
-                                stashInitialSize: this.params.stashInitialSize
-                            });
-                            
-                            this.flvPlayer.attachMediaElement(videoElement);
-                            this.flvPlayer.load();
-                            this.flvPlayer.play().catch(e => {
-                                console.log("Autoplay diblokir browser, klik tombol Play manual.", e);
-                            });
-                        } else {
-                            alert('Browser Anda tidak mendukung FLV.js');
-                        }
-                    } else if (this.mediaType === 'm3u8') {
-                        // Logika bawaan browser (Safari/Mobile) atau bisa ditambah hls.js di sini
-                        videoElement.src = this.mediaUrl;
-                        videoElement.play();
-                    }
-                },
-                playVideo() { document.getElementById('videoElement').play(); },
-                pauseVideo() { document.getElementById('videoElement').pause(); }
+            } else {
+                errorMsg.innerText = "Browser Anda tidak mendukung Media Source Extensions (MSE) untuk memutar FLV.";
+                errorMsg.style.display = "block";
             }
         });
     </script>
 </body>
-
 </html>
