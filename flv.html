@@ -1,82 +1,212 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huya Live Stream Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>FLV Player Test</title>
     <style>
-        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: sans-serif; }
-        .container { width: 100%; max-width: 850px; text-align: center; padding: 10px; }
-        video { width: 100%; background-color: #111; border-radius: 8px; }
-        #status { margin-top: 15px; color: #00ffcc; font-size: 14px; font-family: monospace; }
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            text-align: center;
+            min-width: 880px;
+            font-size: 12px;
+        }
+
+        input {
+            height: 30px;
+            line-height: 30px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        button {
+            min-width: 120px;
+            padding: 0 6px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            border: 1px solid #ddd;
+            vertical-align: top;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .action p {
+            margin-bottom: 10px;
+        }
+
+        select {
+            border: 1px solid #ddd;
+            height: 30px;
+            vertical-align: top;
+        }
+
+        .selectItem {
+            margin: 5px 0;
+            float: left;
+            width: 50%;
+            text-align: left;
+        }
+
+        .selectItem label {
+            display: inline-block;
+            vertical-align: middle;
+            width: 200px;
+            padding-left: 10px;
+        }
+
+        .selectItem select {
+            margin-left: 5px;
+            width: 100px;
+            vertical-align: middle;
+        }
+
+        .selectItem input {
+            padding-left: 5px;
+        }
     </style>
+    <script src="./js/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
 </head>
+
 <body>
+    <video id="videoElement" style="width: 96%; margin: 0 auto; height: 400px;" muted controls></video>
+    <div id="app">
+        <div style="margin: 10px auto;">
+            <select name="type" id="type" style="width: 10%;" v-model="mediaType">
+                <option value="m3u8">m3u8</option>
+                <option value="flv">flv</option>
+            </select>
+            <input type="text" style="width: 70%; padding-left: 5px;" v-model="mediaUrl" id="sourceUrl"
+                v-on:keyup.enter="initPlayer" v-on:keyup="fillType">
+            <button style="width: 15%" id="button" v-on:click="initPlayer">播放 (Play)</button>
+        </div>
 
-<div class="container">
-    <video id="videoElement" controls autoplay muted playsinline></video>
-    <div id="status">Menginisialisasi Stream...</div>
-</div>
+        <div style="width: 100%; height: 80%;">
+            <div class="left-part" style="float: left; width: 80%">
+                <div class="select-zone">
+                    <span class="selectItem">
+                        <label for="isLive">isLive: </label>
+                        <select name="isLive" id="isLive" v-model="params.isLive">
+                            <option :value="false">false</option>
+                            <option :value="true">true</option>
+                        </select>
+                    </span>
+                    <span class="selectItem">
+                        <label for="enableWorker">enableWorker</label>
+                        <select name="enableWorker" id="enableWorker" v-model="params.enableWorker">
+                            <option :value="false">false</option>
+                            <option :value="true">true</option>
+                        </select>
+                    </span>
+                    </div>
+            </div>
+            <div style="float: right; width: 20%" class="action">
+                <p>Opsi Kontrol</p>
+                <p><button v-on:click="playVideo">Play</button></p>
+                <p><button v-on:click="pauseVideo">Pause</button></p>
+            </div>
+        </div>
+    </div>
 
-<script>
-    // Fungsi pintar untuk mengambil seluruh sisa URL tanpa terpotong tanda tanya kedua
-    function getRawStreamUrl() {
-        const currentUrl = window.location.href;
-        const searchKey = "?url=";
-        const index = currentUrl.indexOf(searchKey);
-        if (index === -1) return null;
-        return currentUrl.substring(index + searchKey.length);
-    }
+    <script>
+        // Inisialisasi Vue App
+        const app = new Vue({
+            el: '#app',
+            data: {
+                mediaType: 'flv',
+                mediaUrl: '',
+                flvPlayer: null,
+                params: {
+                    isLive: true, // Default true untuk streaming FLV biasanya
+                    enableWorker: true,
+                    enableStashBuffer: true,
+                    stashInitialSize: 384
+                }
+            },
+            mounted() {
+                // 1. Mengambil parameter ?url= dari address bar browser
+                const urlParams = new URLSearchParams(window.location.search);
+                const urlVideo = urlParams.get('url');
 
-    document.addEventListener("DOMContentLoaded", function() {
-        const videoElement = document.getElementById('videoElement');
-        const statusDiv = document.getElementById('status');
-        
-        // Menggunakan fungsi bypass potongan URL
-        let streamUrl = getRawStreamUrl();
+                if (urlVideo) {
+                    this.mediaUrl = decodeURIComponent(urlVideo);
+                    
+                    // Otomatis deteksi tipe jika link berakhiran m3u8
+                    if (this.mediaUrl.includes('.m3u8')) {
+                        this.mediaType = 'm3u8';
+                    } else {
+                        this.mediaType = 'flv';
+                    }
 
-        if (!streamUrl) {
-            statusDiv.innerHTML = "<span style='color:red;'>Error: Parameter ?url= tidak ditemukan!</span>";
-            return;
-        }
+                    // Jalankan player setelah DOM siap
+                    this.$nextTick(() => {
+                        this.initPlayer();
+                    });
+                }
+            },
+            methods: {
+                fillType() {
+                    if (this.mediaUrl.includes('.m3u8')) this.mediaType = 'm3u8';
+                    if (this.mediaUrl.includes('.flv')) this.mediaType = 'flv';
+                },
+                initPlayer() {
+                    if (!this.mediaUrl) return alert('Masukkan URL Video!');
 
-        // Decode otomatis jika URL dimasukkan dalam bentuk persen-encoded
-        streamUrl = decodeURIComponent(streamUrl);
+                    const videoElement = document.getElementById('videoElement');
 
-        if (flvjs.isSupported()) {
-            statusDiv.innerText = "Membuka koneksi ke: " + streamUrl;
+                    // Hancurkan player lama jika ada
+                    if (this.flvPlayer) {
+                        this.flvPlayer.unload();
+                        this.flvPlayer.detachMediaElement();
+                        this.flvPlayer.destroy();
+                        this.flvPlayer = null;
+                    }
 
-            const flvPlayer = flvjs.createPlayer({
-                type: 'flv',
-                url: streamUrl,
-                isLive: true,
-                hasAudio: true,
-                hasVideo: true
-            }, {
-                enableWorker: true,
-                enableStashBuffer: false,
-                stashInitialSize: 128
-            });
-
-            flvPlayer.attachMediaElement(videoElement);
-            flvPlayer.load();
-
-            flvPlayer.play().then(() => {
-                statusDiv.innerText = "Streaming Aktif! Aktifkan suara lewat ikon speaker.";
-            }).catch(err => {
-                statusDiv.innerText = "Klik Play pada video untuk memulai.";
-            });
-
-            flvPlayer.on(flvjs.Events.ERROR, function(errorType, errorDetails, errorInfo) {
-                console.error(errorType, errorDetails, errorInfo);
-                statusDiv.innerHTML = "<span style='color:#ff4d4d;'>Gagal memutar. Cek tab Console untuk detail.</span>";
-            });
-        } else {
-            statusDiv.innerText = "Browser tidak mendukung flv.js";
-        }
-    });
-</script>
-
+                    if (this.mediaType === 'flv') {
+                        if (flvjs.isSupported()) {
+                            this.flvPlayer = flvjs.createPlayer({
+                                type: 'flv',
+                                url: this.mediaUrl,
+                                isLive: this.params.isLive
+                            }, {
+                                enableWorker: this.params.enableWorker,
+                                enableStashBuffer: this.params.enableStashBuffer,
+                                stashInitialSize: this.params.stashInitialSize
+                            });
+                            
+                            this.flvPlayer.attachMediaElement(videoElement);
+                            this.flvPlayer.load();
+                            this.flvPlayer.play().catch(e => {
+                                console.log("Autoplay diblokir browser, klik tombol Play manual.", e);
+                            });
+                        } else {
+                            alert('Browser Anda tidak mendukung FLV.js');
+                        }
+                    } else if (this.mediaType === 'm3u8') {
+                        // Logika bawaan browser (Safari/Mobile) atau bisa ditambah hls.js di sini
+                        videoElement.src = this.mediaUrl;
+                        videoElement.play();
+                    }
+                },
+                playVideo() { document.getElementById('videoElement').play(); },
+                pauseVideo() { document.getElementById('videoElement').pause(); }
+            }
+        });
+    </script>
 </body>
+
 </html>
