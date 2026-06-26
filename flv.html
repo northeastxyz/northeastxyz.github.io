@@ -90,12 +90,17 @@
             const streamUrlBadge = document.getElementById('streamUrlBadge');
             let player = null;
 
-            // Mengambil parameter query secara fleksibel
+            // 1. Mengambil parameter query "?url=" atau "?id=" secara fleksibel dari browser
             const urlParams = new URLSearchParams(window.location.search);
-            const roomId = urlParams.get('id') || '30805928';
-            const finalProxyUrl = `https://flv.northeastxyz.workers.dev/?id=${roomId}`;
+            const roomId = urlParams.get('url') || urlParams.get('id') || '30805928';
+            
+            // Ekstrak room ID saja seandainya yang dilempar adalah link penuh
+            const cleanRoomId = roomId.includes('room=') ? roomId.split('room=')[1] : roomId;
 
-            streamUrlBadge.textContent = `Proxy: ${finalProxyUrl}`;
+            // 2. DIUBAH: Mengarah langsung ke Endpoint API Anvil Anda dengan parameter ?room=
+            const finalProxyUrl = `https://teeming-shameless-rail.anvil.app/_/api/get_huya?room=${cleanRoomId}`;
+
+            streamUrlBadge.textContent = `Proxy Anvil: ${finalProxyUrl}`;
 
             function startLiveStream() {
                 if (player !== null) {
@@ -105,7 +110,6 @@
                     player = null;
                 }
 
-                // Proteksi pengecekan library mpegts resmi
                 if (typeof mpegts !== 'undefined' && mpegts.getFeatureList().isSupported) {
                     player = mpegts.createPlayer({
                         type: 'flv',
@@ -115,25 +119,24 @@
                     }, {
                         enableWorker: true,
                         lazyLoad: false,
-                        liveBufferLatencyChasing: true,
-                        stashInitialSize: 32
+                        liveBufferLatencyChasing: true, // Mengejar delay agar real-time
+                        stashInitialSize: 128,          // Menaikkan buffer awal agar stream FLV stabil
+                        enableStashBuffer: true
                     });
 
                     player.attachMediaElement(videoElement);
                     player.load();
                     
-                    videoElement.muted = true;
+                    videoElement.muted = true; // bypass aturan kebijakan autoplay browser
                     player.play().catch(err => {
-                        console.log("Autoplay ditahan browser.", err);
+                        console.log("Autoplay ditahan browser, klik play manual.", err);
                     });
                 } else {
-                    alert('Browser tidak mendukung atau mpegts.js gagal dimuat dari lokal.');
+                    alert('Browser tidak mendukung flv melalui mpegts.js.');
                 }
             }
 
-            // Jalankan player setelah memverifikasi window load
             setTimeout(startLiveStream, 200);
-
             reloadBtn.addEventListener('click', startLiveStream);
         });
     </script>
