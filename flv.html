@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern HTML5 FLV Player</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mpegts.js/1.7.3/mpegts.min.js"></script>
+    <!-- Opsi 1: Menggunakan CDN unpkg yang valid dan stabil -->
+    <script src="https://unpkg.com/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,34 +19,37 @@
             margin: 0;
         }
         .player-container {
-            width: 80%;
-            max-width: 800px;
+            width: 90%;
+            max-width: 850px;
             background: #000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             border-radius: 8px;
             overflow: hidden;
         }
         video {
             width: 100%;
             display: block;
+            aspect-ratio: 16 / 9;
         }
         .error-msg {
             color: #ff4a4a;
             padding: 20px;
             text-align: center;
             display: none;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
     <div class="player-container">
+        <!-- controls: tombol navigasi, autoplay: putar otomatis, muted: disenyapkan agar bypass kebijakan autoplay browser -->
         <video id="videoElement" controls autoplay muted></video>
         <div id="errorMsg" class="error-msg"></div>
     </div>
 
     <script>
-        // 1. Fungsi untuk mengambil parameter 'url' dari query string URL
+        // Fungsi untuk mengambil parameter 'url' dari query string
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
@@ -55,37 +59,41 @@
             const videoElement = document.getElementById('videoElement');
             const errorMsg = document.getElementById('errorMsg');
             
-            // Ambil link FLV dari parameter ?url=
+            // Mengambil link stream dari ?url=
             const flvUrl = getQueryParam('url');
 
             if (!flvUrl) {
-                errorMsg.innerText = "Error: Parameter URL tidak ditemukan. Contoh penggunaan: flv.html?url=http://contoh.com/video.flv";
+                errorMsg.innerText = "Error: Parameter URL tidak ditemukan!\nContoh format: flv.html?url=https://alamat-stream.com/live.flv";
                 errorMsg.style.display = "block";
                 videoElement.style.display = "none";
                 return;
             }
 
-            // 2. Cek apakah mpegts.js didukung oleh browser
+            // Memastikan browser mendukung MSE (Media Source Extensions)
             if (mpegts.getFeatureList().mseSourceBufferSupported) {
-                // Inisialisasi player
+                
+                // Konfigurasi player mpegts
                 const player = mpegts.createPlayer({
                     type: 'flv',
                     url: flvUrl,
-                    isLive: false // Ubah jadi true jika ini adalah Live Streaming (HTTP-FLV)
+                    isLive: true // Diubah ke true karena url pada image_bc1f3e.png berupa Live Streaming
+                }, {
+                    enableStashBuffer: false, // Meminimalkan delay/latensi untuk live stream
+                    liveBufferLatencyChasing: true
                 });
                 
                 player.attachMediaElement(videoElement);
                 player.load();
                 
-                // Handle error player
+                // Menangani error pemutaran video secara internal
                 player.on(mpegts.Events.ERROR, (type, detail, info) => {
                     console.error('Player Error:', type, detail, info);
-                    errorMsg.innerText = `Gagal memutar video FLV. Terjadi kesalahan internal.`;
+                    errorMsg.innerText = "Gagal memuat video. Pastikan link aktif dan mendukung CORS.";
                     errorMsg.style.display = "block";
                 });
 
             } else {
-                errorMsg.innerText = "Browser Anda tidak mendukung Media Source Extensions (MSE) untuk memutar FLV.";
+                errorMsg.innerText = "Browser Anda tidak mendukung pemutaran FLV berbasis MSE.";
                 errorMsg.style.display = "block";
             }
         });
