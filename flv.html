@@ -3,51 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huya Live Player</title>
+    <title>Huya Live Player Final</title>
     <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #fff;
-            font-family: sans-serif;
-        }
-        .container {
-            width: 100%;
-            max-width: 850px;
-            text-align: center;
-            padding: 10px;
-        }
-        video {
-            width: 100%;
-            background-color: #111;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
-        }
-        #status {
-            margin-top: 15px;
-            color: #00ffcc;
-            font-size: 14px;
-            font-family: monospace;
-        }
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: sans-serif; }
+        .container { width: 100%; max-width: 850px; text-align: center; padding: 10px; }
+        video { width: 100%; background-color: #111; border-radius: 8px; }
+        #status { margin-top: 15px; color: #00ffcc; font-size: 14px; font-family: monospace; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <video id="videoElement" controls autoplay muted playsinline></video>
-    <div id="status">Menginisialisasi Player...</div>
+    <div id="status">Memulai player...</div>
 </div>
 
 <script>
     function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
+        return new URLSearchParams(window.location.search).get(param);
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -56,14 +30,13 @@
         const streamUrl = getQueryParam('url');
 
         if (!streamUrl) {
-            statusDiv.innerHTML = "<span style='color:red;'>Error: Parameter ?url= kosong!</span>";
+            statusDiv.innerHTML = "<span style='color:red;'>Error: URL Kosong!</span>";
             return;
         }
 
         if (flvjs.isSupported()) {
-            statusDiv.innerText = "Menghubungkan langsung ke Live Stream...";
+            statusDiv.innerText = "Koneksi langsung aktif. Membuka stream...";
 
-            // Konfigurasi performa tinggi untuk mencegah buffer macet di Chrome
             const flvPlayer = flvjs.createPlayer({
                 type: 'flv',
                 url: streamUrl,
@@ -71,30 +44,26 @@
                 hasAudio: true,
                 hasVideo: true
             }, {
-                enableWorker: true,         // Menggunakan web worker agar player ringan
-                enableStashBuffer: false,   // Mematikan simpanan buffer mentah agar video real-time & tidak tertahan
-                stashInitialSize: 128,      // Ukuran awal buffer kecil saja biar cepat play
-                seekType: 'range'
+                enableWorker: true,
+                enableStashBuffer: false, // WAJIB untuk live stream biar gak stuck buffering
+                stashInitialSize: 128
             });
 
             flvPlayer.attachMediaElement(videoElement);
             flvPlayer.load();
 
-            // Memaksa browser memutar video setelah loading segment awal
             flvPlayer.play().then(() => {
-                statusDiv.innerText = "Streaming Berhasil Diputar! (Suara dimute otomatis oleh Chrome, silakan klik ikon speaker)";
+                statusDiv.innerText = "Streaming Berhasil! Aktifkan suara via ikon speaker.";
             }).catch(err => {
-                statusDiv.innerText = "Klik tombol PLAY pada video untuk memulai.";
+                statusDiv.innerText = "Klik tombol PLAY tengah / manual untuk memulai.";
             });
 
-            // Monitor jika ada error saat pemutaran tengah berlangsung
             flvPlayer.on(flvjs.Events.ERROR, function(errorType, errorDetails, errorInfo) {
-                console.error("FLV Player Error:", errorType, errorDetails, errorInfo);
-                statusDiv.innerHTML = "<span style='color:#ff4d4d;'>Stream Terputus / Format Audio-Video Tidak Sesuai.</span>";
+                console.error("Detail Error:", errorType, errorDetails, errorInfo);
+                statusDiv.innerHTML = "<span style='color:#ff4d4d;'>Gagal memproses stream. Cek Tab Console (F12).</span>";
             });
-
         } else {
-            statusDiv.innerText = "Browser Anda tidak mendukung HTML5 MSE (flv.js).";
+            statusDiv.innerText = "Browser tidak mendukung flv.js";
         }
     });
 </script>
