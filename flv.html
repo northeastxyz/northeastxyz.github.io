@@ -3,88 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced HTML5 Player</title>
+    <title>Debug & Play FLV</title>
     <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: sans-serif; }
-        .container { width: 80%; max-width: 800px; text-align: center; }
-        video { width: 100%; background: #111; }
-        #log { color: #ffbc00; margin-top: 15px; font-size: 14px; }
+        body { margin: 0; background: #111; color: #fff; font-family: monospace; padding: 20px; }
+        .player-box { max-width: 800px; margin: 0 auto; }
+        video { width: 100%; background: #000; margin-bottom: 15px; }
+        #status-log { background: #222; padding: 15px; border-left: 4px solid #00f3ff; white-space: pre-wrap; word-break: break-all; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <video id="videoElement" controls autoplay muted playsinline></video>
-    <div id="log">Memulai inisialisasi stream...</div>
+<div class="player-box">
+    <video id="videoPlayer" controls autoplay muted></video>
+    <h3>Status & Debug Log:</h3>
+    <div id="status-log">Mengambil data dari API...</div>
 </div>
 
 <script>
-    function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
+    const logBox = document.getElementById('status-log');
+    const videoElement = document.getElementById('videoPlayer');
+
+    function log(msg) {
+        logBox.innerText += "\n> " + msg;
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        const videoElement = document.getElementById('videoElement');
-        const logDiv = document.getElementById('log');
-        const streamUrl = getQueryParam('url');
+    function getQueryParam(param) {
+        return new URLSearchParams(window.location.search).get(param);
+    }
 
-        if (!streamUrl) {
-            logDiv.innerText = "Error: Parameter URL tidak ditemukan.";
+    async function initPlayer() {
+        const apiUrl = getQueryParam('url');
+        if (!apiUrl) {
+            log("Error: Parameter ?url= tidak ditemukan!");
             return;
         }
 
-        logDiv.innerText = "Mencoba memutar via FLV.js...";
+        log("Menghubungi API: " + apiUrl);
 
-        if (flvjs.isSupported()) {
-            // Konfigurasi flv.js yang lebih agresif untuk Live Stream
-            const flvPlayer = flvjs.createPlayer({
-                type: 'flv',
-                url: streamUrl,
-                isLive: true,
-                hasAudio: true,
-                hasVideo: true,
-                enableStashBuffer: false // Mengurangi delay & loading mandek pada live stream
-            }, {
-                enableWorker: true,
-                stashInitialSize: 128
-            });
+        try {
+            // 1. Ambil respon dari API terlebih dahulu untuk melihat isinya
+            const response = await fetch(apiUrl);
             
-            flvPlayer.attachMediaElement(videoElement);
-            flvPlayer.load();
-            
-            flvPlayer.play().catch(e => {
-                logDiv.innerText = "Autoplay diblokir browser, klik PLAY pada video.";
-            });
+            // Cek jika response berupa JSON atau teks biasa (bukan stream langsung)
+            const contentType = response.headers.get("content-type") || "";
+            log("Content-Type Terdeteksi: " + contentType);
 
-            flvPlayer.on(flvjs.Events.ERROR, function(type, detail, info) {
-                console.log("FLV Error:", type, detail, info);
-                logDiv.innerText = "FLV gagal. Mencoba beralih ke HLS format...";
-                tryHls(streamUrl, videoElement, logDiv);
-            });
-        } else {
-            tryHls(streamUrl, videoElement, logDiv);
-        }
-    });
+            let finalStreamUrl = apiUrl;
 
-    function tryHls(url, videoElement, logDiv) {
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMediaElement(videoElement);
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                logDiv.innerText = "Memutar via HLS.js";
-                videoElement.play();
-            });
-            hls.on(Hls.Events.ERROR, function(event, data) {
-                logDiv.innerText = "Semua metode pemutaran gagal. Coba cek Tab Console (F12) untuk melihat error CORS.";
-            });
-        } else {
-            logDiv.innerText = "Browser tidak mendukung FLV maupun HLS.";
+            if (contentType.includes("application/json")) {
+                const jsonData = await response.json();
+                log("API mengembalikan JSON! Mengurai data...");
+                console.log("Isi JSON:", jsonData);
+                
+                // === SESUAIKAN DI SINI ===
+                // Contoh jika JSON berbentuk: { "data": "http://...flv" } atau { "url": "http://...flv" }
+                finalStreamUrl = jsonData.url || jsonData.data || jsonData.stream || null;
+                
+                if (!finalStreamUrl) {
+                    log("Gagal menemukan key 'url' atau 'data' di dalam JSON. Struktur JSON tercatat di Console (F12).");
+                    return;
+                }
+                log("Link asli ditemukan dalam JSON: " + finalStreamUrl);
+            }
+
+            // 2. Jalankan FLV Player dengan URL final
+            if (flvjs.isSupported()) {
+                log("Memulai FLV.js untuk: " + finalStreamUrl);
+                const flvPlayer = flvjs.createPlayer({
+                    type: 'flv',
+                    url: finalStreamUrl,
+                    isLive: true
+                }, {
+                    enableStashBuffer: false,
+                    cors: true
+                });
+
+                flvPlayer.attachMediaElement(videoElement);
+                flvPlayer.load();
+                flvPlayer.play().then(() => {
+                    log("Video berhasil diputar!");
+                }).catch(e => {
+                    log("Autoplay ditahan browser. Silakan klik tombol Play manual.");
+                });
+
+                flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail) => {
+                    log(`FLV Player Error: ${errType} - ${errDetail}`);
+                });
+            }
+
+        } catch (error) {
+            log("Gagal mengambil data dari API. Kemungkinan besar diblokir oleh CORS.");
+            log("Pesan Error: " + error.message);
+            log("SOLUSI: Buka tab 'Console' (klik tanda silang merah di pojok kanan atas) untuk detail error lengkap.");
         }
     }
+
+    document.addEventListener("DOMContentLoaded", initPlayer);
 </script>
 </body>
 </html>
