@@ -3,73 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huya Live Stream Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <title>Bilibili FLV.js Demo Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
     <style>
-        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: sans-serif; }
-        .container { width: 100%; max-width: 850px; text-align: center; padding: 10px; }
-        video { width: 100%; background-color: #111; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); }
-        #status { margin-top: 15px; color: #00ffcc; font-size: 14px; font-family: monospace; }
+        body {
+            margin: 0;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .mainContainer {
+            width: 100%;
+            max-width: 800px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .video-container {
+            position: relative;
+            background-color: #000;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            display: block;
+        }
+        .controls {
+            margin-top: 10px;
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .log-output {
+            color: #00ffcc;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <video id="videoElement" controls autoplay muted playsinline></video>
-    <div id="status">Mencoba memuat stream...</div>
+<div class="mainContainer">
+    <div class="video-container">
+        <video name="videoElement" id="videoElement" controls autoplay muted playsinline></video>
+    </div>
+    
+    <div class="controls">
+        <div><strong>Status:</strong> <span id="player-status" class="log-output">Menggali konfigurasi...</span></div>
+    </div>
 </div>
 
 <script>
+    var player = null;
+
     function getQueryParam(param) {
-        return new URLSearchParams(window.location.search).get(param);
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        const videoElement = document.getElementById('videoElement');
-        const statusDiv = document.getElementById('status');
-        const streamUrl = getQueryParam('url');
+    function flv_load(url) {
+        var element = document.getElementById('videoElement');
+        var statusTxt = document.getElementById('player-status');
+
+        if (player) {
+            player.unload();
+            player.detachMediaElement();
+            player.destroy();
+            player = null;
+        }
+
+        // Membangun MediaDataSource secara detail sesuai standar Bilibili Demo
+        var mediaDataSource = {
+            type: 'flv',
+            isLive: true,
+            url: url,
+            hasAudio: true,
+            hasVideo: true
+        };
+
+        // Konfigurasi internal engine flv.js dari source demo
+        var config = {
+            enableWorker: true,
+            enableStashBuffer: false,
+            stashInitialSize: 128,
+            lazyLoad: false
+        };
+
+        statusTxt.innerText = "Membuat instansi flvjs.createPlayer...";
+        player = flvjs.createPlayer(mediaDataSource, config);
+        player.attachMediaElement(element);
+        
+        // Memulai proses streaming biner secara asinkronus
+        player.load();
+        
+        player.play().then(function() {
+            statusTxt.innerText = "Stream terhubung! Memutar segmen data.";
+        }).catch(function(error) {
+            statusTxt.innerText = "Autoplay diblokir browser. Klik Play manual.";
+        });
+
+        // Event Listener untuk mendiagnosis crash internal demuxing data biner
+        player.on(flvjs.Events.ERROR, function(errorType, errorDetails, errorInfo) {
+            console.error('FLV Error:', errorType, errorDetails, errorInfo);
+            statusTxt.innerHTML = "<span style='color:#ff4d4d;'>Error: " + errorType + " (" + errorDetails + ")</span>";
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var streamUrl = getQueryParam('url');
+        var statusTxt = document.getElementById('player-status');
 
         if (!streamUrl) {
-            statusDiv.innerHTML = "<span style='color:red;'>Error: Parameter ?url= kosong!</span>";
+            statusTxt.innerHTML = "<span style='color:red;'>Error: Parameter ?url= tidak ditemukan!</span>";
             return;
         }
 
-        // Metode 1: Coba putar langsung menggunakan kemampuan native browser (misal di HP/Safari)
-        if (videoElement.canPlayType('application/x-mpegURL') || videoElement.canPlayType('vnd.apple.mpegurl')) {
-            statusDiv.innerText = "Memutar via Native Browser Player...";
-            videoElement.src = streamUrl;
-            videoElement.play().catch(e => console.log("Autoplay ditahan"));
-        } 
-        // Metode 2: Menggunakan hls.js (Untuk Chrome di PC/Laptop)
-        else if (Hls.isSupported()) {
-            statusDiv.innerText = "Menghubungkan via HLS Engine...";
-            
-            const hls = new Hls({
-                maxBufferLength: 10,
-                liveSyncDurationCount: 3,
-                forceKeyFrameOnDiscontinuity: true
-            });
-
-            hls.loadSource(streamUrl);
-            hls.attachMediaElement(videoElement);
-
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                statusDiv.innerText = "Streaming Berhasil Dimuat! Silakan klik unmute untuk suara.";
-                videoElement.play().catch(e => {
-                    statusDiv.innerText = "Klik tombol PLAY untuk memulai streaming.";
-                });
-            });
-
-            hls.on(Hls.Events.ERROR, function(event, data) {
-                console.log("HLS Error:", data);
-                // Jika HLS gagal, kita paksa pakai HTML5 video src biasa (Fallback terakhir)
-                if (data.fatal) {
-                    statusDiv.innerText = "HLS gagal. Mencoba memuat direct source...";
-                    videoElement.src = streamUrl;
-                }
-            });
+        if (flvjs.isSupported()) {
+            flv_load(streamUrl);
         } else {
-            statusDiv.innerText = "Browser tidak mendukung pemutaran stream ini.";
+            statusTxt.innerText = "Browser ini tidak mendukung MSE / flv.js";
         }
     });
 </script>
