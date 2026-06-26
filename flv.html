@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huya Live Player Final</title>
-    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+    <title>Huya Live Player (MPEG-TS)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
     <style>
         body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: sans-serif; }
         .container { width: 100%; max-width: 850px; text-align: center; padding: 10px; }
@@ -16,7 +16,7 @@
 
 <div class="container">
     <video id="videoElement" controls autoplay muted playsinline></video>
-    <div id="status">Memulai player...</div>
+    <div id="status">Membuka stream dengan mpegts.js...</div>
 </div>
 
 <script>
@@ -34,36 +34,36 @@
             return;
         }
 
-        if (flvjs.isSupported()) {
-            statusDiv.innerText = "Koneksi langsung aktif. Membuka stream...";
+        if (mpegts.getFeatureList().mseLivePlayback) {
+            statusDiv.innerText = "Menghubungkan ke stream...";
 
-            const flvPlayer = flvjs.createPlayer({
-                type: 'flv',
+            // Menggunakan mpegts untuk auto-detect format flv/ts
+            const player = mpegts.createPlayer({
+                type: 'mse', // Menggunakan 'mse' agar otomatis mendeteksi apakah ini FLV atau TS
                 url: streamUrl,
-                isLive: true,
-                hasAudio: true,
-                hasVideo: true
+                isLive: true
             }, {
                 enableWorker: true,
-                enableStashBuffer: false, // WAJIB untuk live stream biar gak stuck buffering
-                stashInitialSize: 128
+                enableStashBuffer: false, // Langsung render data tanpa antrean buffer
+                stashInitialSize: 128,
+                liveBufferLatencyChasing: true // Kejar delay live stream jika sempat tertinggal
             });
 
-            flvPlayer.attachMediaElement(videoElement);
-            flvPlayer.load();
+            player.attachMediaElement(videoElement);
+            player.load();
 
-            flvPlayer.play().then(() => {
-                statusDiv.innerText = "Streaming Berhasil! Aktifkan suara via ikon speaker.";
+            player.play().then(() => {
+                statusDiv.innerText = "Streaming Aktif! (Unmute suara manual via ikon speaker)";
             }).catch(err => {
-                statusDiv.innerText = "Klik tombol PLAY tengah / manual untuk memulai.";
+                statusDiv.innerText = "Klik Play pada video untuk memulai.";
             });
 
-            flvPlayer.on(flvjs.Events.ERROR, function(errorType, errorDetails, errorInfo) {
+            player.on(mpegts.Events.ERROR, function(errorType, errorDetails, errorInfo) {
                 console.error("Detail Error:", errorType, errorDetails, errorInfo);
-                statusDiv.innerHTML = "<span style='color:#ff4d4d;'>Gagal memproses stream. Cek Tab Console (F12).</span>";
+                statusDiv.innerHTML = "<span style='color:#ff4d4d;'>Gagal memutar stream. Cek Console log.</span>";
             });
         } else {
-            statusDiv.innerText = "Browser tidak mendukung flv.js";
+            statusDiv.innerText = "Browser tidak mendukung mpegts.js (MSE).";
         }
     });
 </script>
