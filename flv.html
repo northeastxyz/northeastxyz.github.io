@@ -3,92 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML5 FLV Player</title>
+    <title>Advanced HTML5 Player</title>
     <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #fff;
-            font-family: sans-serif;
-        }
-        .container {
-            width: 80%;
-            max-width: 800px;
-            text-align: center;
-        }
-        video {
-            width: 100%;
-            background-color: #111;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        #error-msg {
-            color: #ff4d4d;
-            margin-top: 15px;
-            font-weight: bold;
-        }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: sans-serif; }
+        .container { width: 80%; max-width: 800px; text-align: center; }
+        video { width: 100%; background: #111; }
+        #log { color: #ffbc00; margin-top: 15px; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <video id="videoElement" controls autoplay muted></video>
-    <div id="error-msg"></div>
+    <video id="videoElement" controls autoplay muted playsinline></video>
+    <div id="log">Memulai inisialisasi stream...</div>
 </div>
 
 <script>
-    // 1. Fungsi untuk mengambil parameter 'url' dari query string
     function getQueryParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(param);
     }
 
-    // 2. Jalankan player setelah halaman selesai dimuat
     document.addEventListener("DOMContentLoaded", function() {
         const videoElement = document.getElementById('videoElement');
-        const errorMsg = document.getElementById('error-msg');
-        
-        // Ambil URL video FLV dari parameter ?url=
-        const flvUrl = getQueryParam('url');
+        const logDiv = document.getElementById('log');
+        const streamUrl = getQueryParam('url');
 
-        if (!flvUrl) {
-            errorMsg.innerText = "Error: Parameter URL FLV tidak ditemukan. Contoh penggunaan: flv.html?url=http://link-flv-kamu.flv";
+        if (!streamUrl) {
+            logDiv.innerText = "Error: Parameter URL tidak ditemukan.";
             return;
         }
 
-        // 3. Cek apakah browser mendukung flv.js
+        logDiv.innerText = "Mencoba memutar via FLV.js...";
+
         if (flvjs.isSupported()) {
+            // Konfigurasi flv.js yang lebih agresif untuk Live Stream
             const flvPlayer = flvjs.createPlayer({
                 type: 'flv',
-                url: flvUrl,
-                isLive: true, // Ubah ke false jika ini file video rekaman (bukan live stream)
-                cors: true    // Mengaktifkan CORS jika server video mendukungnya
+                url: streamUrl,
+                isLive: true,
+                hasAudio: true,
+                hasVideo: true,
+                enableStashBuffer: false // Mengurangi delay & loading mandek pada live stream
+            }, {
+                enableWorker: true,
+                stashInitialSize: 128
             });
             
             flvPlayer.attachMediaElement(videoElement);
             flvPlayer.load();
             
-            // Mencoba melakukan autoplay
-            flvPlayer.play().catch(error => {
-                console.log("Autoplay diblokir oleh browser, user harus klik play manual atau video harus di-mute.");
+            flvPlayer.play().catch(e => {
+                logDiv.innerText = "Autoplay diblokir browser, klik PLAY pada video.";
             });
 
-            // Handle error jika streaming putus atau gagal dimuat
-            flvPlayer.on(flvjs.Events.ERROR, function(errorType, errorDetails, errorInfo) {
-                console.error('Flv.js Error:', errorType, errorDetails, errorInfo);
-                errorMsg.innerText = "Gagal memutar FLV. Pastikan link aktif dan mendukung CORS.";
+            flvPlayer.on(flvjs.Events.ERROR, function(type, detail, info) {
+                console.log("FLV Error:", type, detail, info);
+                logDiv.innerText = "FLV gagal. Mencoba beralih ke HLS format...";
+                tryHls(streamUrl, videoElement, logDiv);
             });
-
         } else {
-            errorMsg.innerText = "Browser Anda tidak mendukung MSE / flv.js.";
+            tryHls(streamUrl, videoElement, logDiv);
         }
     });
-</script>
 
+    function tryHls(url, videoElement, logDiv) {
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMediaElement(videoElement);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                logDiv.innerText = "Memutar via HLS.js";
+                videoElement.play();
+            });
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                logDiv.innerText = "Semua metode pemutaran gagal. Coba cek Tab Console (F12) untuk melihat error CORS.";
+            });
+        } else {
+            logDiv.innerText = "Browser tidak mendukung FLV maupun HLS.";
+        }
+    }
+</script>
 </body>
 </html>
