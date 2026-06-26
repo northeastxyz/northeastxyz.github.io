@@ -36,6 +36,7 @@
             text-align: center;
             display: none;
             font-weight: bold;
+            white-space: pre-wrap;
         }
     </style>
 </head>
@@ -64,7 +65,15 @@
                 return;
             }
 
-            if (mpegts.getFeatureList().mseSourceBufferSupported) {
+            // Memastikan library mpegts terdefinisi
+            if (typeof mpegts === 'undefined') {
+                errorMsg.innerText = "Error: Library mpegts.js gagal dimuat oleh browser. Periksa ekstensi adblock Anda.";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            // Langsung paksa jalankan pemutar tanpa memedulikan getFeatureList()
+            try {
                 const player = mpegts.createPlayer({
                     type: 'flv',
                     url: flvUrl,
@@ -79,12 +88,13 @@
                 
                 player.on(mpegts.Events.ERROR, (type, detail, info) => {
                     console.error('Player Error:', type, detail, info);
-                    errorMsg.innerText = "Gagal memuat video. Pastikan link aktif dan mendukung CORS.";
+                    errorMsg.innerText = `Gagal memutar stream.\nDetail: ${type} - ${detail}`;
                     errorMsg.style.display = "block";
                 });
 
-            } else {
-                errorMsg.innerText = "Browser Anda tidak mendukung pemutaran FLV berbasis MSE.";
+            } catch (error) {
+                console.error('Initialization Error:', error);
+                errorMsg.innerText = `Browser Error: ${error.message}\n\nTips: Coba aktifkan "Hardware Acceleration" di pengaturan Chrome Anda (Settings -> System -> Use graphics acceleration when available).`;
                 errorMsg.style.display = "block";
             }
         });
