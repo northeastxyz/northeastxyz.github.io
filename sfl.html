@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="31495d33e24227ee112df808b7733c91aea8233d" content="31495d33e24227ee112df808b7733c91aea8233d" />
+    <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
+    <meta name="monetag" content="b79007a23af4dfb3887acd433ac61810">
     <title>Menuju Link Tujuan...</title>
     <style>
         body { 
@@ -57,6 +58,24 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
+        .adsterra-container { 
+            margin: 20px auto 0 auto; 
+            display: flex; 
+            justify-content: center; 
+        }
+        .native-ad-wrapper { 
+            margin-top: 25px; 
+            border-top: 1px dashed #ccc; 
+            padding-top: 15px; 
+            text-align: left; 
+        }
+        .native-ad-title { 
+            font-size: 13px; 
+            font-weight: bold; 
+            color: #666; 
+            margin-bottom: 10px; 
+            text-align: center; 
+        }
     </style>
 </head>
 <body>
@@ -71,18 +90,37 @@
         </div>
         
         <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
+
+        <!-- IKLAN BANNER IFRAME -->
+        <div class="adsterra-container">
+            <script>
+                atOptions = {
+                    'key' : 'edbd8723bd12e9ca889bef0ef9d4d90d',
+                    'format' : 'iframe',
+                    'height' : 250,
+                    'width' : 300,
+                    'params' : {}
+                };
+            </script>
+            <script src="https://www.highperformanceformat.com/edbd8723bd12e9ca889bef0ef9d4d90d/invoke.js"></script>
+        </div>
+
+        <!-- IKLAN NATIVE BANNER -->
+        <div class="native-ad-wrapper">
+            <div class="native-ad-title">Rekomendasi Informasi Untuk Anda:</div>
+            <script async="async" data-cfasync="false" src="https://pl29766994.effectivecpmnetwork.com/076ff83650bd22814c1f41e4a0d2049a/invoke.js"></script>
+            <div id="container-076ff83650bd22814c1f41e4a0d2049a"></div>
+        </div>
     </div>
 
-    <script>(function(s){s.dataset.zone='11141931',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-
     <script>
-        // Mengambil dan decode URL target (?to=BASE64)
         const urlParams = new URLSearchParams(window.location.search);
         const encodedUrl = urlParams.get('to'); 
         let targetUrl = null;
 
         if (encodedUrl) {
             try {
+                // Mendekode URL tujuan dari base64
                 targetUrl = atob(encodedUrl);
             } catch (e) {
                 targetUrl = null;
@@ -104,8 +142,6 @@
                 if(timeLeft <= 0){
                     clearInterval(downloadTimer);
                     loadingZone.style.display = "none";
-                    
-                    // Memasang link asli ke tombol
                     btnElement.href = targetUrl;
                     btnElement.setAttribute('rel', 'noreferrer noopener');
                     btnElement.style.display = "inline-block";
@@ -113,6 +149,9 @@
             }, 1000);
         }
     </script>
+
+    <!-- KODE TAMBAHAN: POPUNDER ADS (Pemicu saat tombol/halaman diklik) -->
+    <script src="https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js"></script>
 
 </body>
 </html>
