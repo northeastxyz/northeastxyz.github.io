@@ -61,7 +61,7 @@
 </head>
 <body>
 
-    <!-- 🔔 SATU-SATUNYA IKLAN AKTIF: SOCIAL BAR -->
+    <!-- 🔔 IKLAN 1: SOCIAL BAR (Selalu Aktif) -->
     <script src="https://pl29792552.effectivecpmnetwork.com/4b/aa/c6/4baac623aeef95f158360897e673b495.js"></script>
 
     <div class="container">
@@ -76,6 +76,45 @@
         <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
     </div>
 
+    <!-- 🌐 IKLAN 2: POPUNDER JINAK (Hanya Trigger 1 Kali via Cookie) -->
+    <script>
+        function setCookie(name, value, hours) {
+            const d = new Date();
+            d.setTime(d.getTime() + (hours * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) == 0) {
+                    return c.substring(cname.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        // Jalankan popunder hanya jika cookie belum diset
+        if (getCookie("popunder_fired") === "") {
+            // Pasang tanda bahwa user sudah pernah terkena popunder
+            // Angka 2 artinya iklan tidak akan muncul lagi selama 2 jam ke depan untuk user yang sama
+            setCookie("popunder_fired", "true", 2); 
+
+            // Masukkan script Popunder AdSterra Anda di sini secara dinamis
+            const popScript = document.createElement('script');
+            popScript.src = "https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js";
+            document.body.appendChild(popScript);
+        }
+    </script>
+
+    <!-- KODE PENGALIH LINK -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const encodedUrl = urlParams.get('to'); 
@@ -83,7 +122,6 @@
 
         if (encodedUrl) {
             try {
-                // Mendekode URL tujuan dari base64
                 targetUrl = atob(encodedUrl);
             } catch (e) {
                 targetUrl = null;
