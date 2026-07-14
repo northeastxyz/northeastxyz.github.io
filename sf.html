@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    
+    <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
+    <meta name="31495d33e24227ee112df808b7733c91aea8233d" content="31495d33e24227ee112df808b7733c91aea8233d" />
+    <meta name="monetag" content="b79007a23af4dfb3887acd433ac61810">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/controls.min.css">
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #video-container { width: 100vw; height: 100vh; }
+        video { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="video-container" data-shaka-player-container>
+        <video id="video" data-shaka-player autoplay playsinline></video>
+    </div>
+
+    <script>
+        async function initPlayer() {
+            const video = document.getElementById('video');
+            const ui = video['ui'];
+            const controls = ui.getControls();
+            const player = controls.getPlayer();
+
+            // Ambil parameter dari link
+            const params = new URLSearchParams(window.location.search);
+            const mpdUrl = params.get('mpd');
+            const keyPair = params.get('key');
+
+            if (!mpdUrl) return;
+
+            // Setup ClearKey
+            if (keyPair && keyPair.includes(':')) {
+                const [kid, key] = keyPair.split(':');
+                player.configure({
+                    drm: {
+                        clearKeys: {
+                            [kid.trim()]: key.trim()
+                        }
+                    }
+                });
+            }
+
+            try {
+                await player.load(mpdUrl);
+                console.log('Video berhasil dimuat!');
+            } catch (e) {
+                console.error('Gagal memutar:', e);
+            }
+        }
+
+        document.addEventListener('shaka-ui-loaded', initPlayer);
+    </script>
+
+    <!-- ========================================== -->
+    <!-- KODE CADANGAN: ADS TERA SOCIAL BAR ADS      -->
+    <!-- ========================================== -->
+    <script src="https://pl29792552.effectivecpmnetwork.com/4b/aa/c6/4baac623aeef95f158360897e673b495.js"></script>
+
+</body>
+</html>
