@@ -3,38 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
-    <meta name="monetag" content="b79007a23af4dfb3887acd433ac61810">
-    <title>Menuju Link Tujuan...</title>
+    <title>Mohon Tunggu Sebentar...</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            padding: 40px 20px; 
-            background: #f0f2f5; 
-            color: #333; 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-        .container { 
-            max-width: 500px; 
-            margin: auto; 
-            background: white; 
-            padding: 25px; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
         }
-        .btn { 
-            display: none; 
-            background: #28a745; 
-            color: white; 
-            padding: 15px 30px; 
-            text-decoration: none; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            font-size: 18px; 
-            box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
-            transition: 0.3s; 
-            margin-bottom: 20px; 
+        .text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-weight: 500;
         }
+        .btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+            transition: background 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
+    </style>
+
+    <!-- SKRIP POPUNDER ADSTERRA ANDA -->
+    <script src="https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js"></script>
+    
+</head>
+<body>
+
+    <div class="container">
+        <p class="text">Mohon tunggu sebentar untuk melanjutkan<br>ke tujuan Anda.</p>
+        
+        <!-- Tombol navigasi utama -->
+        <button class="btn" onclick="redirectToTarget()">KLIK DI SINI UNTUK MELANJUTKAN</button>
+    </div>
+
+    <script>
+        // Fungsi untuk membaca parameter '?to=' di URL dan mengarahkan penonton
+        function redirectToTarget() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUrl = urlParams.get('to');
+            
+            if (targetUrl) {
+                window.location.href = decodeURIComponent(targetUrl);
+            } else {
+                alert('Tautan tujuan tidak ditemukan. Pastikan parameter URL sudah benar.');
+            }
+        }
+    </script>
+
+    <!-- ========================================================= -->
+    <!-- JANGAN LUPA: TEMPEL SCRIPT SOCIAL BAR DI SINI (JIKA ADA) -->
+    <!-- ========================================================= -->
+
+</body>
+</html>        }
         .btn:hover { 
             background: #218838; 
             transform: translateY(-3px); 
