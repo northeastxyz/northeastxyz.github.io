@@ -3,77 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mohon Tunggu Sebentar...</title>
+    <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
+    <title>Menuju Link Tujuan...</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f7fb;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding: 40px 20px; 
+            background: #f0f2f5; 
+            color: #333; 
         }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            box-sizing: border-box;
+        .container { 
+            max-width: 500px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
         }
-        .text {
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 25px;
-            line-height: 1.5;
-            font-weight: 500;
+        .btn { 
+            display: none; 
+            background: #28a745; 
+            color: white; 
+            padding: 15px 30px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 18px; 
+            box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
+            transition: 0.3s; 
+            margin-bottom: 20px; 
         }
-        .btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
-            transition: background 0.2s;
-            width: 100%;
-            box-sizing: border-box;
+        .btn:hover { 
+            background: #218838; 
+            transform: translateY(-3px); 
         }
-        .btn:hover {
-            background-color: #218838;
+        .timer { 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: #d9534f; 
+            margin: 15px 0; 
+        }
+        .loader { 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #d9534f; 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            animation: spin 1s linear infinite; 
+            margin: 10px auto; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
         }
     </style>
-
-    <!-- SKRIP POPUNDER ADSTERRA ANDA -->
-    <script src="https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js"></script>
-    
 </head>
 <body>
 
+    <!-- 🔔 IKLAN 1: SOCIAL BAR (Selalu Aktif) -->
+    <script src="https://pl29792552.effectivecpmnetwork.com/4b/aa/c6/4baac623aeef95f158360897e673b495.js"></script>
+
     <div class="container">
-        <p class="text">Mohon tunggu sebentar untuk melanjutkan<br>ke tujuan Anda.</p>
+        <h3>Menyiapkan Tautan...</h3>
+        <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
         
-        <!-- Tombol navigasi utama -->
-        <button class="btn" onclick="redirectToTarget()">KLIK DI SINI UNTUK MELANJUTKAN</button>
+        <div id="loading-zone">
+            <div class="loader"></div>
+            <div class="timer" id="countdown">Menunggu: 3 detik</div>
+        </div>
+        
+        <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
     </div>
 
+    <!-- 🌐 IKLAN 2: POPUNDER JINAK (Hanya Trigger 1 Kali via Cookie) -->
     <script>
-        // Fungsi untuk membaca parameter '?to=' di URL dan mengarahkan penonton
-        function redirectToTarget() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetUrl = urlParams.get('to');
-            
-            if (targetUrl) {
-                window.location.href = decodeURIComponent(targetUrl);
-            } else {
-                alert('Tautan tujuan tidak ditemukan. Pastikan parameter URL sudah benar.');
+        function setCookie(name, value, hours) {
+            const d = new Date();
+            d.setTime(d.getTime() + (hours * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) == 0) {
+                    return c.substring(cname.length, c.length);
+                }
             }
+            return "";
+        }
+
+        // Jalankan popunder hanya jika cookie belum diset
+        if (getCookie("popunder_fired") === "") {
+            // Pasang tanda bahwa user sudah pernah terkena popunder
+            // Angka 2 artinya iklan tidak akan muncul lagi selama 2 jam ke depan untuk user yang sama
+            setCookie("popunder_fired", "true", 2); 
+
+            // Masukkan script Popunder AdSterra Anda di sini secara dinamis
+            const popScript = document.createElement('script');
+            popScript.src = "https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js";
+            document.body.appendChild(popScript);
+        }
+    </script>
+
+    <!-- KODE PENGALIH LINK -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedUrl = urlParams.get('to'); 
+        let targetUrl = null;
+
+        if (encodedUrl) {
+            try {
+                targetUrl = atob(encodedUrl);
+            } catch (e) {
+                targetUrl = null;
+            }
+        }
+
+        if (!targetUrl) {
+            document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
+        } else {
+            let timeLeft = 3; 
+            const timerElement = document.getElementById('countdown');
+            const btnElement = document.getElementById('redirect-btn');
+            const loadingZone = document.getElementById('loading-zone');
+
+            const downloadTimer = setInterval(function(){
+                timeLeft--;
+                timerElement.innerText = "Menunggu: " + timeLeft + " detik";
+                
+                if(timeLeft <= 0){
+                    clearInterval(downloadTimer);
+                    loadingZone.style.display = "none";
+                    btnElement.href = targetUrl;
+                    btnElement.setAttribute('rel', 'noreferrer noopener');
+                    btnElement.style.display = "inline-block";
+                }
+            }, 1000);
         }
     </script>
 
