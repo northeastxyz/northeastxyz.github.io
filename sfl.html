@@ -22,6 +22,7 @@
             text-align: center;
             max-width: 400px;
             width: 90%;
+            box-sizing: border-box;
         }
         .text {
             font-size: 16px;
@@ -75,131 +76,6 @@
             }
         }
     </script>
-
-    <!-- ========================================================= -->
-    <!-- JANGAN LUPA: TEMPEL SCRIPT SOCIAL BAR DI SINI (JIKA ADA) -->
-    <!-- ========================================================= -->
-
-</body>
-</html>        }
-        .btn:hover { 
-            background: #218838; 
-            transform: translateY(-3px); 
-        }
-        .timer { 
-            font-size: 20px; 
-            font-weight: bold; 
-            color: #d9534f; 
-            margin: 15px 0; 
-        }
-        .loader { 
-            border: 4px solid #f3f3f3; 
-            border-top: 4px solid #d9534f; 
-            border-radius: 50%; 
-            width: 30px; 
-            height: 30px; 
-            animation: spin 1s linear infinite; 
-            margin: 10px auto; 
-        }
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-        }
-        .adsterra-container { 
-            margin: 20px auto 0 auto; 
-            display: flex; 
-            justify-content: center; 
-        }
-        .native-ad-wrapper { 
-            margin-top: 25px; 
-            border-top: 1px dashed #ccc; 
-            padding-top: 15px; 
-            text-align: left; 
-        }
-        .native-ad-title { 
-            font-size: 13px; 
-            font-weight: bold; 
-            color: #666; 
-            margin-bottom: 10px; 
-            text-align: center; 
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <h3>Menyiapkan Tautan...</h3>
-        <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
-        
-        <div id="loading-zone">
-            <div class="loader"></div>
-            <div class="timer" id="countdown">Menunggu: 3 detik</div>
-        </div>
-        
-        <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
-
-        <!-- IKLAN BANNER IFRAME -->
-        <div class="adsterra-container">
-            <script>
-                atOptions = {
-                    'key' : 'edbd8723bd12e9ca889bef0ef9d4d90d',
-                    'format' : 'iframe',
-                    'height' : 250,
-                    'width' : 300,
-                    'params' : {}
-                };
-            </script>
-            <script src="https://www.highperformanceformat.com/edbd8723bd12e9ca889bef0ef9d4d90d/invoke.js"></script>
-        </div>
-
-        <!-- IKLAN NATIVE BANNER -->
-        <div class="native-ad-wrapper">
-            <div class="native-ad-title">Rekomendasi Informasi Untuk Anda:</div>
-            <script async="async" data-cfasync="false" src="https://pl29766994.effectivecpmnetwork.com/076ff83650bd22814c1f41e4a0d2049a/invoke.js"></script>
-            <div id="container-076ff83650bd22814c1f41e4a0d2049a"></div>
-        </div>
-    </div>
-
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedUrl = urlParams.get('to'); 
-        let targetUrl = null;
-
-        if (encodedUrl) {
-            try {
-                targetUrl = atob(encodedUrl);
-            } catch (e) {
-                targetUrl = null;
-            }
-        }
-
-        if (!targetUrl) {
-            document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
-        } else {
-            let timeLeft = 3; 
-            const timerElement = document.getElementById('countdown');
-            const btnElement = document.getElementById('redirect-btn');
-            const loadingZone = document.getElementById('loading-zone');
-
-            const downloadTimer = setInterval(function(){
-                timeLeft--;
-                timerElement.innerText = "Menunggu: " + timeLeft + " detik";
-                
-                if(timeLeft <= 0){
-                    clearInterval(downloadTimer);
-                    loadingZone.style.display = "none";
-                    btnElement.href = targetUrl;
-                    btnElement.setAttribute('rel', 'noreferrer noopener');
-                    btnElement.style.display = "inline-block";
-                }
-            }, 1000);
-        }
-    </script>
-
-    <!-- ========================================== -->
-    <!-- FORMAT BARU: ADS TERRA SOCIAL BAR ADS      -->
-    <!-- ========================================== -->
-    <script src="https://pl29792552.effectivecpmnetwork.com/4b/aa/c6/4baac623aeef95f158360897e673b495.js"></script>
 
 </body>
 </html>
