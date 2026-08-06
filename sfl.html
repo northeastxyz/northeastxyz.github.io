@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
-    <title>Menuju Link Tujuan...</title>
+    <title>Redirecting...</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -61,19 +61,19 @@
 </head>
 <body>
 
-    <!-- 🔔 IKLAN POPUNDER (diganti dari social bar) -->
+    <!-- 🔔 POPUNDER AD (replaces social bar) -->
     <script src="https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js"></script>
 
     <div class="container">
-        <h3>Menyiapkan Tautan...</h3>
-        <p>Mohon tunggu sebentar untuk melanjutkan ke tujuan Anda.</p>
+        <h3>Preparing Your Link...</h3>
+        <p>Please wait a moment while we get you to your destination.</p>
         
         <div id="loading-zone">
             <div class="loader"></div>
-            <div class="timer" id="countdown">Menunggu: 3 detik</div>
+            <div class="timer" id="countdown">Waiting: 3 seconds</div>
         </div>
         
-        <a href="#" id="redirect-btn" class="btn">KLIK DI SINI UNTUK MELANJUTKAN</a>
+        <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
     </div>
 
     <script>
@@ -90,7 +90,7 @@
         }
 
         if (!targetUrl) {
-            document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Tautan tujuan tidak valid.</p>";
+            document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Invalid destination link.</p>";
         } else {
             let timeLeft = 3; 
             const timerElement = document.getElementById('countdown');
@@ -99,7 +99,7 @@
 
             const downloadTimer = setInterval(function(){
                 timeLeft--;
-                timerElement.innerText = "Menunggu: " + timeLeft + " detik";
+                timerElement.innerText = "Waiting: " + timeLeft + " second" + (timeLeft !== 1 ? "s" : "");
                 
                 if(timeLeft <= 0){
                     clearInterval(downloadTimer);
