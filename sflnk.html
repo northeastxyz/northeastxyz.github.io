@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
+    <title>Redirecting...</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding: 40px 20px; 
+            background: #f0f2f5; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 500px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+        }
+        .btn { 
+            display: none; 
+            background: #28a745; 
+            color: white; 
+            padding: 15px 30px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 18px; 
+            box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
+            transition: 0.3s; 
+            margin-bottom: 20px; 
+        }
+        .btn:hover { 
+            background: #218838; 
+            transform: translateY(-3px); 
+        }
+        .timer { 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: #d9534f; 
+            margin: 15px 0; 
+        }
+        .loader { 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #d9534f; 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            animation: spin 1s linear infinite; 
+            margin: 10px auto; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 🔔 POPUNDER AD (replaces social bar) -->
+    <script src="https://pl30358751.effectivecpmnetwork.com/2c/e9/c0/2ce9c079ee14af4f602429741861788e.js"></script>
+
+    <div class="container">
+        <h3>Preparing Your Link...</h3>
+        <p>Please wait a moment while we get you to your destination.</p>
+        
+        <div id="loading-zone">
+            <div class="loader"></div>
+            <div class="timer" id="countdown">Waiting: 3 seconds</div>
+        </div>
+        
+        <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedUrl = urlParams.get('to'); 
+        let targetUrl = null;
+
+        if (encodedUrl) {
+            try {
+                targetUrl = atob(encodedUrl);
+            } catch (e) {
+                targetUrl = null;
+            }
+        }
+
+        if (!targetUrl) {
+            document.getElementById('loading-zone').innerHTML = "<p style='color:red; font-weight:bold;'>Error: Invalid destination link.</p>";
+        } else {
+            let timeLeft = 3; 
+            const timerElement = document.getElementById('countdown');
+            const btnElement = document.getElementById('redirect-btn');
+            const loadingZone = document.getElementById('loading-zone');
+
+            const downloadTimer = setInterval(function(){
+                timeLeft--;
+                timerElement.innerText = "Waiting: " + timeLeft + " second" + (timeLeft !== 1 ? "s" : "");
+                
+                if(timeLeft <= 0){
+                    clearInterval(downloadTimer);
+                    loadingZone.style.display = "none";
+                    btnElement.href = targetUrl;
+                    btnElement.setAttribute('rel', 'noreferrer noopener');
+                    btnElement.style.display = "inline-block";
+                }
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>
