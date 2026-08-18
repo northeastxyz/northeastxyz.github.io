@@ -6,12 +6,19 @@
     <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
     <title>Redirecting...</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             text-align: center; 
             padding: 40px 20px; 
             background: #f0f2f5; 
             color: #333; 
+            min-height: 100vh;
+            cursor: pointer;
         }
         .container { 
             max-width: 500px; 
@@ -20,6 +27,7 @@
             padding: 25px; 
             border-radius: 12px; 
             box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+            pointer-events: none;
         }
         .btn { 
             display: none; 
@@ -33,6 +41,7 @@
             box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
             transition: 0.3s; 
             margin-bottom: 20px; 
+            pointer-events: auto;
         }
         .btn:hover { 
             background: #218838; 
@@ -61,34 +70,61 @@
             font-size: 14px;
             color: #888;
             margin-top: 15px;
+            pointer-events: none;
         }
-        .smartlink-info {
-            font-size: 13px;
-            color: #666;
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 15px;
+        .popunder-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 999;
         }
     </style>
 </head>
 <body>
 
-    <!-- 🔔 SMARTLINK - opens in new tab automatically -->
+    <!-- 🔔 SMARTLINK POPUNDER - terbuka saat klik di mana saja -->
     <script>
-        // Buka smartlink di tab baru segera setelah halaman dimuat
-        (function() {
-            // Redirect ke smartlink di tab baru
-            window.open('https://omg10.com/4/11141347', '_blank');
-            
-            // Log untuk debugging
-            console.log('Smartlink opened in new tab: https://omg10.com/4/11141347');
-        })();
+        // Variabel untuk mencegah multiple popup
+        let popupOpened = false;
+        const SMARTLINK_URL = 'https://omg10.com/4/11141347';
+        
+        // Fungsi untuk membuka smartlink di tab baru
+        function openSmartlink() {
+            if (!popupOpened) {
+                popupOpened = true;
+                window.open(SMARTLINK_URL, '_blank');
+                console.log('Smartlink popunder opened: ' + SMARTLINK_URL);
+            }
+        }
+
+        // Event listener untuk klik di mana saja pada halaman
+        document.addEventListener('click', function(e) {
+            // Cegah jika klik pada tombol redirect
+            if (e.target.closest('#redirect-btn')) {
+                return;
+            }
+            openSmartlink();
+        });
+
+        // Juga buka saat halaman dimuat (opsional, untuk memastikan)
+        setTimeout(function() {
+            if (!popupOpened) {
+                openSmartlink();
+            }
+        }, 500);
     </script>
 
     <div class="container">
-        <h3>🔗 Redirecting...</h3>
-        <p>Please wait while we redirect you to your destination.</p>
+        <h3>⏳ Preparing Your Link...</h3>
+        <p>Please wait a moment while we get you to your destination.</p>
         
         <div id="loading-zone">
             <div class="loader"></div>
@@ -96,9 +132,10 @@
         </div>
         
         <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
-        <div class="info-text">📌 Smartlink opened in new tab</div>
-        <div class="smartlink-info">🔹 Link tujuan akan terbuka di tab baru secara otomatis</div>
+        <div class="info-text">💡 Klik di mana saja untuk membuka smartlink di tab baru</div>
     </div>
+
+    <div class="popunder-notice">🔗 Smartlink ready</div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -132,7 +169,7 @@
                     btnElement.setAttribute('rel', 'noreferrer noopener');
                     btnElement.setAttribute('target', '_blank');
                     btnElement.style.display = "inline-block";
-                    btnElement.innerText = "🔗 OPEN DESTINATION";
+                    btnElement.innerText = "🔗 GO TO DESTINATION";
                 }
             }, 1000);
         }
