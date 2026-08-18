@@ -98,22 +98,34 @@
 </head>
 <body>
 
-    <!-- 🔔 SMARTLINK POPUNDER - terbuka saat klik di mana saja -->
+    <!-- 🔔 POPUNDER - terbuka saat klik di mana saja -->
     <script>
-        // Variabel untuk mencegah multiple popup
-        let popupOpened = false;
-        const SMARTLINK_URL = 'https://omg10.com/4/11141347';
-        
-        // Fungsi untuk membuka smartlink di tab baru
-        function openSmartlink() {
-            if (!popupOpened) {
-                popupOpened = true;
-                const newTab = window.open(SMARTLINK_URL, '_blank');
-                console.log('✅ Smartlink opened: ' + SMARTLINK_URL);
+        // Fungsi popunder yang akan dipanggil saat klik
+        function loadPopunder() {
+            try {
+                // Inisialisasi popunder dengan zone ID
+                (function(s){
+                    s.dataset.zone = '11600354';
+                    s.src = 'https://zovidree.com/tag.min.js';
+                })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+                console.log('✅ Popunder loaded: zone 11600354');
+            } catch(e) {
+                console.log('Popunder error:', e);
+            }
+        }
+
+        // Flag untuk mencegah load berulang
+        let popunderLoaded = false;
+
+        // Fungsi untuk membuka popunder
+        function openPopunder() {
+            if (!popunderLoaded) {
+                popunderLoaded = true;
+                loadPopunder();
                 
-                // Reset flag setelah beberapa saat agar bisa buka lagi jika perlu
+                // Reset flag setelah beberapa saat
                 setTimeout(function() {
-                    popupOpened = false;
+                    popunderLoaded = false;
                 }, 3000);
             }
         }
@@ -124,7 +136,7 @@
             if (e.target.closest('#redirect-btn')) {
                 return;
             }
-            openSmartlink();
+            openPopunder();
         });
 
         // Juga saat touch (untuk mobile)
@@ -132,7 +144,7 @@
             if (e.target.closest('#redirect-btn')) {
                 return;
             }
-            openSmartlink();
+            openPopunder();
         });
     </script>
 
@@ -146,10 +158,10 @@
         </div>
         
         <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
-        <div class="info-text">👆 Klik di mana saja untuk membuka smartlink di tab baru</div>
+        <div class="info-text">👆 Klik di mana saja untuk membuka popunder</div>
     </div>
 
-    <div class="click-hint">🔄 Klik di mana saja untuk membuka link</div>
+    <div class="click-hint">🔄 Klik di mana saja untuk membuka popunder</div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
