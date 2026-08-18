@@ -6,20 +6,12 @@
     <meta name="kadam-verification" content="kadam5f42d5beb3a31996a48d6814ae3cdd0e" />
     <title>Redirecting...</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             text-align: center; 
             padding: 40px 20px; 
             background: #f0f2f5; 
             color: #333; 
-            min-height: 100vh;
-            cursor: pointer;
-            user-select: none;
         }
         .container { 
             max-width: 500px; 
@@ -28,7 +20,6 @@
             padding: 25px; 
             border-radius: 12px; 
             box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
-            pointer-events: none;
         }
         .btn { 
             display: none; 
@@ -42,8 +33,6 @@
             box-shadow: 0 4px 10px rgba(40,167,69,0.3); 
             transition: 0.3s; 
             margin-bottom: 20px; 
-            pointer-events: auto;
-            cursor: pointer;
         }
         .btn:hover { 
             background: #218838; 
@@ -68,88 +57,20 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
-        .info-text {
-            font-size: 14px;
-            color: #888;
-            margin-top: 15px;
-            pointer-events: none;
-        }
-        .click-hint {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: #fff;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-size: 14px;
-            pointer-events: none;
-            z-index: 999;
-            animation: pulse 2s infinite;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        @keyframes pulse {
-            0% { opacity: 0.6; transform: translateX(-50%) scale(1); }
-            50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
-            100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
-        }
     </style>
 </head>
 <body>
 
-    <!-- 🔔 POPUNDER - terbuka saat klik di mana saja -->
+    <!-- 🔔 POPUNDER AD -->
     <script>
-        // Fungsi popunder yang akan dipanggil saat klik
-        function loadPopunder() {
-            try {
-                // Inisialisasi popunder dengan zone ID
-                (function(s){
-                    s.dataset.zone = '11600354';
-                    s.src = 'https://zovidree.com/tag.min.js';
-                })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
-                console.log('✅ Popunder loaded: zone 11600354');
-            } catch(e) {
-                console.log('Popunder error:', e);
-            }
-        }
-
-        // Flag untuk mencegah load berulang
-        let popunderLoaded = false;
-
-        // Fungsi untuk membuka popunder
-        function openPopunder() {
-            if (!popunderLoaded) {
-                popunderLoaded = true;
-                loadPopunder();
-                
-                // Reset flag setelah beberapa saat
-                setTimeout(function() {
-                    popunderLoaded = false;
-                }, 3000);
-            }
-        }
-
-        // Event listener untuk klik di mana saja pada halaman
-        document.addEventListener('click', function(e) {
-            // Cegah jika klik pada tombol redirect
-            if (e.target.closest('#redirect-btn')) {
-                return;
-            }
-            openPopunder();
-        });
-
-        // Juga saat touch (untuk mobile)
-        document.addEventListener('touchstart', function(e) {
-            if (e.target.closest('#redirect-btn')) {
-                return;
-            }
-            openPopunder();
-        });
+        (function(s){
+            s.dataset.zone='11600354';
+            s.src='https://zovidree.com/tag.min.js';
+        })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
     </script>
 
     <div class="container">
-        <h3>⏳ Preparing Your Link...</h3>
+        <h3>Preparing Your Link...</h3>
         <p>Please wait a moment while we get you to your destination.</p>
         
         <div id="loading-zone">
@@ -158,10 +79,7 @@
         </div>
         
         <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
-        <div class="info-text">👆 Klik di mana saja untuk membuka popunder</div>
     </div>
-
-    <div class="click-hint">🔄 Klik di mana saja untuk membuka popunder</div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -193,9 +111,7 @@
                     loadingZone.style.display = "none";
                     btnElement.href = targetUrl;
                     btnElement.setAttribute('rel', 'noreferrer noopener');
-                    btnElement.setAttribute('target', '_blank');
                     btnElement.style.display = "inline-block";
-                    btnElement.innerText = "🔗 GO TO DESTINATION";
                 }
             }, 1000);
         }
