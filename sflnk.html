@@ -57,12 +57,17 @@
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
+        .info-text {
+            font-size: 14px;
+            color: #888;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- 🔔 POPUNDER AD (replaces social bar) -->
-    <script src="https://quge5.com/88/tag.min.js" data-zone="249263" async data-cfasync="false"></script>
+    <!-- 🔔 POPUNDER AD -->
+    <script src="https://omg10.com/4/11141347"></script>
 
     <div class="container">
         <h3>Preparing Your Link...</h3>
@@ -74,6 +79,7 @@
         </div>
         
         <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
+        <div class="info-text">⚡ Opening in new tab</div>
     </div>
 
     <script>
@@ -106,7 +112,13 @@
                     loadingZone.style.display = "none";
                     btnElement.href = targetUrl;
                     btnElement.setAttribute('rel', 'noreferrer noopener');
+                    btnElement.setAttribute('target', '_blank'); // Open in new tab
                     btnElement.style.display = "inline-block";
+                    
+                    // Auto redirect ke tab baru setelah 1 detik
+                    setTimeout(function() {
+                        window.open(targetUrl, '_blank');
+                    }, 1000);
                 }
             }, 1000);
         }
