@@ -62,16 +62,33 @@
             color: #888;
             margin-top: 15px;
         }
+        .smartlink-info {
+            font-size: 13px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- 🔔 POPUNDER AD -->
-    <script src="https://omg10.com/4/11141347"></script>
+    <!-- 🔔 SMARTLINK - opens in new tab automatically -->
+    <script>
+        // Buka smartlink di tab baru segera setelah halaman dimuat
+        (function() {
+            // Redirect ke smartlink di tab baru
+            window.open('https://omg10.com/4/11141347', '_blank');
+            
+            // Log untuk debugging
+            console.log('Smartlink opened in new tab: https://omg10.com/4/11141347');
+        })();
+    </script>
 
     <div class="container">
-        <h3>Preparing Your Link...</h3>
-        <p>Please wait a moment while we get you to your destination.</p>
+        <h3>🔗 Redirecting...</h3>
+        <p>Please wait while we redirect you to your destination.</p>
         
         <div id="loading-zone">
             <div class="loader"></div>
@@ -79,7 +96,8 @@
         </div>
         
         <a href="#" id="redirect-btn" class="btn">CLICK HERE TO CONTINUE</a>
-        <div class="info-text">⚡ Opening in new tab</div>
+        <div class="info-text">📌 Smartlink opened in new tab</div>
+        <div class="smartlink-info">🔹 Link tujuan akan terbuka di tab baru secara otomatis</div>
     </div>
 
     <script>
@@ -112,13 +130,9 @@
                     loadingZone.style.display = "none";
                     btnElement.href = targetUrl;
                     btnElement.setAttribute('rel', 'noreferrer noopener');
-                    btnElement.setAttribute('target', '_blank'); // Open in new tab
+                    btnElement.setAttribute('target', '_blank');
                     btnElement.style.display = "inline-block";
-                    
-                    // Auto redirect ke tab baru setelah 1 detik
-                    setTimeout(function() {
-                        window.open(targetUrl, '_blank');
-                    }, 1000);
+                    btnElement.innerText = "🔗 OPEN DESTINATION";
                 }
             }, 1000);
         }
